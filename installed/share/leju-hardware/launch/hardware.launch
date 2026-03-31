@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Hardware node for Leju humanoid robot -->
+
+  <!-- Configuration directory argument -->
+  <arg name="config_dir" default="$(find leju-hardware)/"
+       doc="Configuration directory path for hardware settings"/>
+
+  <!-- Hardware node with config_dir parameter -->
+  <node pkg="leju-hardware" type="leju-hardware" name="leju_hardware" output="screen"
+        args="$(arg config_dir)"
+        required="true"/>
+</launch>

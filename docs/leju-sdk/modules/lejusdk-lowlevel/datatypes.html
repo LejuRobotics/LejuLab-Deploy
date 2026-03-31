@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lejusdk-lowlevel 数据类型 &mdash; LejuSDK 0986747a0 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/translations.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="电机控制模式 (CSP/CST)" href="control_modes.html" />
+    <link rel="prev" title="lejusdk-lowlevel" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                0986747a0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">模块列表</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">lejusdk-lowlevel</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
+          <li class="breadcrumb-item"><a href="index.html">lejusdk-lowlevel</a></li>
+      <li class="breadcrumb-item active">lejusdk-lowlevel 数据类型</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lejusdk-lowlevel">
+<h1>lejusdk-lowlevel 数据类型<a class="headerlink" href="#lejusdk-lowlevel" title="此标题的永久链接"></a></h1>
+<p>SDK 中使用的核心数据结构定义。示例代码中涉及的类型可点击跳转至本页对应说明。</p>
+<section id="motorcontrolmode">
+<span id="id1"></span><span id="datatypes-motorcontrolmode"></span><h2>MotorControlMode<a class="headerlink" href="#motorcontrolmode" title="此标题的永久链接"></a></h2>
+<dl class="cpp enum-class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju16MotorControlModeE">
+<span id="_CPPv3N4leju16MotorControlModeE"></span><span id="_CPPv2N4leju16MotorControlModeE"></span><span class="target" id="namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405c"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">MotorControlMode</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">uint8_t</span></span><a class="headerlink" href="#_CPPv4N4leju16MotorControlModeE" title="永久链接至目标"></a><br /></dt>
+<dd><p>电机控制模式枚举 </p>
+<p>定义了机器人电机支持的三种控制模式，用于指定电机的运行方式。</p>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>CST 模式下，kp 和 kd 必须设置为 0，否则会叠加 PD 控制律的输出。 </p>
+</div>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju16MotorControlMode3CSTE">
+<span id="_CPPv3N4leju16MotorControlMode3CSTE"></span><span id="_CPPv2N4leju16MotorControlMode3CSTE"></span><span class="target" id="namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405cab3319f0293b58437972b5976f6c5da0a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">CST</span></span></span><a class="headerlink" href="#_CPPv4N4leju16MotorControlMode3CSTE" title="永久链接至目标"></a><br /></dt>
+<dd><p>力矩控制模式，直接发送目标力矩，kp/kd 必须为 0 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju16MotorControlMode3CSVE">
+<span id="_CPPv3N4leju16MotorControlMode3CSVE"></span><span id="_CPPv2N4leju16MotorControlMode3CSVE"></span><span class="target" id="namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405cacc8d68c551c4a9a6d5313e07de4deafd"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">CSV</span></span></span><a class="headerlink" href="#_CPPv4N4leju16MotorControlMode3CSVE" title="永久链接至目标"></a><br /></dt>
+<dd><p>速度控制模式，发送目标速度 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju16MotorControlMode3CSPE">
+<span id="_CPPv3N4leju16MotorControlMode3CSPE"></span><span id="_CPPv2N4leju16MotorControlMode3CSPE"></span><span class="target" id="namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405cacbc6e9792f97c17c170caeb83895c44e"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">CSP</span></span></span><a class="headerlink" href="#_CPPv4N4leju16MotorControlMode3CSPE" title="永久链接至目标"></a><br /></dt>
+<dd><p>位置控制模式，发送目标位置、Kp、Kd，内部计算力矩 </p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="hardwarestate">
+<span id="datatypes-hardwarestate"></span><h2>HardwareState<a class="headerlink" href="#hardwarestate" title="此标题的永久链接"></a></h2>
+<dl class="cpp enum-class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju13HardwareStateE">
+<span id="_CPPv3N4leju13HardwareStateE"></span><span id="_CPPv2N4leju13HardwareStateE"></span><span class="target" id="namespaceleju_1aaba2239d56d448f4e133e84d778bcd86"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">HardwareState</span></span></span><a class="headerlink" href="#_CPPv4N4leju13HardwareStateE" title="永久链接至目标"></a><br /></dt>
+<dd><p>硬件状态枚举 </p>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju13HardwareState7UNKNOWNE">
+<span id="_CPPv3N4leju13HardwareState7UNKNOWNE"></span><span id="_CPPv2N4leju13HardwareState7UNKNOWNE"></span><span class="target" id="namespaceleju_1aaba2239d56d448f4e133e84d778bcd86a696b031073e74bf2cb98e5ef201d4aa3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">UNKNOWN</span></span></span><a class="headerlink" href="#_CPPv4N4leju13HardwareState7UNKNOWNE" title="永久链接至目标"></a><br /></dt>
+<dd><p>未知状态 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju13HardwareState7STOPPEDE">
+<span id="_CPPv3N4leju13HardwareState7STOPPEDE"></span><span id="_CPPv2N4leju13HardwareState7STOPPEDE"></span><span class="target" id="namespaceleju_1aaba2239d56d448f4e133e84d778bcd86a09d4d696b4e935115b9313e3c412509a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">STOPPED</span></span></span><a class="headerlink" href="#_CPPv4N4leju13HardwareState7STOPPEDE" title="永久链接至目标"></a><br /></dt>
+<dd><p>已停止 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju13HardwareState5ERRORE">
+<span id="_CPPv3N4leju13HardwareState5ERRORE"></span><span id="_CPPv2N4leju13HardwareState5ERRORE"></span><span class="target" id="namespaceleju_1aaba2239d56d448f4e133e84d778bcd86abb1ca97ec761fc37101737ba0aa2e7c5"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ERROR</span></span></span><a class="headerlink" href="#_CPPv4N4leju13HardwareState5ERRORE" title="永久链接至目标"></a><br /></dt>
+<dd><p>错误状态 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju13HardwareState12INITIALIZINGE">
+<span id="_CPPv3N4leju13HardwareState12INITIALIZINGE"></span><span id="_CPPv2N4leju13HardwareState12INITIALIZINGE"></span><span class="target" id="namespaceleju_1aaba2239d56d448f4e133e84d778bcd86a86bf8c89d85949f8f45cde2f73fce113"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">INITIALIZING</span></span></span><a class="headerlink" href="#_CPPv4N4leju13HardwareState12INITIALIZINGE" title="永久链接至目标"></a><br /></dt>
+<dd><p>初始化中 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju13HardwareState8READY_OKE">
+<span id="_CPPv3N4leju13HardwareState8READY_OKE"></span><span id="_CPPv2N4leju13HardwareState8READY_OKE"></span><span class="target" id="namespaceleju_1aaba2239d56d448f4e133e84d778bcd86a3faf9ba9d7c538da22a12c436c7a8786"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">READY_OK</span></span></span><a class="headerlink" href="#_CPPv4N4leju13HardwareState8READY_OKE" title="永久链接至目标"></a><br /></dt>
+<dd><p>就绪，可发送控制指令 </p>
+</dd></dl>
+
+</dd></dl>
+
+<section id="id2">
+<h3>辅助函数<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h3>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju14String2HwStateERKNSt6stringE">
+<span id="_CPPv3N4leju14String2HwStateERKNSt6stringE"></span><span id="_CPPv2N4leju14String2HwStateERKNSt6stringE"></span><span id="leju::String2HwState__ssCR"></span><span class="target" id="namespaceleju_1ae99786fcc5702a2f662f180be5c998d9"></span><a class="reference internal" href="#_CPPv4N4leju13HardwareStateE" title="leju::HardwareState"><span class="n"><span class="pre">HardwareState</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">String2HwState</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">hw_state_str</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju14String2HwStateERKNSt6stringE" title="永久链接至目标"></a><br /></dt>
+<dd><p>字符串转硬件状态 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hw_state_str</strong> – “unknown”, “initializing”, “ready_ok”, “error” </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju20HardwareState2StringE13HardwareState">
+<span id="_CPPv3N4leju20HardwareState2StringE13HardwareState"></span><span id="_CPPv2N4leju20HardwareState2StringE13HardwareState"></span><span id="leju::HardwareState2String__HardwareState"></span><span class="target" id="namespaceleju_1aba51267732ea50ea95d605690ee8262c"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">HardwareState2String</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4leju13HardwareStateE" title="leju::HardwareState"><span class="n"><span class="pre">HardwareState</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">hw_state</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju20HardwareState2StringE13HardwareState" title="永久链接至目标"></a><br /></dt>
+<dd><p>硬件状态转字符串 </p>
+</dd></dl>
+
+</section>
+</section>
+<section id="robotstate">
+<span id="datatypes-robotstate"></span><h2>RobotState<a class="headerlink" href="#robotstate" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotStateE">
+<span id="_CPPv3N4leju10RobotStateE"></span><span id="_CPPv2N4leju10RobotStateE"></span><span id="leju::RobotState"></span><span class="target" id="structleju_1_1RobotState"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotState</span></span></span><a class="headerlink" href="#_CPPv4N4leju10RobotStateE" title="永久链接至目标"></a><br /></dt>
+<dd><p>机器人状态结构体 </p>
+<p>用于封装机器人关节的状态信息，包括位置、速度、加速度和力矩等反馈数据。</p>
+<p><div class="admonition seealso">
+<p class="admonition-title">参见</p>
+<p><a class="reference internal" href="#structleju_1_1RobotCmd"><span class="std std-ref">RobotCmd</span></a> 机器人控制指令结构体 </p>
+</div>
+</p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>所有向量的维度应与机器人关节数量一致，可通过 <a class="reference internal" href="#structleju_1_1RobotState_1ab03645dcb42df634ba3e08e6c5058773"><span class="std std-ref">resize()</span></a> 方法调整。</p>
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState10RobotStateEv">
+<span id="_CPPv3N4leju10RobotState10RobotStateEv"></span><span id="_CPPv2N4leju10RobotState10RobotStateEv"></span><span id="leju::RobotState::RobotState"></span><span class="target" id="structleju_1_1RobotState_1a2af4c95259e6439ff06d9e5eaef4574a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotState</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju10RobotState10RobotStateEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>默认构造函数 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState10RobotStateE6size_t">
+<span id="_CPPv3N4leju10RobotState10RobotStateE6size_t"></span><span id="_CPPv2N4leju10RobotState10RobotStateE6size_t"></span><span id="leju::RobotState::RobotState__s"></span><span class="target" id="structleju_1_1RobotState_1a11fe903929e949edf19794126f50d017"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotState</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">num</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju10RobotState10RobotStateE6size_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>构造函数，指定关节数量 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num</strong> – 关节数量 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState6resizeE6size_t">
+<span id="_CPPv3N4leju10RobotState6resizeE6size_t"></span><span id="_CPPv2N4leju10RobotState6resizeE6size_t"></span><span id="leju::RobotState::resize__s"></span><span class="target" id="structleju_1_1RobotState_1ab03645dcb42df634ba3e08e6c5058773"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">resize</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">num</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju10RobotState6resizeE6size_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>调整所有向量的维度 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num</strong> – 目标关节数量 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju10RobotState7isValidEv">
+<span id="_CPPv3NK4leju10RobotState7isValidEv"></span><span id="_CPPv2NK4leju10RobotState7isValidEv"></span><span id="leju::RobotState::isValidC"></span><span class="target" id="structleju_1_1RobotState_1af6d369d54dcc33d24522eb12650cd36f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isValid</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju10RobotState7isValidEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>检查数据维度是否一致 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>所有向量维度一致返回 true </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState1qE">
+<span id="_CPPv3N4leju10RobotState1qE"></span><span id="_CPPv2N4leju10RobotState1qE"></span><span id="leju::RobotState::q__std::vector:double:"></span><span class="target" id="structleju_1_1RobotState_1a6ec3304a5ee255f165572c805eaff2c7"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">q</span></span></span><a class="headerlink" href="#_CPPv4N4leju10RobotState1qE" title="永久链接至目标"></a><br /></dt>
+<dd><p>关节位置数组，单位: rad </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState1vE">
+<span id="_CPPv3N4leju10RobotState1vE"></span><span id="_CPPv2N4leju10RobotState1vE"></span><span id="leju::RobotState::v__std::vector:double:"></span><span class="target" id="structleju_1_1RobotState_1a6173576757c1fcbd2e47a8b4be035746"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">v</span></span></span><a class="headerlink" href="#_CPPv4N4leju10RobotState1vE" title="永久链接至目标"></a><br /></dt>
+<dd><p>关节速度数组，单位: rad/s </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState2vdE">
+<span id="_CPPv3N4leju10RobotState2vdE"></span><span id="_CPPv2N4leju10RobotState2vdE"></span><span id="leju::RobotState::vd__std::vector:double:"></span><span class="target" id="structleju_1_1RobotState_1a8ccf61d11589c2e240e5fe44da7c11c0"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">vd</span></span></span><a class="headerlink" href="#_CPPv4N4leju10RobotState2vdE" title="永久链接至目标"></a><br /></dt>
+<dd><p>关节加速度数组，单位: rad/s² </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState3tauE">
+<span id="_CPPv3N4leju10RobotState3tauE"></span><span id="_CPPv2N4leju10RobotState3tauE"></span><span id="leju::RobotState::tau__std::vector:double:"></span><span class="target" id="structleju_1_1RobotState_1a539154d1dbbcede5cd4a3c03fcbb7675"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tau</span></span></span><a class="headerlink" href="#_CPPv4N4leju10RobotState3tauE" title="永久链接至目标"></a><br /></dt>
+<dd><p>关节力矩数组，单位: N·m </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10RobotState9timestampE">
+<span id="_CPPv3N4leju10RobotState9timestampE"></span><span id="_CPPv2N4leju10RobotState9timestampE"></span><span id="leju::RobotState::timestamp__double"></span><span class="target" id="structleju_1_1RobotState_1ac198af22e0a79ad99e2887c2e371a8e2"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><a class="headerlink" href="#_CPPv4N4leju10RobotState9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="robotcmd">
+<span id="datatypes-robotcmd"></span><h2>RobotCmd<a class="headerlink" href="#robotcmd" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmdE">
+<span id="_CPPv3N4leju8RobotCmdE"></span><span id="_CPPv2N4leju8RobotCmdE"></span><span id="leju::RobotCmd"></span><span class="target" id="structleju_1_1RobotCmd"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotCmd</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmdE" title="永久链接至目标"></a><br /></dt>
+<dd><p>机器人关节控制指令结构体 </p>
+<p>用于封装机器人关节的控制参数，包括目标位置、速度、力矩以及控制增益等。 支持三种控制模式：<a class="reference internal" href="#namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405cab3319f0293b58437972b5976f6c5da0a"><span class="std std-ref">CST</span></a>(力矩控制)、 <a class="reference internal" href="#namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405cacc8d68c551c4a9a6d5313e07de4deafd"><span class="std std-ref">CSV</span></a>(速度控制)、<a class="reference internal" href="#namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405cacbc6e9792f97c17c170caeb83895c44e"><span class="std std-ref">CSP</span></a>(位置控制)。</p>
+<p><div class="admonition seealso">
+<p class="admonition-title">参见</p>
+<p><a class="reference internal" href="#structleju_1_1RobotState"><span class="std std-ref">RobotState</span></a> 机器人状态结构体 </p>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">参见</p>
+<p><a class="reference internal" href="#namespaceleju_1aa0e57daa6d08fe532f29dbe1fd28405c"><span class="std std-ref">MotorControlMode</span></a> 电机控制模式枚举 </p>
+</div>
+</p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>各向量维度必须与机器人关节数量一致。</p>
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd8RobotCmdEv">
+<span id="_CPPv3N4leju8RobotCmd8RobotCmdEv"></span><span id="_CPPv2N4leju8RobotCmd8RobotCmdEv"></span><span id="leju::RobotCmd::RobotCmd"></span><span class="target" id="structleju_1_1RobotCmd_1ac29ee64b3ce5cf13e491a0c02588b38e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotCmd</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd8RobotCmdEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>默认构造函数 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd8RobotCmdE6size_t">
+<span id="_CPPv3N4leju8RobotCmd8RobotCmdE6size_t"></span><span id="_CPPv2N4leju8RobotCmd8RobotCmdE6size_t"></span><span id="leju::RobotCmd::RobotCmd__s"></span><span class="target" id="structleju_1_1RobotCmd_1adfeffca3aa7add249876594a8f1ebbc7"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotCmd</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">num</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd8RobotCmdE6size_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>构造函数，指定数量 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num</strong> – 数量 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd6resizeE6size_t">
+<span id="_CPPv3N4leju8RobotCmd6resizeE6size_t"></span><span id="_CPPv2N4leju8RobotCmd6resizeE6size_t"></span><span id="leju::RobotCmd::resize__s"></span><span class="target" id="structleju_1_1RobotCmd_1ad11b129061a7c51ab1aef49d0f05d3c2"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">resize</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">num</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd6resizeE6size_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>调整所有向量的维度 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num</strong> – 目标关节数量 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju8RobotCmd7isValidEv">
+<span id="_CPPv3NK4leju8RobotCmd7isValidEv"></span><span id="_CPPv2NK4leju8RobotCmd7isValidEv"></span><span id="leju::RobotCmd::isValidC"></span><span class="target" id="structleju_1_1RobotCmd_1a910d62f23a2b09596700b03dac0110da"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isValid</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju8RobotCmd7isValidEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>检查数据维度是否一致 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>所有向量维度一致返回 true </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd1qE">
+<span id="_CPPv3N4leju8RobotCmd1qE"></span><span id="_CPPv2N4leju8RobotCmd1qE"></span><span id="leju::RobotCmd::q__std::vector:double:"></span><span class="target" id="structleju_1_1RobotCmd_1ab145e01e33a2824182c906fa91befe87"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">q</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd1qE" title="永久链接至目标"></a><br /></dt>
+<dd><p>目标位置数组，单位: rad </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd1vE">
+<span id="_CPPv3N4leju8RobotCmd1vE"></span><span id="_CPPv2N4leju8RobotCmd1vE"></span><span id="leju::RobotCmd::v__std::vector:double:"></span><span class="target" id="structleju_1_1RobotCmd_1afdf33cc72a6cfee14e91e29bdec5336c"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">v</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd1vE" title="永久链接至目标"></a><br /></dt>
+<dd><p>目标速度数组，单位: rad/s </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd3tauE">
+<span id="_CPPv3N4leju8RobotCmd3tauE"></span><span id="_CPPv2N4leju8RobotCmd3tauE"></span><span id="leju::RobotCmd::tau__std::vector:double:"></span><span class="target" id="structleju_1_1RobotCmd_1a920b5a129b82ca2670deded48a32d46c"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tau</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd3tauE" title="永久链接至目标"></a><br /></dt>
+<dd><p>前馈力矩数组，单位: N·m </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd2kpE">
+<span id="_CPPv3N4leju8RobotCmd2kpE"></span><span id="_CPPv2N4leju8RobotCmd2kpE"></span><span id="leju::RobotCmd::kp__std::vector:double:"></span><span class="target" id="structleju_1_1RobotCmd_1a5aff8d7fe3b1015dc9df5b9ebfbce5c4"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kp</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd2kpE" title="永久链接至目标"></a><br /></dt>
+<dd><p>位置增益 (Kp)，单位: N·m/rad </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd2kdE">
+<span id="_CPPv3N4leju8RobotCmd2kdE"></span><span id="_CPPv2N4leju8RobotCmd2kdE"></span><span id="leju::RobotCmd::kd__std::vector:double:"></span><span class="target" id="structleju_1_1RobotCmd_1a998c3d97a8ba38d06e2042c5bad13c02"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kd</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd2kdE" title="永久链接至目标"></a><br /></dt>
+<dd><p>速度增益 (Kd)，单位: N·m·s/rad </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd5modesE">
+<span id="_CPPv3N4leju8RobotCmd5modesE"></span><span id="_CPPv2N4leju8RobotCmd5modesE"></span><span id="leju::RobotCmd::modes__std::vector:uint8_t:"></span><span class="target" id="structleju_1_1RobotCmd_1ae6a83aa99433b86fa5c68336ab40faa1"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">uint8_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">modes</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd5modesE" title="永久链接至目标"></a><br /></dt>
+<dd><p>控制模式数组，参见 MotorControlMode </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju8RobotCmd9timestampE">
+<span id="_CPPv3N4leju8RobotCmd9timestampE"></span><span id="_CPPv2N4leju8RobotCmd9timestampE"></span><span id="leju::RobotCmd::timestamp__double"></span><span class="target" id="structleju_1_1RobotCmd_1ab7950185231fae0162687644c5c02112"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><a class="headerlink" href="#_CPPv4N4leju8RobotCmd9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="imudata">
+<span id="datatypes-imudata"></span><h2>ImuData<a class="headerlink" href="#imudata" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuDataE">
+<span id="_CPPv3N4leju7ImuDataE"></span><span id="_CPPv2N4leju7ImuDataE"></span><span id="leju::ImuData"></span><span class="target" id="structleju_1_1ImuData"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ImuData</span></span></span><a class="headerlink" href="#_CPPv4N4leju7ImuDataE" title="永久链接至目标"></a><br /></dt>
+<dd><p>IMU传感器数据结构体 </p>
+<p>用于封装惯性测量单元(IMU)的状态信息，包括角速度、加速度和姿态四元数。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuData7ImuDataEv">
+<span id="_CPPv3N4leju7ImuData7ImuDataEv"></span><span id="_CPPv2N4leju7ImuData7ImuDataEv"></span><span id="leju::ImuData::ImuData"></span><span class="target" id="structleju_1_1ImuData_1a3ae0d03923c59b365f3b500b61211372"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ImuData</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju7ImuData7ImuDataEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>默认构造函数，四元数初始化为单位四元数 [1, 0, 0, 0] </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuData4gyroE">
+<span id="_CPPv3N4leju7ImuData4gyroE"></span><span id="_CPPv2N4leju7ImuData4gyroE"></span><span id="leju::ImuData::gyro__std::array:double.3:"></span><span class="target" id="structleju_1_1ImuData_1ae6a1d4e04716a1325931a3fb40d7b4b2"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gyro</span></span></span><a class="headerlink" href="#_CPPv4N4leju7ImuData4gyroE" title="永久链接至目标"></a><br /></dt>
+<dd><p>角速度 [x, y, z]，单位: rad/s </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuData3accE">
+<span id="_CPPv3N4leju7ImuData3accE"></span><span id="_CPPv2N4leju7ImuData3accE"></span><span id="leju::ImuData::acc__std::array:double.3:"></span><span class="target" id="structleju_1_1ImuData_1a2d5bb3c46ea3343a56407c80c20d0623"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">acc</span></span></span><a class="headerlink" href="#_CPPv4N4leju7ImuData3accE" title="永久链接至目标"></a><br /></dt>
+<dd><p>加速度 [x, y, z]，含重力，单位: m/s² </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuData8free_accE">
+<span id="_CPPv3N4leju7ImuData8free_accE"></span><span id="_CPPv2N4leju7ImuData8free_accE"></span><span id="leju::ImuData::free_acc__std::array:double.3:"></span><span class="target" id="structleju_1_1ImuData_1a7a02489c403aca78c548abf9a201ddbb"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">free_acc</span></span></span><a class="headerlink" href="#_CPPv4N4leju7ImuData8free_accE" title="永久链接至目标"></a><br /></dt>
+<dd><p>无重力加速度 [x, y, z]，单位: m/s² </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuData4quatE">
+<span id="_CPPv3N4leju7ImuData4quatE"></span><span id="_CPPv2N4leju7ImuData4quatE"></span><span id="leju::ImuData::quat__std::array:double.4:"></span><span class="target" id="structleju_1_1ImuData_1a5b7f0305fbfc3f91cb70a5d080e91034"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">quat</span></span></span><a class="headerlink" href="#_CPPv4N4leju7ImuData4quatE" title="永久链接至目标"></a><br /></dt>
+<dd><p>姿态四元数 [w, x, y, z] </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7ImuData9timestampE">
+<span id="_CPPv3N4leju7ImuData9timestampE"></span><span id="_CPPv2N4leju7ImuData9timestampE"></span><span id="leju::ImuData::timestamp__double"></span><span class="target" id="structleju_1_1ImuData_1a4e9e3985f4d629d5a139757c5394c92c"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><a class="headerlink" href="#_CPPv4N4leju7ImuData9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="joydata">
+<span id="datatypes-joydata"></span><h2>JoyData<a class="headerlink" href="#joydata" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyDataE">
+<span id="_CPPv3N4leju7JoyDataE"></span><span id="_CPPv2N4leju7JoyDataE"></span><span id="leju::JoyData"></span><span class="target" id="structleju_1_1JoyData"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">JoyData</span></span></span><a class="headerlink" href="#_CPPv4N4leju7JoyDataE" title="永久链接至目标"></a><br /></dt>
+<dd><p>手柄输入数据结构体 </p>
+<p>用于封装游戏手柄的输入数据，包括摇杆、扳机和按钮状态。 数据格式与 DDS/SDL 保持一致，支持 Xbox 和 PlayStation 风格手柄。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7JoyDataEv">
+<span id="_CPPv3N4leju7JoyData7JoyDataEv"></span><span id="_CPPv2N4leju7JoyData7JoyDataEv"></span><span id="leju::JoyData::JoyData"></span><span class="target" id="structleju_1_1JoyData_1a37fb3fb0f72a73dd52ce1ef3bffbb1b9"></span><span class="sig-name descname"><span class="n"><span class="pre">JoyData</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7JoyDataEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>默认构造函数 </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData9timestampE">
+<span id="_CPPv3N4leju7JoyData9timestampE"></span><span id="_CPPv2N4leju7JoyData9timestampE"></span><span id="leju::JoyData::timestamp__double"></span><span class="target" id="structleju_1_1JoyData_1a84934fb16df0e5e69d5ee456ec0fcd45"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4axesE">
+<span id="_CPPv3N4leju7JoyData4axesE"></span><span id="_CPPv2N4leju7JoyData4axesE"></span><span id="leju::JoyData::axes__Axes"></span><span class="target" id="structleju_1_1JoyData_1a473c62e942fa8bae787431f32c05af8d"></span><a class="reference internal" href="#_CPPv4N4leju7JoyData4AxesE" title="leju::JoyData::Axes"><span class="n"><span class="pre">Axes</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">axes</span></span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4axesE" title="永久链接至目标"></a><br /></dt>
+<dd><p>摇杆和扳机数据 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7buttonsE">
+<span id="_CPPv3N4leju7JoyData7buttonsE"></span><span id="_CPPv2N4leju7JoyData7buttonsE"></span><span id="leju::JoyData::buttons__Buttons"></span><span class="target" id="structleju_1_1JoyData_1aadae7968bd24322d931b4cfb07398300"></span><a class="reference internal" href="#_CPPv4N4leju7JoyData7ButtonsE" title="leju::JoyData::Buttons"><span class="n"><span class="pre">Buttons</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">buttons</span></span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7buttonsE" title="永久链接至目标"></a><br /></dt>
+<dd><p>按钮状态数据 </p>
+</dd></dl>
+
+</div>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4AxesE">
+<span id="_CPPv3N4leju7JoyData4AxesE"></span><span id="_CPPv2N4leju7JoyData4AxesE"></span><span id="leju::JoyData::Axes"></span><span class="target" id="structleju_1_1JoyData_1_1Axes"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Axes</span></span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4AxesE" title="永久链接至目标"></a><br /></dt>
+<dd><p>摇杆和扳机轴数据结构体 </p>
+<p>包含左右摇杆的 X/Y 轴数值以及左右扳机的数值。 摇杆数值范围为 [-1.0, 1.0]，扳机数值范围为 [0.0, 1.0]。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4Axes6left_xE">
+<span id="_CPPv3N4leju7JoyData4Axes6left_xE"></span><span id="_CPPv2N4leju7JoyData4Axes6left_xE"></span><span id="leju::JoyData::Axes::left_x__float"></span><span class="target" id="structleju_1_1JoyData_1_1Axes_1af881ed010b23614885cce46d02d4db24"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4Axes6left_xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左摇杆 X 轴 [-1.0, 1.0] </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4Axes6left_yE">
+<span id="_CPPv3N4leju7JoyData4Axes6left_yE"></span><span id="_CPPv2N4leju7JoyData4Axes6left_yE"></span><span id="leju::JoyData::Axes::left_y__float"></span><span class="target" id="structleju_1_1JoyData_1_1Axes_1aac2ea4b89c2f9cd511cbec3313857021"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4Axes6left_yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左摇杆 Y 轴 [-1.0, 1.0] </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4Axes7right_xE">
+<span id="_CPPv3N4leju7JoyData4Axes7right_xE"></span><span id="_CPPv2N4leju7JoyData4Axes7right_xE"></span><span id="leju::JoyData::Axes::right_x__float"></span><span class="target" id="structleju_1_1JoyData_1_1Axes_1a4fbd15016c080befb7dd29c7bb6db07a"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4Axes7right_xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右摇杆 X 轴 [-1.0, 1.0] </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4Axes7right_yE">
+<span id="_CPPv3N4leju7JoyData4Axes7right_yE"></span><span id="_CPPv2N4leju7JoyData4Axes7right_yE"></span><span id="leju::JoyData::Axes::right_y__float"></span><span class="target" id="structleju_1_1JoyData_1_1Axes_1a6902da8eb6137f2b2a114dcbaef07cab"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4Axes7right_yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右摇杆 Y 轴 [-1.0, 1.0] </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4Axes12left_triggerE">
+<span id="_CPPv3N4leju7JoyData4Axes12left_triggerE"></span><span id="_CPPv2N4leju7JoyData4Axes12left_triggerE"></span><span id="leju::JoyData::Axes::left_trigger__float"></span><span class="target" id="structleju_1_1JoyData_1_1Axes_1ab7dfd444608741d47029e31d3363c080"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_trigger</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4Axes12left_triggerE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左扳机 (LT/L2) [0.0, 1.0] </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData4Axes13right_triggerE">
+<span id="_CPPv3N4leju7JoyData4Axes13right_triggerE"></span><span id="_CPPv2N4leju7JoyData4Axes13right_triggerE"></span><span id="leju::JoyData::Axes::right_trigger__float"></span><span class="target" id="structleju_1_1JoyData_1_1Axes_1a7bbbc631b7ea329f455bc0a99d2b8e53"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_trigger</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData4Axes13right_triggerE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右扳机 (RT/R2) [0.0, 1.0] </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7ButtonsE">
+<span id="_CPPv3N4leju7JoyData7ButtonsE"></span><span id="_CPPv2N4leju7JoyData7ButtonsE"></span><span id="leju::JoyData::Buttons"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Buttons</span></span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7ButtonsE" title="永久链接至目标"></a><br /></dt>
+<dd><p>按钮状态结构体 </p>
+<p>包含手柄上所有按钮的状态。 按钮状态值：0 表示未按下，非0 表示按下。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons5southE">
+<span id="_CPPv3N4leju7JoyData7Buttons5southE"></span><span id="_CPPv2N4leju7JoyData7Buttons5southE"></span><span id="leju::JoyData::Buttons::south__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a4c87356e71686a151f923b5623370779"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">south</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons5southE" title="永久链接至目标"></a><br /></dt>
+<dd><p>底部面键 (Xbox A / PS Cross) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons4eastE">
+<span id="_CPPv3N4leju7JoyData7Buttons4eastE"></span><span id="_CPPv2N4leju7JoyData7Buttons4eastE"></span><span id="leju::JoyData::Buttons::east__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a8d595946985793202d0393bc70c3913c"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">east</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons4eastE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右侧面键 (Xbox B / PS Circle) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons4westE">
+<span id="_CPPv3N4leju7JoyData7Buttons4westE"></span><span id="_CPPv2N4leju7JoyData7Buttons4westE"></span><span id="leju::JoyData::Buttons::west__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a2f39c5ee84af1c5af2272f17359d6b13"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">west</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons4westE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左侧面键 (Xbox X / PS Square) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons5northE">
+<span id="_CPPv3N4leju7JoyData7Buttons5northE"></span><span id="_CPPv2N4leju7JoyData7Buttons5northE"></span><span id="leju::JoyData::Buttons::north__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1ab0945aaa914f32c19587a3a8762d764a"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">north</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons5northE" title="永久链接至目标"></a><br /></dt>
+<dd><p>顶部面键 (Xbox Y / PS Triangle) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons4backE">
+<span id="_CPPv3N4leju7JoyData7Buttons4backE"></span><span id="_CPPv2N4leju7JoyData7Buttons4backE"></span><span id="leju::JoyData::Buttons::back__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a80510af805d9c15971919e56d527dcf3"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">back</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons4backE" title="永久链接至目标"></a><br /></dt>
+<dd><p>返回键 (Xbox Back / PS Select) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons5guideE">
+<span id="_CPPv3N4leju7JoyData7Buttons5guideE"></span><span id="_CPPv2N4leju7JoyData7Buttons5guideE"></span><span id="leju::JoyData::Buttons::guide__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1ad5f9976e9d71f51aae32c7c9265203b3"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">guide</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons5guideE" title="永久链接至目标"></a><br /></dt>
+<dd><p>指南键 (Xbox 按钮 / PS 按钮) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons5startE">
+<span id="_CPPv3N4leju7JoyData7Buttons5startE"></span><span id="_CPPv2N4leju7JoyData7Buttons5startE"></span><span id="leju::JoyData::Buttons::start__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1acfaeb17c42f5fdba5f8ab30f466d00d8"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">start</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons5startE" title="永久链接至目标"></a><br /></dt>
+<dd><p>开始键 (Xbox Start / PS Start) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons10left_stickE">
+<span id="_CPPv3N4leju7JoyData7Buttons10left_stickE"></span><span id="_CPPv2N4leju7JoyData7Buttons10left_stickE"></span><span id="leju::JoyData::Buttons::left_stick__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a3ba8165014836104c243ff0dbaa47540"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_stick</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons10left_stickE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左摇杆按下 (L3) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons11right_stickE">
+<span id="_CPPv3N4leju7JoyData7Buttons11right_stickE"></span><span id="_CPPv2N4leju7JoyData7Buttons11right_stickE"></span><span id="leju::JoyData::Buttons::right_stick__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a600206cefc8475ab237d34360d99f845"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_stick</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons11right_stickE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右摇杆按下 (R3) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons13left_shoulderE">
+<span id="_CPPv3N4leju7JoyData7Buttons13left_shoulderE"></span><span id="_CPPv2N4leju7JoyData7Buttons13left_shoulderE"></span><span id="leju::JoyData::Buttons::left_shoulder__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a62c349906d8100929e70f8ed4bd3a6a2"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_shoulder</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons13left_shoulderE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左肩键 (LB / L1) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons14right_shoulderE">
+<span id="_CPPv3N4leju7JoyData7Buttons14right_shoulderE"></span><span id="_CPPv2N4leju7JoyData7Buttons14right_shoulderE"></span><span id="leju::JoyData::Buttons::right_shoulder__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a866274352d5b0616f0953321c81dccf0"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_shoulder</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons14right_shoulderE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右肩键 (RB / R1) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons7dpad_upE">
+<span id="_CPPv3N4leju7JoyData7Buttons7dpad_upE"></span><span id="_CPPv2N4leju7JoyData7Buttons7dpad_upE"></span><span id="leju::JoyData::Buttons::dpad_up__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1ae5b444b0eccf88af25c572b562dbb2be"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dpad_up</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons7dpad_upE" title="永久链接至目标"></a><br /></dt>
+<dd><p>方向键上 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons9dpad_downE">
+<span id="_CPPv3N4leju7JoyData7Buttons9dpad_downE"></span><span id="_CPPv2N4leju7JoyData7Buttons9dpad_downE"></span><span id="leju::JoyData::Buttons::dpad_down__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a9210b64a17df224fa6233d67b47665b4"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dpad_down</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons9dpad_downE" title="永久链接至目标"></a><br /></dt>
+<dd><p>方向键下 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons9dpad_leftE">
+<span id="_CPPv3N4leju7JoyData7Buttons9dpad_leftE"></span><span id="_CPPv2N4leju7JoyData7Buttons9dpad_leftE"></span><span id="leju::JoyData::Buttons::dpad_left__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1aae63cbe6b95676da7b98ad0fa6f7cf69"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dpad_left</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons9dpad_leftE" title="永久链接至目标"></a><br /></dt>
+<dd><p>方向键左 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons10dpad_rightE">
+<span id="_CPPv3N4leju7JoyData7Buttons10dpad_rightE"></span><span id="_CPPv2N4leju7JoyData7Buttons10dpad_rightE"></span><span id="leju::JoyData::Buttons::dpad_right__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1af1b0703136c67da6b2df71b9dd082d1d"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dpad_right</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons10dpad_rightE" title="永久链接至目标"></a><br /></dt>
+<dd><p>方向键右 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju7JoyData7Buttons5misc1E">
+<span id="_CPPv3N4leju7JoyData7Buttons5misc1E"></span><span id="_CPPv2N4leju7JoyData7Buttons5misc1E"></span><span id="leju::JoyData::Buttons::misc1__int32_t"></span><span class="target" id="structleju_1_1JoyData_1_1Buttons_1a71b1185b6bb55b452b08181b7371d7e6"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">misc1</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju7JoyData7Buttons5misc1E" title="永久链接至目标"></a><br /></dt>
+<dd><p>额外按键1 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="stringdata">
+<span id="datatypes-stringdata"></span><h2>StringData<a class="headerlink" href="#stringdata" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10StringDataE">
+<span id="_CPPv3N4leju10StringDataE"></span><span id="_CPPv2N4leju10StringDataE"></span><span id="leju::StringData"></span><span class="target" id="structleju_1_1StringData"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">StringData</span></span></span><a class="headerlink" href="#_CPPv4N4leju10StringDataE" title="永久链接至目标"></a><br /></dt>
+<dd><p>字符串数据结构体 </p>
+<p>用于传输通用字符串消息，如可将 json 数据转换为字符串，用于传输等。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10StringData10StringDataEv">
+<span id="_CPPv3N4leju10StringData10StringDataEv"></span><span id="_CPPv2N4leju10StringData10StringDataEv"></span><span id="leju::StringData::StringData"></span><span class="target" id="structleju_1_1StringData_1a13d16ecf6904fb5ab32f2e994da6f2d1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">StringData</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju10StringData10StringDataEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>默认构造函数 </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10StringData9timestampE">
+<span id="_CPPv3N4leju10StringData9timestampE"></span><span id="_CPPv2N4leju10StringData9timestampE"></span><span id="leju::StringData::timestamp__double"></span><span class="target" id="structleju_1_1StringData_1a1590b3d705491f095d1c53f3cdb76d5e"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><a class="headerlink" href="#_CPPv4N4leju10StringData9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju10StringData4dataE">
+<span id="_CPPv3N4leju10StringData4dataE"></span><span id="_CPPv2N4leju10StringData4dataE"></span><span id="leju::StringData::data__ss"></span><span class="target" id="structleju_1_1StringData_1a0565c347d4e7a664436006ef110197b9"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">data</span></span></span><a class="headerlink" href="#_CPPv4N4leju10StringData4dataE" title="永久链接至目标"></a><br /></dt>
+<dd><p>字符串数据内容 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="index.html" class="btn btn-neutral float-left" title="lejusdk-lowlevel" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="control_modes.html" class="btn btn-neutral float-right" title="电机控制模式 (CSP/CST)" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

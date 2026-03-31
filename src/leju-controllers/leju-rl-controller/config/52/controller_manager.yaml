@@ -1,0 +1,17 @@
+loop_dt: 0.001
+default_controller: "amp"
+
+# 控制器切换期间插值用的 kp/kd（使用 AMP 配置）
+switch_interpolation:
+  # Kuavo5: 14个手臂关节（每边7个）- 来自 config_amp.yaml
+  arm_kp: [30.0, 30.0, 15.0, 30.0, 15.0, 15.0, 15.0, 30.0, 30.0, 15.0, 30.0, 15.0, 15.0, 15.0]
+  arm_kd: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
+  # Kuavo5: 1个腰部关节
+  waist_kp: [30.0]
+  waist_kd: [3.0]
+
+controllers:
+  - name: "amp"
+    type: "GenericRLController"
+    config: "config_amp.yaml"
+    enabled: true

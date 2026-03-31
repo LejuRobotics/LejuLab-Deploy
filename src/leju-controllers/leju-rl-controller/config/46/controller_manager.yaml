@@ -1,0 +1,18 @@
+loop_dt: 0.001
+default_controller: "amp"
+
+# 控制器切换期间插值用的 kp/kd（确保能跟踪到位）
+switch_interpolation:
+  # Kuavo4: 14个手臂关节（每边7个）参考AMP配置
+  # 插值期间需要比AMP更大的kp/kd以确保跟踪（AMP:30/30/30/20/10/10/10，这里翻倍）
+  arm_kp: [80.0, 80.0, 80.0, 60.0, 40.0, 40.0, 40.0, 80.0, 80.0, 80.0, 60.0, 40.0, 40.0, 40.0]
+  arm_kd: [8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0]
+  # Kuavo4: 无腰部关节
+  waist_kp: []
+  waist_kd: []
+
+controllers:
+  - name: "amp"
+    type: "GenericRLController"
+    config: "config_amp.yaml"
+    enabled: true

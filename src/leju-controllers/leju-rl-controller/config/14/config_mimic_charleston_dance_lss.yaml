@@ -1,0 +1,96 @@
+HumanoidRobotCfg:
+  loop_dt: 0.001
+  policy_path: "policy/robanS14_charleston_dance.onnx" # 相对于配置文件的路径
+  motion_data_path: "motion_data/robanS14_charleston_dance_50fps_deploy.csv"
+
+  motion:
+    default_motion: "charleston_dance_lss"   # 默认动作名称（启动时加载）
+    motions:
+      - name: "charleston_dance_lss"
+        file: "motion_data/robanS14_charleston_dance_50fps_deploy.csv"
+
+  env:
+    policy_dt: 0.02
+    robot:
+      residual_action: true
+      joint_names: 
+        ["waist_yaw_joint",
+         "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint", 
+         "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint", 
+         "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
+         "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
+      joint_direction:
+        [-1.,
+         1.,1.,1.,1.,1.,1.,
+         1.,1.,1.,1.,1.,1.,
+         1.,1.,1.,1.,
+         1.,1.,1.,1.]
+      joint_default_pos:
+        [0.,
+         -0.412, -0.0437, -0.287, 0.5, -0.2, 0.,
+         0.412, 0.0437, 0.287, 0.5, -0.2, 0.,
+         0.2, 0.16, -0.4, -0.5,
+         0.2, -0.16, 0.4, -0.5,]
+      joint_torque_limit:
+        [61.,
+         61., 52., 61., 52., 20., 20., 
+         61., 52., 61., 52., 20., 20., 
+         15.0, 15.0, 15.0, 15.0,
+         15.0, 15.0, 15.0, 15.0,]
+      actuator_kp:
+        [100.,
+         100., 100., 100., 150., 20., 20., 
+         100., 100., 100., 150., 20., 20., 
+         20., 20., 20., 20., 
+         20., 20., 20., 20., ]
+      actuator_kd:
+        [2.0,
+         2.0, 2.0, 2.0, 2.0, 1.0, 1.0,
+         2.0, 2.0, 2.0, 2.0, 1.0, 1.0,
+         1.0, 1.0, 1.0, 1.0, 
+         1.0, 1.0, 1.0, 1.0, ]
+      actuator_control_mode:
+        [0,
+         0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 
+        #  2, 2, 2, 2,
+        #  2, 2, 2, 2,]
+         0, 0, 0, 0,
+         0, 0, 0, 0,]
+      action_scale: 
+        [0.1525,
+         0.1525, 0.13, 0.1525, 0.086667, 0.25, 0.25,
+         0.1525, 0.13, 0.1525, 0.086667, 0.25, 0.25,
+         0.1875, 0.1875, 0.1875, 0.1875,
+         0.1875, 0.1875, 0.1875, 0.1875,]
+
+    observations:
+      history_length: 1
+      stack_order: "classic" # classic
+      terms:
+        motion_command:
+          scale: 1.
+          clip: [-9999., 9999.]
+        motion_target_height:
+          scale: 1.
+          clip: [-9999., 9999.]
+        motion_anchor_ori_b:
+          scale: 1.
+          clip: [-9999., 9999.]
+        projected_gravity:
+          scale: 1.
+          clip: [-9999., 9999.]
+        base_ang_vel:
+          scale: 1.
+          clip: [-9999., 9999.]
+        joint_pos:
+          scale: 1.
+          clip: [-9999., 9999.]
+        joint_vel:
+          scale: 1.
+          clip: [-9999., 9999.]
+        actions:
+          scale: 1.
+          clip: [-9999., 9999.]
+        
+

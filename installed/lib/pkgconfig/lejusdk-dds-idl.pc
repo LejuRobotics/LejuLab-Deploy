@@ -1,0 +1,8 @@
+prefix=/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: lejusdk-dds-idl
+Description: Description of lejusdk-dds-idl
+Version: 0.0.1
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -llejusdk-dds-idl
+Requires: 

@@ -1,0 +1,61 @@
+# Teleop Bindings Configuration for Robot Version 52 (Kuavo 5 Base)
+# 格式：使用 buttons + action 嵌套结构
+
+# ============================================================================
+# Joy 手柄绑定
+# ============================================================================
+joy_bindings:
+
+  # 注意：START 和 BACK（quit）是系统内置的生命周期控制，不需要在配置中定义
+  #
+  # 可用按键列表：A, B, X, Y, LB, RB, L3, R3, GUIDE, MISC
+  #
+  # 手臂模式切换配置说明：
+  #   如需配置手臂模式切换，请在 joy_bindings 下添加：
+  #
+  #   - buttons: ["LB", "X"]
+  #     action:
+  #       type: SetArmMode
+  #       args:
+  #         name: keep_pose
+  #
+  #   支持的手臂模式：
+  #     - keep_pose: 保持当前手臂姿态
+  #     - auto:      自动控制模式（跟随行走策略）
+  #     - external:  外部控制模式（接受 VR/SDK 指令）
+
+  # -------------------------------------------------------------------------
+  # 控制器动作绑定
+  # -------------------------------------------------------------------------
+  # 注意：当前版本只有 amp 控制器，如需添加更多控制器请在 controller_manager.yaml 中配置
+  # - buttons: ["X"]
+  #   action:
+  #     type: SwitchController
+  #     args:
+  #       name: amp
+
+  # -------------------------------------------------------------------------
+  # Motion 播放触发
+  # -------------------------------------------------------------------------
+  # 注意：当前版本未配置舞蹈控制器，如需启用请在 controller_manager.yaml 中添加 mimic 控制器
+  # - buttons: ["GUIDE"]
+  #   action:
+  #     type: MotionCommand
+  #     args:
+  #       op: Start
+  #       # name: "dance_1" # 可选，指定动作名称
+
+# ============================================================================
+# Quest VR 控制器绑定
+# ============================================================================
+quest_bindings:
+
+  # 可用按键列表：LEFT_TRIGGER, RIGHT_TRIGGER, LEFT_GRIP, RIGHT_GRIP,
+  #               LEFT_FIRST, LEFT_SECOND, RIGHT_FIRST, RIGHT_SECOND
+  #
+  # 手臂模式切换配置示例：
+  #   - buttons: ["LEFT_TRIGGER", "RIGHT_FIRST"]
+  #     action:
+  #       type: SetArmMode
+  #       args:
+  #         name: keep_pose

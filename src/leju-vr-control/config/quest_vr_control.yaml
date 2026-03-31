@@ -1,0 +1,11 @@
+# Quest VR control node configuration
+
+# FSM
+unlock_hold_ms: 1000
+lock_hold_ms: 1000
+
+# Waist
+waist_dof: 1
+waist_control:
+  yaw_max_abs: 0.52
+  deadzone: 0.05

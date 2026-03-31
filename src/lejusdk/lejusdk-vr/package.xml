@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lejusdk-vr</name>
+  <version>0.1.0</version>
+  <description>VR control SDK for Leju robots</description>
+
+  <maintainer email="dev@lejurobot.com">Leju Robot</maintainer>
+  <license>MIT</license>
+
+  <url type="repository">https://www.lejuhub.com/highlydynamic/lejulab</url>
+  <author>Leju Robotics Team</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies on other packages -->
+  <depend>lejusdk-utils</depend>
+
+  <export>
+    <cpp_libraries>
+      <!-- This library is built and installed by this package -->
+      <cpp_library name="lejusdk-vr" />
+    </cpp_libraries>
+  </export>
+</package>

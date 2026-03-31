@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>快速入门 &mdash; LejuSDK 0986747a0 文档</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/translations.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="next" title="模块列表" href="modules/index.html" />
+    <link rel="prev" title="LejuSDK 文档" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                0986747a0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#quest3-vr">Quest3 VR 控制快速上手</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/index.html">模块列表</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-lowlevel/index.html">lejusdk-lowlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">快速入门</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>快速入门<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h1>
+<section id="id2">
+<h2>环境要求<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h2>
+<ul class="simple">
+<li><p>Ubuntu 20.04+</p></li>
+<li><p>ROS Noetic</p></li>
+<li><p>C++17</p></li>
+</ul>
+</section>
+<section id="id3">
+<h2>依赖安装<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>build-essential<span class="w"> </span>cmake<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>libacl1-dev<span class="w"> </span>libncurses5-dev
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h2>编译<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 克隆仓库</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://gitee.com/leju-robot/lejulab.git
+
+<span class="c1"># 编译</span>
+<span class="nb">cd</span><span class="w"> </span>lejulab
+catkin<span class="w"> </span>build
+</pre></div>
+</div>
+</section>
+<section id="iceoryx">
+<h2>部署 iceoryx 共享内存（首次使用需执行）<a class="headerlink" href="#iceoryx" title="此标题的永久链接"></a></h2>
+<p>项目支持通过 iceoryx 共享内存加速进程间通信，建议部署以获得更优的实时性能：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./src/leju_launch/scripts/setup_cyclonedds_config.sh
+</pre></div>
+</div>
+<p>部署脚本会完成以下操作：</p>
+<ul class="simple">
+<li><p>安装 RouDi 守护进程为系统服务（开机自启）</p></li>
+<li><p>部署 CycloneDDS 配置文件到 <code class="docutils literal notranslate"><span class="pre">/etc/cyclonedds/</span></code></p></li>
+<li><p>设置 <code class="docutils literal notranslate"><span class="pre">CYCLONEDDS_URI</span></code> 环境变量默认为 <code class="docutils literal notranslate"><span class="pre">cyclonedds_shm.xml</span></code></p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>部署完成后需要 <strong>注销当前用户重新登录</strong> 或 <strong>重启系统</strong> 才能生效。</p>
+</div>
+<p>卸载共享内存支持（还原为普通网络通信）：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./src/leju_launch/scripts/setup_cyclonedds_config.sh<span class="w"> </span>--remove
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h2>基本使用<a class="headerlink" href="#id5" title="此标题的永久链接"></a></h2>
+<p>启动前需设置机器人版本并加载工作空间，再选择启动 <strong>实物</strong> 或 <strong>仿真</strong>。</p>
+<section id="id6">
+<h3>1. 设置机器人版本（必选）<a class="headerlink" href="#id6" title="此标题的永久链接"></a></h3>
+<p>通过环境变量 <code class="docutils literal notranslate"><span class="pre">ROBOT_VERSION</span></code> 指定当前机型，取值与 <a class="reference internal" href="modules/lejusdk-utils/api.html#api-robot-versions"><span class="std std-ref">RobotVersions（Kuavo / Roban 系列）</span></a> 对应，例如：</p>
+<ul class="simple">
+<li><p><strong>Kuavo 系列</strong>：<code class="docutils literal notranslate"><span class="pre">45</span></code> （4.5 PRO 灵巧手）、<code class="docutils literal notranslate"><span class="pre">46</span></code> （4.6 UAE）、<code class="docutils literal notranslate"><span class="pre">47</span></code> （4.7 夹爪）、<code class="docutils literal notranslate"><span class="pre">42</span></code> （4.2 基础版）、<code class="docutils literal notranslate"><span class="pre">50</span></code> （5.0 基础版）等，详见 <a class="reference internal" href="modules/lejusdk-utils/api.html#api-kuavo-versions"><span class="std std-ref">Kuavo 系列</span></a>。</p></li>
+<li><p><strong>Roban 系列</strong>：<code class="docutils literal notranslate"><span class="pre">14</span></code> （2 代基础版）等，详见 <a class="reference internal" href="modules/lejusdk-utils/api.html#api-roban-versions"><span class="std std-ref">Roban 系列</span></a>。</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span><span class="w">   </span><span class="c1"># 示例：Kuavo 4.6 UAE</span>
+</pre></div>
+</div>
+</section>
+<section id="id7">
+<h3>2. 加载工作空间（必选）<a class="headerlink" href="#id7" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>lejulab_platform
+<span class="nb">source</span><span class="w"> </span>devel/setup.bash
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3>3. 启动实物<a class="headerlink" href="#id8" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>load_real.launch
+</pre></div>
+</div>
+</section>
+<section id="mujoco">
+<h3>4. 启动仿真（MuJoCo）<a class="headerlink" href="#mujoco" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>load_mujoco_sim.launch
+</pre></div>
+</div>
+</section>
+</section>
+<section id="quest3-vr">
+<h2>Quest3 VR 控制快速上手<a class="headerlink" href="#quest3-vr" title="此标题的永久链接"></a></h2>
+<p>Quest3 VR 控制面向 <code class="docutils literal notranslate"><span class="pre">Kuavo4Pro(46)</span></code> 与 <code class="docutils literal notranslate"><span class="pre">Kuavo5(52)</span></code>。当前 <code class="docutils literal notranslate"><span class="pre">Roban(14)</span></code> 不开放
+<code class="docutils literal notranslate"><span class="pre">leju-vr-control</span></code> 节点。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>机型</p></th>
+<th class="head"><p>手臂控制</p></th>
+<th class="head"><p>头部控制</p></th>
+<th class="head"><p>速度控制</p></th>
+<th class="head"><p>腰部控制</p></th>
+<th class="head"><p>备注</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Kuavo4Pro(46)</span></code></p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>不支持</p></td>
+<td><p>无腰部自由度</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Kuavo5(52)</span></code></p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>左手 <code class="docutils literal notranslate"><span class="pre">Y</span></code> 触摸时可控腰</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Roban(14)</span></code></p></td>
+<td><p>不开放</p></td>
+<td><p>不开放</p></td>
+<td><p>不开放</p></td>
+<td><p>不开放</p></td>
+<td><p>当前节点启动即退出</p></td>
+</tr>
+</tbody>
+</table>
+<p>启动方式：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>su<span class="w">  </span><span class="c1"># 实物需要 root 权限</span>
+<span class="nb">source</span><span class="w"> </span>devel/setup.bash
+
+<span class="c1"># kuavo5</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">52</span>
+roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>vr_teleop.launch
+
+<span class="c1"># kuavo4pro</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span>
+roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>vr_teleop.launch
+</pre></div>
+</div>
+<p>如需手动指定 Quest3 的 IP，可追加：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>vr_teleop.launch<span class="w"> </span>quest_ip:<span class="o">=</span><span class="m">192</span>.168.1.100
+</pre></div>
+</div>
+<p>手臂模式切换：</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 10.0%" />
+<col style="width: 68.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>模式</p></th>
+<th class="head"><p>值</p></th>
+<th class="head"><p>效果</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">KeepPose</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p>保持当前手臂姿态，适合临时停在当前位置</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Auto</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>交还给默认自动行为，手臂不再接受当前 VR 增量控制</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">External</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2</span></code></p></td>
+<td><p>进入 VR 外部控制模式，按住对应 <code class="docutils literal notranslate"><span class="pre">grip</span></code> 后可进行增量控制</p></td>
+</tr>
+</tbody>
+</table>
+<p>常用操作：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X+A</span></code>：在 <code class="docutils literal notranslate"><span class="pre">Auto(1)</span></code> 与 <code class="docutils literal notranslate"><span class="pre">External(2)</span></code> 之间切换</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X+B</span></code>：在 <code class="docutils literal notranslate"><span class="pre">KeepPose(0)</span></code> 与 <code class="docutils literal notranslate"><span class="pre">External(2)</span></code> 之间切换</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X+Y</span></code>：进入安全停机/关节松弛状态</p></li>
+<li><p>左/右 <code class="docutils literal notranslate"><span class="pre">grip</span></code>：对应手臂进入增量控制</p></li>
+<li><p>头部：由头显姿态驱动</p></li>
+<li><p>左摇杆：发布原始范围 <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code> 的平移速度指令，上推前进、下拉后退、左推左移、右推右移</p></li>
+<li><p>右摇杆：发布原始范围 <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code> 的旋转速度指令，左推左转、右推右转</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">Kuavo5(52)</span></code> 额外支持腰部手柄控制：</p>
+<ul class="simple">
+<li><p>左手只触摸 <code class="docutils literal notranslate"><span class="pre">Y</span></code></p></li>
+<li><p>右摇杆左右绝对控制腰部 yaw</p></li>
+<li><p>触摸 <code class="docutils literal notranslate"><span class="pre">Y</span></code> 时 walking 被禁用</p></li>
+<li><p>松开 <code class="docutils literal notranslate"><span class="pre">Y</span></code> 后腰部回零</p></li>
+</ul>
+</section>
+<section id="id9">
+<h2>遥控器操作<a class="headerlink" href="#id9" title="此标题的永久链接"></a></h2>
+<p><strong>leju-joystick</strong> 提供手柄/遥控器输入：插入实体手柄时可可视化手柄状态；未插入手柄时可用键盘和鼠标模拟手柄输入。不论哪种方式，都会将手柄数据通过 LejuSDK 以 <a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#datatypes-joydata"><span class="std std-ref">JoyData</span></a> 类型发布到 DDS，控制器可通过 <code class="docutils literal notranslate"><span class="pre">subscribeJoyData()</span></code> 订阅。</p>
+<p>插入手柄时，界面会显示当前手柄状态（按键与摇杆实时反馈），例如：</p>
+<img alt="插入手柄时的可视化界面" class="align-center" src="_images/onmouseover.webp" />
+<p>未插入手柄时，可用键盘和鼠标模拟手柄输入，界面示意如下：</p>
+<img alt="无手柄时键盘/鼠标模拟界面" class="align-center" src="_images/no_gamepad.png" />
+<section id="id10">
+<h3>键盘映射（无手柄时）<a class="headerlink" href="#id10" title="此标题的永久链接"></a></h3>
+<p><strong>摇杆轴</strong> （对应 <a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#datatypes-joydata"><span class="std std-ref">JoyData.axes</span></a>）</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>键盘</p></th>
+<th class="head"><p>映射</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>W / S</p></td>
+<td><p>左摇杆 Y</p></td>
+<td><p>左摇杆上下（W 负向，S 正向）</p></td>
+</tr>
+<tr class="row-odd"><td><p>A / D</p></td>
+<td><p>左摇杆 X</p></td>
+<td><p>左摇杆左右（A 负向，D 正向）</p></td>
+</tr>
+<tr class="row-even"><td><p>I / K</p></td>
+<td><p>右摇杆 Y</p></td>
+<td><p>右摇杆上下（I 负向，K 正向）</p></td>
+</tr>
+<tr class="row-odd"><td><p>J / Q / L / E</p></td>
+<td><p>右摇杆 X</p></td>
+<td><p>J 或 Q 负向，L 或 E 正向</p></td>
+</tr>
+<tr class="row-even"><td><p>Space</p></td>
+<td><p>重置</p></td>
+<td><p>所有摇杆与扳机归零</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>按钮</strong> （对应 <a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#datatypes-joydata"><span class="std std-ref">JoyData.buttons</span></a>）</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 25.0%" />
+<col style="width: 55.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>键盘</p></th>
+<th class="head"><p>映射</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>C</p></td>
+<td><p>south</p></td>
+<td><p>底部面键 (Xbox A / PS Cross)</p></td>
+</tr>
+<tr class="row-odd"><td><p>T</p></td>
+<td><p>east</p></td>
+<td><p>右侧面键 (Xbox B / PS Circle)</p></td>
+</tr>
+<tr class="row-even"><td><p>R</p></td>
+<td><p>north</p></td>
+<td><p>顶部面键 (Xbox Y / PS Triangle)</p></td>
+</tr>
+<tr class="row-odd"><td><p>B</p></td>
+<td><p>back</p></td>
+<td><p>返回键 (Xbox Back / PS Select)</p></td>
+</tr>
+<tr class="row-even"><td><p>G</p></td>
+<td><p>guide</p></td>
+<td><p>指南键 (Xbox 按钮 / PS 按钮)</p></td>
+</tr>
+<tr class="row-odd"><td><p>O / F</p></td>
+<td><p>start</p></td>
+<td><p>开始键 (Xbox Start / PS Start)</p></td>
+</tr>
+<tr class="row-even"><td><p>P</p></td>
+<td><p>left_shoulder</p></td>
+<td><p>左肩键 (LB / L1)</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>鼠标</strong>：界面上的按钮可用鼠标左键点击，摇杆区域可用鼠标拖拽；效果与键盘映射一致。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="index.html" class="btn btn-neutral float-left" title="LejuSDK 文档" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="modules/index.html" class="btn btn-neutral float-right" title="模块列表" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

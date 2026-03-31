@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lejusdk-utils API &mdash; LejuSDK 0986747a0 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/translations.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="lejusdk-lowlevel" href="../lejusdk-lowlevel/index.html" />
+    <link rel="prev" title="lejusdk-utils" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                0986747a0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">模块列表</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">lejusdk-utils</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-lowlevel/index.html">lejusdk-lowlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
+          <li class="breadcrumb-item"><a href="index.html">lejusdk-utils</a></li>
+      <li class="breadcrumb-item active">lejusdk-utils API</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lejusdk-utils-api">
+<h1>lejusdk-utils API<a class="headerlink" href="#lejusdk-utils-api" title="此标题的永久链接"></a></h1>
+<section id="robotversion">
+<h2>RobotVersion<a class="headerlink" href="#robotversion" title="此标题的永久链接"></a></h2>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersionE">
+<span id="_CPPv3N4leju12RobotVersionE"></span><span id="_CPPv2N4leju12RobotVersionE"></span><span id="leju::RobotVersion"></span><span class="target" id="classleju_1_1RobotVersion"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotVersion</span></span></span><a class="headerlink" href="#_CPPv4N4leju12RobotVersionE" title="永久链接至目标"></a><br /></dt>
+<dd><p>机器人版本号类 </p>
+<p>机器人版本号类，用于表示机器人版本号 </p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>机器人版本号格式为：<ul class="simple">
+<li><p>MMMM 表示次版本号, 范围为0-9999</p></li>
+<li><p>N 表示修订号, 范围为0-9</p></li>
+<li><p>PPP 表示主版本号, 范围为0-9999</p></li>
+<li><p>BIGNUMBER: PPPPMMMMN</p></li>
+<li><p>STRING: PPPPMMMMN Patch 为 0 时，不显示 Patch 部分, 比如 M(4), N(5),P(0) 表示为 45 而非 000000045 (0000,0004,5) </p></li>
+</ul>
+</p>
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersion12RobotVersionEv">
+<span id="_CPPv3N4leju12RobotVersion12RobotVersionEv"></span><span id="_CPPv2N4leju12RobotVersion12RobotVersionEv"></span><span id="leju::RobotVersion::RobotVersionCE"></span><span class="target" id="classleju_1_1RobotVersion_1a526baa441a56d55632bc976c8111ca6f"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotVersion</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N4leju12RobotVersion12RobotVersionEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>默认构造函数 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersion12RobotVersionERK12RobotVersion">
+<span id="_CPPv3N4leju12RobotVersion12RobotVersionERK12RobotVersion"></span><span id="_CPPv2N4leju12RobotVersion12RobotVersionERK12RobotVersion"></span><span id="leju::RobotVersion::RobotVersion__RobotVersionCRCE"></span><span class="target" id="classleju_1_1RobotVersion_1aa333ef7b4ef0d463e331281c0fba81d3"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotVersion</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersion12RobotVersionERK12RobotVersion" title="leju::RobotVersion::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N4leju12RobotVersion12RobotVersionERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>拷贝构造函数 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersionaSERK12RobotVersion">
+<span id="_CPPv3N4leju12RobotVersionaSERK12RobotVersion"></span><span id="_CPPv2N4leju12RobotVersionaSERK12RobotVersion"></span><span id="leju::RobotVersion::assign-operator__RobotVersionCRCE"></span><span class="target" id="classleju_1_1RobotVersion_1a2730cc83a3ee99f3afa61136edc06cab"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N4leju12RobotVersionaSERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>赋值运算符 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersion12RobotVersionE8uint16_t8uint16_t8uint16_t">
+<span id="_CPPv3N4leju12RobotVersion12RobotVersionE8uint16_t8uint16_t8uint16_t"></span><span id="_CPPv2N4leju12RobotVersion12RobotVersionE8uint16_t8uint16_t8uint16_t"></span><span id="leju::RobotVersion::RobotVersion__uint16_t.uint16_t.uint16_tCE"></span><span class="target" id="classleju_1_1RobotVersion_1a63227e3b30fc4834c4093a9d0e5814c1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobotVersion</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">major</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">minor</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">patch</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotVersion12RobotVersionE8uint16_t8uint16_t8uint16_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>从版本号数字创建 <a class="reference internal" href="#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 对象 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>major</strong> – 主版本号 (0-9999) </p></li>
+<li><p><strong>minor</strong> – 次版本号 (0-9999) </p></li>
+<li><p><strong>patch</strong> – 补丁版本号 (0-9999), 默认为0 </p></li>
+</ul>
+</dd>
+<dt class="field-even">抛出<span class="colon">:</span></dt>
+<dd class="field-even"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">invalid_argument</span></span></span> – 如果版本号超出有效范围 </p>
+</dd>
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 实例 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion10start_withE8uint16_t">
+<span id="_CPPv3NK4leju12RobotVersion10start_withE8uint16_t"></span><span id="_CPPv2NK4leju12RobotVersion10start_withE8uint16_t"></span><span id="leju::RobotVersion::start_with__uint16_tCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a53d112b96e52f0d581ebe8f76a321485"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">start_with</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">major</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion10start_withE8uint16_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断版本号是 major 版本系列 </p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>例如：45, 100045, 4000045, 100000049 都是属于 4 代系列 </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>major</strong> – 主版本号 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否以 major 开头 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion10start_withE8uint16_t8uint16_t">
+<span id="_CPPv3NK4leju12RobotVersion10start_withE8uint16_t8uint16_t"></span><span id="_CPPv2NK4leju12RobotVersion10start_withE8uint16_t8uint16_t"></span><span id="leju::RobotVersion::start_with__uint16_t.uint16_tCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a7d3a364b80781bd967cd82d4b0074b44"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">start_with</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">major</span></span>, <span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">minor</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion10start_withE8uint16_t8uint16_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断版本号是 major.minor 版本系列 </p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>例如：45, 100045, 4000045 都是属于 45 版本系列 </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>major</strong> – 主版本号 </p></li>
+<li><p><strong>minor</strong> – 次版本号 </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否以 major.minor 开头 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion12version_nameEv">
+<span id="_CPPv3NK4leju12RobotVersion12version_nameEv"></span><span id="_CPPv2NK4leju12RobotVersion12version_nameEv"></span><span id="leju::RobotVersion::version_nameC"></span><span class="target" id="classleju_1_1RobotVersion_1a3fa03cc543183957534775a084fedf84"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">version_name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion12version_nameEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取版本号标准的 semantic version 字符串 </p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>例如：45 –&gt; 4.5.0 100045 –&gt; 4.5.1 2000105 –&gt; 10.5.20 <a class="reference external" href="https://semver.org/lang/zh-CN">https://semver.org/lang/zh-CN</a>/ </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>版本号字符串 如 4.5.0, 10.5.20 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion18version_name_shortEv">
+<span id="_CPPv3NK4leju12RobotVersion18version_name_shortEv"></span><span id="_CPPv2NK4leju12RobotVersion18version_name_shortEv"></span><span id="leju::RobotVersion::version_name_shortC"></span><span class="target" id="classleju_1_1RobotVersion_1a26304fa5ec5a40ded7bada603f73f91c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">version_name_short</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion18version_name_shortEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取简洁版本号字符串 </p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>当patch为0时，只显示major.minor格式；当patch不为0时，显示完整的三段式版本号 </p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>例如：45 –&gt; “4.5” </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>简洁版本号字符串，格式为 major.minor 或 major.minor.patch </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion9to_stringEv">
+<span id="_CPPv3NK4leju12RobotVersion9to_stringEv"></span><span id="_CPPv2NK4leju12RobotVersion9to_stringEv"></span><span id="leju::RobotVersion::to_stringC"></span><span class="target" id="classleju_1_1RobotVersion_1aa902a71107d42ed94ed3c022e00f0d5f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">to_string</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion9to_stringEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>将版本号转换为字符串 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>版本号字符串 如 45, 100045, 4000045, 100000049 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion5majorEv">
+<span id="_CPPv3NK4leju12RobotVersion5majorEv"></span><span id="_CPPv2NK4leju12RobotVersion5majorEv"></span><span id="leju::RobotVersion::majorCCE"></span><span class="target" id="classleju_1_1RobotVersion_1afd84db3f089a9201753ad7bb196e75f9"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">major</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion5majorEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取主版本号 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>主版本号 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion5minorEv">
+<span id="_CPPv3NK4leju12RobotVersion5minorEv"></span><span id="_CPPv2NK4leju12RobotVersion5minorEv"></span><span id="leju::RobotVersion::minorCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a212d3dbd8305d67d8da613ae36a67b30"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">minor</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion5minorEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取次版本号 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>次版本号 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersion5patchEv">
+<span id="_CPPv3NK4leju12RobotVersion5patchEv"></span><span id="_CPPv2NK4leju12RobotVersion5patchEv"></span><span id="leju::RobotVersion::patchCCE"></span><span class="target" id="classleju_1_1RobotVersion_1afda888a414c61b052a2c57991a467ff4"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">uint16_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">patch</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersion5patchEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取补丁版本号 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>补丁版本号 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersioneqERK12RobotVersion">
+<span id="_CPPv3NK4leju12RobotVersioneqERK12RobotVersion"></span><span id="_CPPv2NK4leju12RobotVersioneqERK12RobotVersion"></span><span id="leju::RobotVersion::eq-operator__RobotVersionCRCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a91f70ac3f222e5520aa1e5f27d678d88"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">==</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersioneqERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>相等运算符 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> – 其他版本 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否相等 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersionneERK12RobotVersion">
+<span id="_CPPv3NK4leju12RobotVersionneERK12RobotVersion"></span><span id="_CPPv2NK4leju12RobotVersionneERK12RobotVersion"></span><span id="leju::RobotVersion::neq-operator__RobotVersionCRCCE"></span><span class="target" id="classleju_1_1RobotVersion_1abdc4d9bd26328938ab87da673da8b7e7"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">!=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersionneERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>不等运算符 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> – 其他版本 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否不等 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersionltERK12RobotVersion">
+<span id="_CPPv3NK4leju12RobotVersionltERK12RobotVersion"></span><span id="_CPPv2NK4leju12RobotVersionltERK12RobotVersion"></span><span id="leju::RobotVersion::lt-operator__RobotVersionCRCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a7d2df1537a7880ac545e82c34bd48fa7"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">&lt;</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersionltERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>小于运算符 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> – 其他版本 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否小于 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersionleERK12RobotVersion">
+<span id="_CPPv3NK4leju12RobotVersionleERK12RobotVersion"></span><span id="_CPPv2NK4leju12RobotVersionleERK12RobotVersion"></span><span id="leju::RobotVersion::lte-operator__RobotVersionCRCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a0442b92fdcbc703e653608b0a8412f75"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">&lt;=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersionleERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>小于等于运算符 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> – 其他版本 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否小于等于 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersiongtERK12RobotVersion">
+<span id="_CPPv3NK4leju12RobotVersiongtERK12RobotVersion"></span><span id="_CPPv2NK4leju12RobotVersiongtERK12RobotVersion"></span><span id="leju::RobotVersion::gt-operator__RobotVersionCRCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a6214145de53165efc66c501b2e1b3104"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">&gt;</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersiongtERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>大于运算符 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> – 其他版本 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否大于 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotVersiongeERK12RobotVersion">
+<span id="_CPPv3NK4leju12RobotVersiongeERK12RobotVersion"></span><span id="_CPPv2NK4leju12RobotVersiongeERK12RobotVersion"></span><span id="leju::RobotVersion::gte-operator__RobotVersionCRCCE"></span><span class="target" id="classleju_1_1RobotVersion_1a476dc849b2fbaca3538f931d1f40c2de"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">&gt;=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">other</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotVersiongeERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>大于等于运算符 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> – 其他版本 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否大于等于 </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersion6createEi">
+<span id="_CPPv3N4leju12RobotVersion6createEi"></span><span id="_CPPv2N4leju12RobotVersion6createEi"></span><span id="leju::RobotVersion::create__i"></span><span class="target" id="classleju_1_1RobotVersion_1a7fdebd1dee26c6b37133b267e522c774"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">big_number</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotVersion6createEi" title="永久链接至目标"></a><br /></dt>
+<dd><p>从大整数创建 <a class="reference internal" href="#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 对象 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>big_number</strong> – 大整数 </p>
+</dd>
+<dt class="field-even">抛出<span class="colon">:</span></dt>
+<dd class="field-even"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">invalid_argument</span></span></span> – 如果版本号超出有效范围 </p>
+</dd>
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 实例 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersion8from_envEv">
+<span id="_CPPv3N4leju12RobotVersion8from_envEv"></span><span id="_CPPv2N4leju12RobotVersion8from_envEv"></span><span id="leju::RobotVersion::from_env"></span><span class="target" id="classleju_1_1RobotVersion_1ab48f79c506748c369f788bf7b90df22b"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">from_env</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotVersion8from_envEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>从环境变量 ROBOT_VERSION 获取版本号 </p>
+<dl class="field-list simple">
+<dt class="field-odd">抛出<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">invalid_argument</span></span></span> – 如果环境变量不存在或版本号无效 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 实例 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotVersion8is_validEi">
+<span id="_CPPv3N4leju12RobotVersion8is_validEi"></span><span id="_CPPv2N4leju12RobotVersion8is_validEi"></span><span id="leju::RobotVersion::is_valid__iCE"></span><span class="target" id="classleju_1_1RobotVersion_1af9c8e7a438a39fc090883cf791685627"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">is_valid</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">big_number</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotVersion8is_validEi" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断版本号是否合法 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>big_number</strong> – 版本号数字 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>是否合法 </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="robotversions">
+<span id="api-robot-versions"></span><h2>RobotVersions<a class="headerlink" href="#robotversions" title="此标题的永久链接"></a></h2>
+<p>预定义的机器人版本常量。</p>
+</section>
+<section id="kuavo">
+<span id="api-kuavo-versions"></span><h2>Kuavo 系列<a class="headerlink" href="#kuavo" title="此标题的永久链接"></a></h2>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv411KUAVO4_BASE">
+<span id="_CPPv311KUAVO4_BASE"></span><span id="_CPPv211KUAVO4_BASE"></span><span id="KUAVO4_BASE__RobotVersion"></span><span class="target" id="group__KuavoVersions_1gacd499d9731e06e1abbe84d4bb47ea2ee"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KUAVO4_BASE</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">2</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv411KUAVO4_BASE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 4代 基础版 (短手基础版) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv418KUAVO4_PRO_DEXHAND">
+<span id="_CPPv318KUAVO4_PRO_DEXHAND"></span><span id="_CPPv218KUAVO4_PRO_DEXHAND"></span><span id="KUAVO4_PRO_DEXHAND__RobotVersion"></span><span class="target" id="group__KuavoVersions_1gaafb0fb2ba8f9af12625f1bc7aa5a88b4"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KUAVO4_PRO_DEXHAND</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">5</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv418KUAVO4_PRO_DEXHAND" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 4代 PRO 专业版 (灵巧手版本) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv410KUAVO4_UAE">
+<span id="_CPPv310KUAVO4_UAE"></span><span id="_CPPv210KUAVO4_UAE"></span><span id="KUAVO4_UAE__RobotVersion"></span><span class="target" id="group__KuavoVersions_1ga7a62d07a9eacbdfabdec300ac4a3f93b"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KUAVO4_UAE</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">6</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv410KUAVO4_UAE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 4代 UAE 版本 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv418KUAVO4_PRO_GRIPPER">
+<span id="_CPPv318KUAVO4_PRO_GRIPPER"></span><span id="_CPPv218KUAVO4_PRO_GRIPPER"></span><span id="KUAVO4_PRO_GRIPPER__RobotVersion"></span><span class="target" id="group__KuavoVersions_1ga24d2bc50429e493c36ac7d10b8ce06e4"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KUAVO4_PRO_GRIPPER</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">7</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv418KUAVO4_PRO_GRIPPER" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 4代 PRO 夹爪版 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv410KUAVO4_EDU">
+<span id="_CPPv310KUAVO4_EDU"></span><span id="_CPPv210KUAVO4_EDU"></span><span id="KUAVO4_EDU__RobotVersion"></span><span class="target" id="group__KuavoVersions_1gac1b07966aeaa3debe3198cb8e7bbbc9d"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KUAVO4_EDU</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">9</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv410KUAVO4_EDU" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 4代 EDU 教育版 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv411KUAVO5_BASE">
+<span id="_CPPv311KUAVO5_BASE"></span><span id="_CPPv211KUAVO5_BASE"></span><span id="KUAVO5_BASE__RobotVersion"></span><span class="target" id="group__KuavoVersions_1ga17bbd18303e9ad235da2bcc7077b5aa0"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KUAVO5_BASE</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">5</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">2</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv411KUAVO5_BASE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 5代 基础版 </p>
+</dd></dl>
+
+</section>
+<section id="roban">
+<span id="api-roban-versions"></span><h2>Roban 系列<a class="headerlink" href="#roban" title="此标题的永久链接"></a></h2>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv411ROBAN2_BASE">
+<span id="_CPPv311ROBAN2_BASE"></span><span id="_CPPv211ROBAN2_BASE"></span><span id="ROBAN2_BASE__RobotVersion"></span><span class="target" id="group__RobanVersions_1gade15f87631d5e9a97d28d66b9d632c1e"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersion</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ROBAN2_BASE</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">4</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv411ROBAN2_BASE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Roban 2代 基础版 </p>
+</dd></dl>
+
+</section>
+<section id="id1">
+<h2>Kuavo 足式机器人检测宏<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h2>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_KUAVO_LEGGED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_KUAVO_LEGGED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_KUAVO_LEGGED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Kuavo 足式机器人（4代或5代）</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_KUAVO4_LEGGED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_KUAVO4_LEGGED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_KUAVO4_LEGGED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Kuavo 4代足式机器人</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_KUAVO5_LEGGED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_KUAVO5_LEGGED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_KUAVO5_LEGGED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Kuavo 5代足式机器人</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_KUAVO4PRO_LEGGED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_KUAVO4PRO_LEGGED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_KUAVO4PRO_LEGGED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Kuavo 4代 PRO 足式机器人（4.5及以上版本）</p>
+</dd></dl>
+
+</section>
+<section id="id2">
+<h2>Roban 足式机器人检测宏<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h2>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_ROBAN_LEGGED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_ROBAN_LEGGED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_ROBAN_LEGGED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Roban 足式机器人</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_ROBAN2_LEGGED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_ROBAN2_LEGGED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_ROBAN2_LEGGED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Roban 2代足式机器人</p>
+</dd></dl>
+
+</section>
+<section id="id3">
+<h2>Kuavo 轮式机器人检测宏<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h2>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_KUAVO_WHEELED">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_KUAVO_WHEELED</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_KUAVO_WHEELED" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Kuavo 轮式机器人</p>
+</dd></dl>
+
+</section>
+<section id="id4">
+<h2>产品系列检测宏<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h2>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_KUAVO">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_KUAVO</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_KUAVO" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Kuavo 系列机器人（足式或轮式）</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.IS_ROBAN">
+<span class="sig-name descname"><span class="n"><span class="pre">IS_ROBAN</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">rb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.IS_ROBAN" title="永久链接至目标"></a><br /></dt>
+<dd><p>判断是否为 Roban 系列机器人</p>
+</dd></dl>
+
+</section>
+<section id="id5">
+<h2>时间工具函数<a class="headerlink" href="#id5" title="此标题的永久链接"></a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju6common17GetUnixTimestampSEv">
+<span id="_CPPv3N4leju6common17GetUnixTimestampSEv"></span><span id="_CPPv2N4leju6common17GetUnixTimestampSEv"></span><span id="leju::common::GetUnixTimestampS"></span><span class="target" id="namespaceleju_1_1common_1ad4260678d10c36b181d67e0bdada474a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">common</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">GetUnixTimestampS</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju6common17GetUnixTimestampSEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取当前Unix时间戳（秒） </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>double 当前Unix时间戳，单位为秒（自1970-01-01以来） </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju6common18GetUnixTimestampNsEv">
+<span id="_CPPv3N4leju6common18GetUnixTimestampNsEv"></span><span id="_CPPv2N4leju6common18GetUnixTimestampNsEv"></span><span id="leju::common::GetUnixTimestampNs"></span><span class="target" id="namespaceleju_1_1common_1ae8ab148bd3c3d9206e223854b063d3e3"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">common</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">GetUnixTimestampNs</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju6common18GetUnixTimestampNsEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取当前Unix时间戳（纳秒） </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>uint64_t 当前Unix时间戳，单位为纳秒（自1970-01-01以来） </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju6common23GetUnixTimestampSecNsecER7int32_tR8uint32_t">
+<span id="_CPPv3N4leju6common23GetUnixTimestampSecNsecER7int32_tR8uint32_t"></span><span id="_CPPv2N4leju6common23GetUnixTimestampSecNsecER7int32_tR8uint32_t"></span><span id="leju::common::GetUnixTimestampSecNsec__int32_tR.uint32_tR"></span><span class="target" id="namespaceleju_1_1common_1a9e409115bd6c27b8221dca74f151180b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">common</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">GetUnixTimestampSecNsec</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">sec</span></span>, <span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">nsec</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju6common23GetUnixTimestampSecNsecER7int32_tR8uint32_t" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取当前Unix时间戳（秒和纳秒分离） </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sec</strong> – 输出参数，秒部分（自1970-01-01以来） </p></li>
+<li><p><strong>nsec</strong> – 输出参数，纳秒部分（0-999,999,999） </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju6common20GetSteadyTimestampNsEv">
+<span id="_CPPv3N4leju6common20GetSteadyTimestampNsEv"></span><span id="_CPPv2N4leju6common20GetSteadyTimestampNsEv"></span><span id="leju::common::GetSteadyTimestampNs"></span><span class="target" id="namespaceleju_1_1common_1a3caa77454840a14d20d7151627d5bc5d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">uint64_t</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">common</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">GetSteadyTimestampNs</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju6common20GetSteadyTimestampNsEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取当前高精度时间戳（纳秒，基于steady_clock） </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>uint64_t 当前高精度时间戳，单位为纳秒 </p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="loop">
+<h2>Loop<a class="headerlink" href="#loop" title="此标题的永久链接"></a></h2>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4LoopE">
+<span id="_CPPv3N4leju4LoopE"></span><span id="_CPPv2N4leju4LoopE"></span><span id="leju::Loop"></span><span class="target" id="classleju_1_1Loop"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Loop</span></span></span><a class="headerlink" href="#_CPPv4N4leju4LoopE" title="永久链接至目标"></a><br /></dt>
+<dd><p>定时循环执行器类 </p>
+<p>创建一个独立的线程，按照指定周期循环执行用户提供的函数 支持绑定到指定CPU核心以提高性能和确定性 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-types">Public Types</p>
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4Loop12LoopFunctionE">
+<span id="_CPPv3N4leju4Loop12LoopFunctionE"></span><span id="_CPPv2N4leju4Loop12LoopFunctionE"></span><span class="target" id="classleju_1_1Loop_1ad8dd7c775ed273e581eab5f6ff5cce23"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">LoopFunction</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N4leju4Loop12LoopFunctionE" title="永久链接至目标"></a><br /></dt>
+<dd><p>循环函数类型定义 </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4Loop4LoopERKNSt6stringE12LoopFunctioniii">
+<span id="_CPPv3N4leju4Loop4LoopERKNSt6stringE12LoopFunctioniii"></span><span id="_CPPv2N4leju4Loop4LoopERKNSt6stringE12LoopFunctioniii"></span><span id="leju::Loop::Loop__ssCR.LoopFunction.i.i.i"></span><span class="target" id="classleju_1_1Loop_1aa0312bec9a3673e1ae39706958a5cdb3"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Loop</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <a class="reference internal" href="#_CPPv4N4leju4Loop12LoopFunctionE" title="leju::Loop::LoopFunction"><span class="n"><span class="pre">LoopFunction</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">function</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">period_ms</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">cpu_core</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="o"><span class="pre">-</span></span><span class="m"><span class="pre">1</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">sched_priority</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">80</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju4Loop4LoopERKNSt6stringE12LoopFunctioniii" title="永久链接至目标"></a><br /></dt>
+<dd><p>构造函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – 循环器名称，用于标识和调试 </p></li>
+<li><p><strong>function</strong> – 要执行的函数对象 </p></li>
+<li><p><strong>period_ms</strong> – 执行周期，单位毫秒 </p></li>
+<li><p><strong>cpu_core</strong> – 要绑定的CPU核心号，-1表示不绑定 </p></li>
+<li><p><strong>sched_priority</strong> – SCHED_FIFO优先级，-1表示不设置实时调度 </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4LoopD0Ev">
+<span id="_CPPv3N4leju4LoopD0Ev"></span><span id="_CPPv2N4leju4LoopD0Ev"></span><span id="leju::Loop::~Loop"></span><span class="target" id="classleju_1_1Loop_1ad0503f2fc0d5b74dee9575f5b7138fb9"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">~Loop</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju4LoopD0Ev" title="永久链接至目标"></a><br /></dt>
+<dd><p>析构函数，自动停止循环 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4Loop4LoopERK4Loop">
+<span id="_CPPv3N4leju4Loop4LoopERK4Loop"></span><span id="_CPPv2N4leju4Loop4LoopERK4Loop"></span><span id="leju::Loop::Loop__LoopCR"></span><span class="target" id="classleju_1_1Loop_1a49e2dc78d87e1f7a2850f8774acb3eec"></span><span class="sig-name descname"><span class="n"><span class="pre">Loop</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju4Loop4LoopERK4Loop" title="leju::Loop::Loop"><span class="n"><span class="pre">Loop</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju4Loop4LoopERK4Loop" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁止拷贝构造 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4LoopaSERK4Loop">
+<span id="_CPPv3N4leju4LoopaSERK4Loop"></span><span id="_CPPv2N4leju4LoopaSERK4Loop"></span><span id="leju::Loop::assign-operator__LoopCR"></span><span class="target" id="classleju_1_1Loop_1a1454965bb5923c32e994a07f34db13ce"></span><a class="reference internal" href="#_CPPv4N4leju4LoopE" title="leju::Loop"><span class="n"><span class="pre">Loop</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju4LoopE" title="leju::Loop"><span class="n"><span class="pre">Loop</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju4LoopaSERK4Loop" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁止拷贝赋值 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4Loop4LoopERR4Loop">
+<span id="_CPPv3N4leju4Loop4LoopERR4Loop"></span><span id="_CPPv2N4leju4Loop4LoopERR4Loop"></span><span id="leju::Loop::Loop__LoopRR"></span><span class="target" id="classleju_1_1Loop_1aec6887a9577e6ab77cb75a1e783b0271"></span><span class="sig-name descname"><span class="n"><span class="pre">Loop</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4leju4Loop4LoopERR4Loop" title="leju::Loop::Loop"><span class="n"><span class="pre">Loop</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju4Loop4LoopERR4Loop" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁止移动构造 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4LoopaSERR4Loop">
+<span id="_CPPv3N4leju4LoopaSERR4Loop"></span><span id="_CPPv2N4leju4LoopaSERR4Loop"></span><span id="leju::Loop::assign-operator__LoopRR"></span><span class="target" id="classleju_1_1Loop_1a07ad78778c9ee8bef47d48e12bad4088"></span><a class="reference internal" href="#_CPPv4N4leju4LoopE" title="leju::Loop"><span class="n"><span class="pre">Loop</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">=</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4leju4LoopE" title="leju::Loop"><span class="n"><span class="pre">Loop</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju4LoopaSERR4Loop" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁止移动赋值 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4Loop5startEv">
+<span id="_CPPv3N4leju4Loop5startEv"></span><span id="_CPPv2N4leju4Loop5startEv"></span><span id="leju::Loop::start"></span><span class="target" id="classleju_1_1Loop_1a3d90f7a42d8f52ba5100e75b3dcb7d55"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">start</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju4Loop5startEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>启动循环执行器 </p>
+<p>创建新线程并开始按周期执行函数，如果已经在运行则忽略 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju4Loop8shutdownEv">
+<span id="_CPPv3N4leju4Loop8shutdownEv"></span><span id="_CPPv2N4leju4Loop8shutdownEv"></span><span id="leju::Loop::shutdown"></span><span class="target" id="classleju_1_1Loop_1af4e896d5047ca23bfb3252e41b1ce815"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shutdown</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju4Loop8shutdownEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>停止循环执行器 </p>
+<p>安全停止循环并等待线程结束，如果已经停止则忽略 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju4Loop7getNameEv">
+<span id="_CPPv3NK4leju4Loop7getNameEv"></span><span id="_CPPv2NK4leju4Loop7getNameEv"></span><span id="leju::Loop::getNameC"></span><span class="target" id="classleju_1_1Loop_1ae7ea9c74a8e65e34ba9cac0a59f6f15d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getName</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju4Loop7getNameEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取循环器名称 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>循环器名称 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju4Loop9getPeriodEv">
+<span id="_CPPv3NK4leju4Loop9getPeriodEv"></span><span id="_CPPv2NK4leju4Loop9getPeriodEv"></span><span id="leju::Loop::getPeriodC"></span><span class="target" id="classleju_1_1Loop_1aa46ce3ac0684c216be8f453afa193a63"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getPeriod</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju4Loop9getPeriodEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取执行周期 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>执行周期，单位毫秒 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju4Loop9isRunningEv">
+<span id="_CPPv3NK4leju4Loop9isRunningEv"></span><span id="_CPPv2NK4leju4Loop9isRunningEv"></span><span id="leju::Loop::isRunningC"></span><span class="target" id="classleju_1_1Loop_1a5edd1ea7948305ace6eebb5096f88635"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isRunning</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju4Loop9isRunningEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取运行状态 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>true表示正在运行，false表示已停止 </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="id6">
+<h2>日志宏<a class="headerlink" href="#id6" title="此标题的永久链接"></a></h2>
+<p>基础日志宏</p>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_D">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_D</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_D" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出 DEBUG 级别日志</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_T">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_T</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_T" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出 TRACE 级别日志</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_I">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_I</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_I" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出 INFO 级别日志</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_W">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_W</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_W" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出 WARN 级别日志</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_E">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_E</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_E" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出 ERROR 级别日志</p>
+</dd></dl>
+
+<p>彩色日志宏</p>
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_SUCCESS">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_SUCCESS</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="n"><span class="pre">format</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_SUCCESS" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出绿色的成功信息</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_WARNING">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_WARNING</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="n"><span class="pre">format</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_WARNING" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出黄色的警告信息</p>
+</dd></dl>
+
+<dl class="c macro">
+<dt class="sig sig-object c" id="c.LOG_FAILURE">
+<span class="sig-name descname"><span class="n"><span class="pre">LOG_FAILURE</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">tag</span></span>, <span class="n"><span class="pre">format</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.LOG_FAILURE" title="永久链接至目标"></a><br /></dt>
+<dd><p>输出红色的错误信息</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="index.html" class="btn btn-neutral float-left" title="lejusdk-utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="../lejusdk-lowlevel/index.html" class="btn btn-neutral float-right" title="lejusdk-lowlevel" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

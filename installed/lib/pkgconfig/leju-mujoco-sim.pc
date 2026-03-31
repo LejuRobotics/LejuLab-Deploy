@@ -1,0 +1,8 @@
+prefix=/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: leju-mujoco-sim
+Description: Description of leju-mujoco-sim
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

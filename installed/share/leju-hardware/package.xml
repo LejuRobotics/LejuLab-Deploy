@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>leju-hardware</name>
+  <version>0.0.1</version>
+  <description>Hardware for leju humanoid robot </description>
+
+  <maintainer email="edu@lejurobot.com">Leju Robotics</maintainer>
+  <license>MIT</license>
+
+  <url type="repository">https://www.lejuhub.com/highlydynamic/lejulab</url>
+  <author>Leju Robotics Team</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>lejusdk-lowlevel</depend>
+  <depend>lejusdk-utils</depend>
+
+  <export>
+  </export>
+</package>

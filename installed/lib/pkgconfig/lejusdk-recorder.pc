@@ -1,0 +1,8 @@
+prefix=/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: lejusdk-recorder
+Description: Description of lejusdk-recorder
+Version: 1.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lcyclone_dds -lrecorder_lib
+Requires: 

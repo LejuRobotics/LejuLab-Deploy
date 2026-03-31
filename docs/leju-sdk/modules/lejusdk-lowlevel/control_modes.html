@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>电机控制模式 (CSP/CST) &mdash; LejuSDK 0986747a0 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/translations.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="lejusdk-lowlevel API" href="api.html" />
+    <link rel="prev" title="lejusdk-lowlevel 数据类型" href="datatypes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                0986747a0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">模块列表</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">lejusdk-lowlevel</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
+          <li class="breadcrumb-item"><a href="index.html">lejusdk-lowlevel</a></li>
+      <li class="breadcrumb-item active">电机控制模式 (CSP/CST)</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="csp-cst">
+<h1>电机控制模式 (CSP/CST)<a class="headerlink" href="#csp-cst" title="此标题的永久链接"></a></h1>
+<p>本文档介绍 lejusdk-lowlevel 支持的两种电机控制模式：CSP（位置控制）、CST（力矩控制）。</p>
+<p>相关数据类型请参考：</p>
+<ul class="simple">
+<li><p><span class="xref std std-ref">datatypes-motorcontrolmode</span> - 控制模式枚举</p></li>
+<li><p><a class="reference internal" href="datatypes.html#datatypes-robotcmd"><span class="std std-ref">RobotCmd</span></a> - 机器人控制指令结构体</p></li>
+</ul>
+<section id="id1">
+<h2>概述<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h2>
+<table class="docutils align-default" id="id6">
+<caption><span class="caption-text">控制模式对比</span><a class="headerlink" href="#id6" title="此表格的永久链接"></a></caption>
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 15.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>模式</p></th>
+<th class="head"><p>枚举值</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>CSP</p></td>
+<td><p>2</p></td>
+<td><p>位置控制模式，发送目标位置、Kp、Kd，内部计算力矩</p></td>
+</tr>
+<tr class="row-odd"><td><p>CST</p></td>
+<td><p>0</p></td>
+<td><p>力矩控制模式，直接发送目标力矩</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>当前 <strong>手臂和头部</strong> 的关节仅支持 <strong>CSP</strong> 控制模式。</p>
+</div>
+</section>
+<section id="csp">
+<h2>CSP 模式<a class="headerlink" href="#csp" title="此标题的永久链接"></a></h2>
+<p>位置控制模式，使用 PD 控制律计算力矩：</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>τ = Kp × (q_target - q_actual) + Kd × (v_target - v_actual) + τ_ff
+</pre></div>
+</div>
+<section id="id2">
+<h3>控制框图<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h3>
+<p>框图左侧为用户通过 <code class="docutils literal notranslate"><span class="pre">RobotCmd</span></code> 发送的控制参数，右侧为驱动器内部的 PD 控制计算。
+用户发送的参数均为关节空间量，底层控制软件处理流程：</p>
+<ol class="arabic simple">
+<li><p><strong>传动转换</strong>：将关节位置/速度转换为电机位置/速度</p></li>
+<li><p><strong>PD 控制</strong>：使用编码器获取实际位置 <code class="docutils literal notranslate"><span class="pre">q_actual</span></code> 和实际速度 <code class="docutils literal notranslate"><span class="pre">v_actual</span></code>，结合目标值和增益计算力矩</p></li>
+<li><p><strong>力矩限幅</strong>：根据硬件配置文件中的 <code class="docutils literal notranslate"><span class="pre">max_torque</span></code> 对计算出的力矩进行限幅保护</p></li>
+<li><p><strong>单位转换</strong>：转换为驱动器所需的单位后发送</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>   lejusdk (User)        |                 Drive (Motor)
+                          |
++-----------+             |
+| q_target  |-------------+---&gt;+-----------------------------------------+
+| (cmd.q)   |             |    |                                         |
++-----------+             |    |  +--------+             +------+        |
+                          |    |  |        |  +------+   |      |        |
++-----------+             |    +-&gt;|   -    |-&gt;| x Kp |--&gt;|      |        |
+| v_target  |-------------+---&gt;+  +--------+  +------+   |      |        |
+| (cmd.v)   |             |    |       ^                 |      |        |
++-----------+             |    |       | q_actual        |  +   |  +-------+
+                          |    |                         |      |-&gt;| Motor |
++-----------+             |    |  +--------+             |      |  +-------+
+| tau_ff    |-------------+---&gt;+-&gt;|   -    |-&gt;| x Kd |--&gt;|      |        |
+| (cmd.tau) |             |    |  +--------+  +------+   |      |        |
++-----------+             |    |       ^                 +------+        |
+                          |    |       | v_actual                        |
++-----------+             |    |                                         |
+| kp        |-------------+---&gt;+  Kp gain                                |
+| (cmd.kp)  |             |    |                                         |
++-----------+             |    |                                         |
+                          |    |                                         |
++-----------+             |    |                                         |
+| kd        |-------------+---&gt;+  Kd gain                                |
+| (cmd.kd)  |             |    |                                         |
++-----------+             |    +-----------------------------------------+
+                          |
++-----------+             |
+| mode = 2  |-------------+---&gt;  CSP mode
+| (cmd.modes)|            |
++-----------+             |
+
+tau = Kp * (q_target - q_actual) + Kd * (v_target - v_actual) + tau_ff
+
+Legend:
+  q_target  : Target position (rad)
+  v_target  : Target velocity (rad/s)
+  tau_ff    : Feedforward torque (N.m)
+  Kp        : Position gain (N.m/rad)
+  Kd        : Velocity gain (N.m.s/rad)
+</pre></div>
+</div>
+<p>参数对应关系：</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 30.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>参数</p></th>
+<th class="head"><p>RobotCmd 字段</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>q_target</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cmd.q</span></code></p></td>
+<td><p>目标位置 (rad)</p></td>
+</tr>
+<tr class="row-odd"><td><p>v_target</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cmd.v</span></code></p></td>
+<td><p>目标速度 (rad/s)，通常为 0</p></td>
+</tr>
+<tr class="row-even"><td><p>τ_ff</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cmd.tau</span></code></p></td>
+<td><p>前馈力矩 (N·m)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Kp</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cmd.kp</span></code></p></td>
+<td><p>位置增益 (N·m/rad)，CST 模式下必须为 0</p></td>
+</tr>
+<tr class="row-even"><td><p>Kd</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">cmd.kd</span></code></p></td>
+<td><p>速度增益 (N·m·s/rad)，CST 模式下必须为 0</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h3>使用方法<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h3>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;lejusdk-lowlevel/data_types.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;lejusdk-lowlevel/leju_sdk.h&gt;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="kt">size_t</span><span class="w"> </span><span class="n">motor_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">getMotorNumber</span><span class="p">();</span>
+
+<span class="n">RobotCmd</span><span class="w"> </span><span class="nf">cmd</span><span class="p">(</span><span class="n">motor_count</span><span class="p">);</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_count</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target_position</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w">  </span><span class="c1">// 目标位置 (rad)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">                 </span><span class="c1">// 目标速度 (rad/s)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">tau</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">               </span><span class="c1">// 前馈力矩 (N·m)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="p">;</span><span class="w">              </span><span class="c1">// 位置增益 (N·m/rad)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.0</span><span class="p">;</span><span class="w">               </span><span class="c1">// 速度增益 (N·m·s/rad)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MotorControlMode</span><span class="o">::</span><span class="n">CSP</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">robot</span><span class="p">.</span><span class="n">publishRobotCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>CSP 模式下，用户层的 Kp/Kd 参数需要设置成国际单位的值 (N·m/rad, N·m·s/rad)</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>已实现</p>
+</div>
+<del>我们会在下一个版本补充用户层 Kp/Kd 到内部转换，届时用户只需要关心用户层的 Kp/Kd 即可。</del></div>
+</section>
+</section>
+<section id="cst">
+<h2>CST 模式<a class="headerlink" href="#cst" title="此标题的永久链接"></a></h2>
+<p>力矩控制模式，直接发送目标力矩。适用于力控、阻抗控制、RL 策略等场合。</p>
+<section id="id4">
+<h3>控制框图<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h3>
+<p>框图左侧为用户通过 <code class="docutils literal notranslate"><span class="pre">RobotCmd</span></code> 发送的控制参数，右侧为驱动器内部的力矩控制。
+用户发送的 <code class="docutils literal notranslate"><span class="pre">tau_target</span></code> 为关节力矩，底层控制软件处理流程：</p>
+<ol class="arabic simple">
+<li><p><strong>传动转换</strong>：根据机器人传动机构（并联腿、减速器等）将关节力矩转换为电机力矩</p></li>
+<li><p><strong>力矩限幅</strong>：根据硬件配置文件中的 <code class="docutils literal notranslate"><span class="pre">max_torque</span></code> 对电机力矩进行限幅保护</p></li>
+<li><p><strong>单位转换</strong>：转换为驱动器所需的单位后发送</p></li>
+</ol>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>          lejusdk (User)                   |        Drive (Motor)
+                                           |
++-------------+                            |
+| tau_target  |----------------------------+---&gt;+----------+
+| (cmd.tau)   |                            |    |          |   +-------+
++-------------+                            |    |  Torque  |   |       |
+                                           |    |  Control |--&gt;| Motor |
++-------------+                            |    |          |   |       |
+| kp = 0      |  Must be 0, otherwise      |    +----------+   +-------+
+| (cmd.kp)    |  PD control will be added  |         ^
++-------------+                            |         |
+| kd = 0      |                            |         |
+| (cmd.kd)    |                            |         |
++-------------+                            |         |
+                                           |         |
++-------------+                            |         |
+| mode = 0    |----------------------------+---------+
+| (cmd.modes) |  CST mode                  |
++-------------+                            |
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>使用方法<a class="headerlink" href="#id5" title="此标题的永久链接"></a></h3>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;lejusdk-lowlevel/data_types.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;lejusdk-lowlevel/leju_sdk.h&gt;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="kt">size_t</span><span class="w"> </span><span class="n">motor_count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">getMotorNumber</span><span class="p">();</span>
+
+<span class="n">RobotCmd</span><span class="w"> </span><span class="nf">cmd</span><span class="p">(</span><span class="n">motor_count</span><span class="p">);</span>
+
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_count</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">tau</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target_torque</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w">  </span><span class="c1">// 目标力矩 (N·m)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">                </span><span class="c1">// 必须为 0</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">                </span><span class="c1">// 必须为 0</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MotorControlMode</span><span class="o">::</span><span class="n">CST</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">robot</span><span class="p">.</span><span class="n">publishRobotCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">警告</p>
+<p>CST 模式下，<code class="docutils literal notranslate"><span class="pre">cmd.kp</span></code> 和 <code class="docutils literal notranslate"><span class="pre">cmd.kd</span></code> <strong>必须设置为 0</strong>，否则会叠加 PD 控制律的输出。</p>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="datatypes.html" class="btn btn-neutral float-left" title="lejusdk-lowlevel 数据类型" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="lejusdk-lowlevel API" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

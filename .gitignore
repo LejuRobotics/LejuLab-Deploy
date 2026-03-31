@@ -1,0 +1,14 @@
+.catkin_tools/
+.idea/
+.claude/
+.vscode/
+.cursor/
+__pycache__/
+node_modules/
+build/*
+devel/*
+logs/*
+build
+ecmaster*.log
+ecmaster*.csv
+CLAUDE.md

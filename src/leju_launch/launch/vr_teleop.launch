@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Argument for coredump (matches load_mujoco_sim / load_real style) -->
+  <arg name="coredump" default="false"/>
+  <arg name="with_coredump" value="--with-coredump" if="$(arg coredump)"/>
+  <arg name="with_coredump" value="" unless="$(arg coredump)"/>
+
+  <!-- iceoryx 共享内存开关 -->
+  <arg name="enable_iceoryx_shm" default="true"/>
+  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds_shm.xml" if="$(arg enable_iceoryx_shm)"/>
+  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds.xml" unless="$(arg enable_iceoryx_shm)"/>
+  <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)" />
+
+  <!-- VR teleop arguments (override via models_path:=/path config_path:=/path robot_version:=52 quest_ip:=192.168.1.100) -->
+  <arg name="robot_version" default="$(optenv ROBOT_VERSION 46)"/>
+  <arg name="models_path" default="$(find leju_assets)"/>
+  <arg name="config_path" default="$(find leju-hardware)"/>
+  <arg name="quest_ip" default=""/>
+  <arg name="vr_config_file" default="$(find leju-vr-control)/config/quest_vr_control.yaml"/>
+  <!-- use_incremental_ik: true=增量IK(握把切换), false=绝对IK(双手扳机启动). 默认增量 -->
+  <arg name="use_incremental_ik" default="true"/>
+  <!-- quest3_incremental_ik.yaml 路径，默认 leju-ik 包内 -->
+  <arg name="quest3_ik_yaml_path" default="$(find leju-ik)/config/quest3_incremental_ik.yaml"/>
+
+  <!-- 前半段路径由 launch 传入，代码中拼接 /models/biped_s{version}/... 与 /config/kuavo_v{version}/... -->
+  <env name="KUAVO_MODELS_PATH" value="$(arg models_path)"/>
+  <env name="KUAVO_CONFIG_PATH" value="$(arg config_path)"/>
+  <env name="ROBOT_VERSION" value="$(arg robot_version)"/>
+  <env name="USE_INCREMENTAL_IK" value="$(arg use_incremental_ik)"/>
+  <env name="QUEST3_IK_YAML_PATH" value="$(arg quest3_ik_yaml_path)"/>
+  <env name="QUEST_VR_CONTROL_YAML_PATH" value="$(arg vr_config_file)"/>
+
+  <!-- leju-remote: Quest UDP to DDS bridge (quest_ip 为空时等待 Quest 广播发现) -->
+  <node name="leju_remote" pkg="leju-remote" type="quest_udp_to_dds_node" output="screen"
+        args="$(arg quest_ip)"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"/>
+
+  <!-- quest_vr_control_node: VR control, IK, publishes arm/waist/head/velocity commands -->
+  <node name="quest_vr_control" pkg="leju-vr-control" type="quest_vr_control_node" output="screen"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"/>
+</launch>
