@@ -1,0 +1,18 @@
+loop_dt: 0.001
+default_controller: "walk_demo"
+
+controllers:
+  # - name: "amp"
+  #   type: "GenericRLController"
+  #   config: "config_amp.yaml"
+  #   enabled: true
+
+  - name: "walk_demo"
+    type: "GenericRLController"
+    config: "config_walk_demo.yaml"
+    enabled: true
+
+  - name: "mimic_dance"
+    type: "GenericRLController"
+    config: "config_mimic_dance.yaml"
+    enabled: true

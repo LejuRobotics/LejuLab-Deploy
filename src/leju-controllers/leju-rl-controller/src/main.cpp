@@ -1,6 +1,7 @@
 #include "leju-rl-controller/controllers/controller_manager.h"
 #include "leju-rl-controller/joy_handler.h"
 #include "leju-rl-controller/rl_log.h"
+#include "leju-rl-controller/velocity_manager.h"
 #include "lejusdk-lowlevel/leju_sdk.h"
 
 #include <chrono>
@@ -33,6 +34,12 @@ int main(int argc, char** argv) {
 
     // 2. 控制器管理器初始化
     leju::ControllerManager manager;
+    leju::VelocityManager velocity_manager;
+    if (!velocity_manager.initializeFromControllerManagerConfig(config_file)) {
+      RL_LOGE("Failed to initialize VelocityManager");
+      return 1;
+    }
+    manager.setVelocityManager(&velocity_manager);
     if (!manager.initialize(config_file)) {
       RL_LOGE("Failed to initialize ControllerManager");
       return 1;
@@ -42,6 +49,7 @@ int main(int argc, char** argv) {
     // 3. 手柄输入
     leju::JoyHandler joy;
     joy.setCallback([&](const leju::JoyData& data, const leju::JoyData::Buttons& prev) {
+      velocity_manager.onJoyData(data);
       manager.dispatchJoyInput(data, prev);
     });
     joy.start();
@@ -52,6 +60,7 @@ int main(int argc, char** argv) {
     // 5. 主控制循环
     while (manager.isRunning()) {
       auto t = std::chrono::steady_clock::now();
+      velocity_manager.publishResolvedCmdVel();
       manager.update();
       manager.waitNextCycle(t);
     }

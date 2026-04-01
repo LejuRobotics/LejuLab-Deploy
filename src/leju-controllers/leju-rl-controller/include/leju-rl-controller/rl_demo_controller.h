@@ -13,6 +13,8 @@
 
 #include "lejusdk-lowlevel/leju_sdk.h"
 #include "lejusdk-utils/time_utils.hpp"
+#include "leju-rl-controller/arm_controller.h"
+#include "leju-rl-controller/cmd_stance_calculator.h"
 
 namespace leju {
 namespace rl_demo {
@@ -40,6 +42,7 @@ struct RLDemoConfig {
   // std::vector<double> actuator_control_mode;
 
   // std::vector<double> action_scale;
+  Eigen::ArrayXd joint_direction; // 为了兼容roban的不同旋转方向临时加的，处理可能并不完美
   Eigen::ArrayXd q_default;
   Eigen::ArrayXd torque_limit;
 
@@ -88,6 +91,9 @@ class RLDemoController {
 
   void jointMoveTo(const std::vector<double>& joint_target_pos, double elapse);
 
+  /// 就地修改 cmd：前 15 个配置值覆盖到 左腿6+右腿6+腰1+左臂第1+右臂第1（右臂第1=索引20）。由调用方 publish
+  void applyHardwareKpKdOverride(RobotCmd& cmd);
+
   void computeObservation();
   void computeActions();
   void updateRobotCmd();
@@ -98,6 +104,7 @@ class RLDemoController {
   Eigen::ArrayXd get_obs_base_ang_vel();
   Eigen::ArrayXd get_obs_projected_gravity();
   Eigen::ArrayXd get_obs_velocity_commands();
+  Eigen::ArrayXd get_obs_cmd_stance();
   Eigen::ArrayXd get_obs_joint_pos();
   Eigen::ArrayXd get_obs_joint_vel();
   Eigen::ArrayXd get_obs_actions();
@@ -105,6 +112,7 @@ class RLDemoController {
   int get_shape_obs_base_ang_vel() const;
   int get_shape_obs_projected_gravity() const;
   int get_shape_obs_velocity_commands() const;
+  int get_shape_obs_cmd_stance() const;
   int get_shape_obs_joint_pos() const;
   int get_shape_obs_joint_vel() const;
   int get_shape_obs_actions() const;
@@ -177,8 +185,17 @@ class RLDemoController {
 
   Eigen::ArrayXd policy_obs_;
   std::deque<std::deque<Eigen::ArrayXd>> obs_term_stacks_;
-  Eigen::ArrayXd policy_action_; // no lock because we have only 1 thread
+  Eigen::ArrayXd policy_action_;  // no lock because we have only 1 thread
   RobotCmd cmd_;
+
+  CmdStanceCalculator cmd_stance_calculator_;
+  ArmController arm_controller_;
+  int arm_start_index_ = 0;   // 手臂在 policy 关节中的起始索引
+  int arm_joint_count_ = 0;   // 手臂关节数
+
+  /// 前 15 关节 kp/kd 覆盖（左腿6+右腿6+腰1+左臂第1+右臂第1），与 kuavo 配置一致；空则不覆盖
+  std::vector<double> hardware_override_kp_15_;
+  std::vector<double> hardware_override_kd_15_;
 };
 
 }  // namespace rl_demo

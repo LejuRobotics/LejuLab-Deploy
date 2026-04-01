@@ -1,0 +1,8 @@
+loop_dt: 0.001
+default_controller: "mimic_dance"
+
+controllers:
+  - name: "mimic_dance"
+    type: "GenericRLController"
+    config: "config_mimic_dance.yaml"
+    enabled: true

@@ -13,13 +13,34 @@ endif()
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS lejusdk-lowlevel lejusdk-utils)
+find_package(catkin REQUIRED COMPONENTS lejusdk-lowlevel lejusdk-utils lejusdk-vr)
 
 ## System dependencies are found with CMake's conventions
 # find_package(OpenVINO REQUIRED HINTS 3rd_party/openvino_toolkit/runtime COMPONENTS Runtime Threading) # you have to install tbb?
 find_package(OpenVINO REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
+
+# ONNX Runtime (自动检测 3rd_party 库是否存在)
+set(ONNXRUNTIME_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/onnxruntime_toolkit/onnxruntime-linux-x64-1.18.0/lib/libonnxruntime.so")
+message(STATUS "Checking ONNX Runtime library: ${ONNXRUNTIME_LIB_PATH}")
+
+if(EXISTS "${ONNXRUNTIME_LIB_PATH}")
+  set(ONNXRUNTIME_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/onnxruntime_toolkit/onnxruntime-linux-x64-1.18.0")
+  set(ONNXRUNTIME_INCLUDE_DIRS "${ONNXRUNTIME_ROOT}/include")
+  set(ONNXRUNTIME_LIBRARIES "${ONNXRUNTIME_ROOT}/lib/libonnxruntime.so")
+
+  # 设置 CMake 变量供后续条件判断使用
+  set(USE_ONNXRUNTIME TRUE)
+  # 添加编译器宏定义
+  add_compile_definitions(USE_ONNXRUNTIME)
+  message(STATUS "ONNX Runtime backend: enabled (auto-detected)")
+  message(STATUS "  Include: ${ONNXRUNTIME_INCLUDE_DIRS}")
+  message(STATUS "  Library: ${ONNXRUNTIME_LIBRARIES}")
+else()
+  message(STATUS "ONNX Runtime backend: disabled (library not found in 3rd_party)")
+  message(WARNING "ONNX Runtime library not found at: ${ONNXRUNTIME_LIB_PATH}")
+endif()
 
 ###################################
 ## catkin specific configuration ##
@@ -32,8 +53,8 @@ find_package(Eigen3 REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES rl_controller_framework rl_demo_controllers
-  CATKIN_DEPENDS lejusdk-lowlevel lejusdk-utils
+  LIBRARIES rl_controller_framework
+  CATKIN_DEPENDS lejusdk-lowlevel lejusdk-utils lejusdk-vr
 )
 
 ###########
@@ -42,10 +63,18 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
+set(INC_DIRS
   include
+  examples/include
   ${catkin_INCLUDE_DIRS}
 )
+
+# ONNX Runtime include
+if(USE_ONNXRUNTIME)
+  list(APPEND INC_DIRS ${ONNXRUNTIME_INCLUDE_DIRS})
+endif()
+
+include_directories(${INC_DIRS})
 
 ## Declare a C++ library
 add_library(rl_controller_framework
@@ -54,8 +83,15 @@ add_library(rl_controller_framework
   src/controllers/generic_rl_controller.cpp
   src/robot_data.cpp
   src/joy_handler.cpp
+  src/velocity_manager.cpp
   src/motion/motion_trajectory.cpp
   src/inference/openvino_model.cpp
+  src/inference/onnxruntime_model.cpp
+  src/trajectory/minimum_jerk_interpolator.cpp
+  src/trajectory/velocity_limited_generator.cpp
+  src/rl/multi_mode_arm_controller.cpp
+  src/rl/waist_controller.cpp
+  src/utils/uri_path_resolver.cpp
 )
 target_link_libraries(rl_controller_framework
   ${catkin_LIBRARIES}
@@ -64,37 +100,18 @@ target_link_libraries(rl_controller_framework
   Eigen3::Eigen
 )
 
-add_library(rl_demo_controllers
-  src/controllers/rl_demo_controller.cpp
-  src/controllers/rl_mimic_controller.cpp
-  src/cmd_stance_calculator.cpp
-  src/arm_controller.cpp
-)
-target_link_libraries(rl_demo_controllers
-  ${catkin_LIBRARIES}
-  rl_controller_framework
-  openvino::runtime
-  yaml-cpp
-  Eigen3::Eigen
-)
+# ONNX Runtime support
+if(USE_ONNXRUNTIME)
+  target_include_directories(rl_controller_framework PUBLIC ${ONNXRUNTIME_INCLUDE_DIRS})
+  target_link_libraries(rl_controller_framework ${ONNXRUNTIME_LIBRARIES})
+endif()
+
+# Build examples subdirectory
+add_subdirectory(examples)
 
 ## Declare a C++ executable
 add_executable(run_rl_controller src/main.cpp)
 target_link_libraries(run_rl_controller
-  ${catkin_LIBRARIES}
-  rl_controller_framework
-  rl_demo_controllers
-)
-
-add_executable(run_rl_demo_controller src/run_rl_demo_controller.cpp)
-target_link_libraries(run_rl_demo_controller
-  ${catkin_LIBRARIES}
-  rl_controller_framework
-  rl_demo_controllers
-)
-
-add_executable(run_rl_mimic_controller src/run_rl_mimic_controller.cpp)
-target_link_libraries(run_rl_mimic_controller
   ${catkin_LIBRARIES}
   rl_controller_framework
   rl_demo_controllers
@@ -146,11 +163,13 @@ target_link_libraries(run_rl_mimic_controller
 ## Testing ##
 #############
 
+set(CATKIN_ENABLE_TESTING ON)
+
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
 
-  # Test: MotionLoader
-  catkin_add_gtest(test_motion_trajectory tests/test_motion_trajectory.cpp)
+  # Test: MotionTrajectory
+  catkin_add_gtest(test_motion_trajectory tests/motion/test_motion_trajectory.cpp)
   if(TARGET test_motion_trajectory)
     target_link_libraries(test_motion_trajectory
       rl_controller_framework
@@ -165,6 +184,26 @@ if(CATKIN_ENABLE_TESTING)
     target_link_libraries(test_robot_data
       rl_controller_framework
       ${catkin_LIBRARIES}
+    )
+  endif()
+
+  # Test: MinimumJerkInterpolator
+  catkin_add_gtest(test_minimum_jerk_interpolator tests/trajectory/interpolator/test_minimum_jerk_interpolator.cpp)
+  if(TARGET test_minimum_jerk_interpolator)
+    target_link_libraries(test_minimum_jerk_interpolator
+      rl_controller_framework
+      ${catkin_LIBRARIES}
+      Eigen3::Eigen
+    )
+  endif()
+
+  # Test: VelocityLimitedGenerator
+  catkin_add_gtest(test_velocity_limited_generator tests/trajectory/generator/test_velocity_limited_generator.cpp)
+  if(TARGET test_velocity_limited_generator)
+    target_link_libraries(test_velocity_limited_generator
+      rl_controller_framework
+      ${catkin_LIBRARIES}
+      Eigen3::Eigen
     )
   endif()
 endif()

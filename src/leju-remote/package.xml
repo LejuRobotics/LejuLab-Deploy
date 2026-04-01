@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>leju-remote</name>
+  <version>0.0.0</version>
+  <description>Quest3 UDP to DDS bridge - receives LejuHandPoseEvent from Quest3 and publishes QuestBonePoses and QuestJoysticks via DDS</description>
+
+  <maintainer email="lab@todo.todo">lab</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>lejusdk-vr</depend>
+
+  <export>
+  </export>
+</package>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>索引 &mdash; LejuSDK dbf55ca 文档</title>
+  <title>索引 &mdash; LejuSDK 81a896c 文档</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -34,7 +34,7 @@
             LejuSDK
           </a>
               <div class="version">
-                dbf55ca
+                81a896c
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -50,6 +50,7 @@
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#id2">环境要求</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#id3">依赖安装</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#docker">Docker 运行</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#id5">基本使用</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
@@ -58,6 +59,7 @@
 <li class="toctree-l3"><a class="reference internal" href="getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#id9">遥控器操作</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="getting_started.html#id10">键盘映射（无手柄时）</a></li>
 </ul>
@@ -120,6 +122,37 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-highlevel/index.html#id1">示例</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
 </ul>
 </li>
 </ul>
@@ -379,9 +412,17 @@
 </li>
       <li><a href="modules/lejusdk-lowlevel/datatypes.html#_CPPv4N4leju7JoyDataE">leju::JoyData（C++ struct）</a>
 </li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13KuavoHumanoid16getArmJointNamesEv">leju::KuavoHumanoid::getArmJointNames（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13KuavoHumanoid17getHeadJointNamesEv">leju::KuavoHumanoid::getHeadJointNames（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13KuavoHumanoid16getLegJointNamesEv">leju::KuavoHumanoid::getLegJointNames（C++ function）</a>
+</li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13KuavoHumanoid13getMotorNamesEv">leju::KuavoHumanoid::getMotorNames（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13KuavoHumanoid14getMotorNumberEv">leju::KuavoHumanoid::getMotorNumber（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13KuavoHumanoid18getWaistJointNamesEv">leju::KuavoHumanoid::getWaistJointNames（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju13KuavoHumanoidE">leju::KuavoHumanoid（C++ class）</a>
 </li>
@@ -413,19 +454,33 @@
 </li>
       <li><a href="modules/lejusdk-lowlevel/datatypes.html#_CPPv4N4leju16MotorControlModeE">leju::MotorControlMode（C++ enum）</a>
 </li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13RobanHumanoid16getArmJointNamesEv">leju::RobanHumanoid::getArmJointNames（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13RobanHumanoid17getHeadJointNamesEv">leju::RobanHumanoid::getHeadJointNames（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13RobanHumanoid16getLegJointNamesEv">leju::RobanHumanoid::getLegJointNames（C++ function）</a>
+</li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13RobanHumanoid13getMotorNamesEv">leju::RobanHumanoid::getMotorNames（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13RobanHumanoid14getMotorNumberEv">leju::RobanHumanoid::getMotorNumber（C++ function）</a>
 </li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju13RobanHumanoid18getWaistJointNamesEv">leju::RobanHumanoid::getWaistJointNames（C++ function）</a>
+</li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju13RobanHumanoidE">leju::RobanHumanoid（C++ class）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI16getArmJointNamesEv">leju::RobotBaseAPI::getArmJointNames（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI17getHeadJointNamesEv">leju::RobotBaseAPI::getHeadJointNames（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI16getLegJointNamesEv">leju::RobotBaseAPI::getLegJointNames（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI13getMotorNamesEv">leju::RobotBaseAPI::getMotorNames（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI14getMotorNumberEv">leju::RobotBaseAPI::getMotorNumber（C++ function）</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI15getRobotVersionEv">leju::RobotBaseAPI::getRobotVersion（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4NK4leju12RobotBaseAPI18getWaistJointNamesEv">leju::RobotBaseAPI::getWaistJointNames（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju12RobotBaseAPI20publishHardwareStateE13HardwareState">leju::RobotBaseAPI::publishHardwareState（C++ function）</a>
 </li>
@@ -452,6 +507,8 @@
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback">leju::RobotBaseAPI::subscribeRobotCmd（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju12RobotBaseAPI19subscribeRobotStateERK18RobotStateCallback">leju::RobotBaseAPI::subscribeRobotState（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback">leju::RobotBaseAPI::subscribeStopRobot（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju12RobotBaseAPIE">leju::RobotBaseAPI（C++ class）</a>
 </li>
@@ -505,6 +562,8 @@
 </li>
       <li><a href="modules/lejusdk-utils/api.html#_CPPv4NK4leju12RobotVersion5minorEv">leju::RobotVersion::minor（C++ function）</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/lejusdk-utils/api.html#_CPPv4NK4leju12RobotVersionneERK12RobotVersion">leju::RobotVersion::operator!=（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-utils/api.html#_CPPv4NK4leju12RobotVersionleERK12RobotVersion">leju::RobotVersion::operator&lt;=（C++ function）</a>
@@ -556,6 +615,190 @@
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju11TopicLoggerD0Ev">leju::TopicLogger::~TopicLogger（C++ function）</a>
 </li>
       <li><a href="modules/lejusdk-lowlevel/api.html#_CPPv4N4leju11TopicLoggerE">leju::TopicLogger（C++ class）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr15ControllerState8arm_modeE">leju::vr::ControllerState::arm_mode（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr15ControllerState21available_controllersE">leju::vr::ControllerState::available_controllers（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr15ControllerState18current_controllerE">leju::vr::ControllerState::current_controller（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr15ControllerState9head_modeE">leju::vr::ControllerState::head_mode（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr15ControllerState10waist_modeE">leju::vr::ControllerState::waist_mode（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr15ControllerStateE">leju::vr::ControllerState（C++ struct）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11ControlMode5kAutoE">leju::vr::ControlMode::kAuto（C++ enumerator）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11ControlMode9kExternalE">leju::vr::ControlMode::kExternal（C++ enumerator）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11ControlMode9kKeepPoseE">leju::vr::ControlMode::kKeepPose（C++ enumerator）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11ControlModeE">leju::vr::ControlMode（C++ enum）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPoint3accE">leju::vr::JointTrajectoryPoint::acc（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPoint1qE">leju::vr::JointTrajectoryPoint::q（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPoint1vE">leju::vr::JointTrajectoryPoint::v（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPointE">leju::vr::JointTrajectoryPoint（C++ struct）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK10KuavoVRAPI">leju::vr::KuavoVRAPI::KuavoVRAPI（C++ function）</a>, <a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK12RobotVersion">[1]</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr10KuavoVRAPIE">leju::vr::KuavoVRAPI（C++ class）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose2qwE">leju::vr::Pose::qw（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose2qxE">leju::vr::Pose::qx（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose2qyE">leju::vr::Pose::qy（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose2qzE">leju::vr::Pose::qz（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose1xE">leju::vr::Pose::x（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose1yE">leju::vr::Pose::y（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4Pose1zE">leju::vr::Pose::z（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr4PoseE">leju::vr::Pose（C++ struct）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesData14header_nanosecE">leju::vr::QuestBonePosesData::header_nanosec（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesData10header_secE">leju::vr::QuestBonePosesData::header_sec（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesData16is_hand_trackingE">leju::vr::QuestBonePosesData::is_hand_tracking（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesData18is_high_confidenceE">leju::vr::QuestBonePosesData::is_high_confidence（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesData5posesE">leju::vr::QuestBonePosesData::poses（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesData12timestamp_msE">leju::vr::QuestBonePosesData::timestamp_ms（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr18QuestBonePosesDataE">leju::vr::QuestBonePosesData（C++ struct）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData14header_nanosecE">leju::vr::QuestJoystickData::header_nanosec（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData10header_secE">leju::vr::QuestJoystickData::header_sec（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData25left_first_button_pressedE">leju::vr::QuestJoystickData::left_first_button_pressed（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData25left_first_button_touchedE">leju::vr::QuestJoystickData::left_first_button_touched（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData9left_gripE">leju::vr::QuestJoystickData::left_grip（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData26left_second_button_pressedE">leju::vr::QuestJoystickData::left_second_button_pressed（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData26left_second_button_touchedE">leju::vr::QuestJoystickData::left_second_button_touched（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData12left_triggerE">leju::vr::QuestJoystickData::left_trigger（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData6left_xE">leju::vr::QuestJoystickData::left_x（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData6left_yE">leju::vr::QuestJoystickData::left_y（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData26right_first_button_pressedE">leju::vr::QuestJoystickData::right_first_button_pressed（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData26right_first_button_touchedE">leju::vr::QuestJoystickData::right_first_button_touched（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData10right_gripE">leju::vr::QuestJoystickData::right_grip（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData27right_second_button_pressedE">leju::vr::QuestJoystickData::right_second_button_pressed（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData27right_second_button_touchedE">leju::vr::QuestJoystickData::right_second_button_touched（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData13right_triggerE">leju::vr::QuestJoystickData::right_trigger（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData7right_xE">leju::vr::QuestJoystickData::right_x（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickData7right_yE">leju::vr::QuestJoystickData::right_y（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr17QuestJoystickDataE">leju::vr::QuestJoystickData（C++ struct）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK10RobanVRAPI">leju::vr::RobanVRAPI::RobanVRAPI（C++ function）</a>, <a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK12RobotVersion">[1]</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr10RobanVRAPIE">leju::vr::RobanVRAPI（C++ class）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11VelocityCmd9angular_zE">leju::vr::VelocityCmd::angular_z（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11VelocityCmd8linear_xE">leju::vr::VelocityCmd::linear_x（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11VelocityCmd8linear_yE">leju::vr::VelocityCmd::linear_y（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11VelocityCmd9timestampE">leju::vr::VelocityCmd::timestamp（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr11VelocityCmdE">leju::vr::VelocityCmd（C++ struct）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI18getControllerStateER15ControllerStatei">leju::vr::VRBaseAPI::getControllerState（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4NK4leju2vr9VRBaseAPI15getRobotVersionEv">leju::vr::VRBaseAPI::getRobotVersion（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI10initializeEv">leju::vr::VRBaseAPI::initialize（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4NK4leju2vr9VRBaseAPI13isInitializedEv">leju::vr::VRBaseAPI::isInitialized（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI18publishArmJointCmdERK20JointTrajectoryPoint">leju::vr::VRBaseAPI::publishArmJointCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI19publishHeadJointCmdERK20JointTrajectoryPoint">leju::vr::VRBaseAPI::publishHeadJointCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI21publishQuestBonePosesERK18QuestBonePosesData">leju::vr::VRBaseAPI::publishQuestBonePoses（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI24publishQuestJoystickDataERK17QuestJoystickData">leju::vr::VRBaseAPI::publishQuestJoystickData（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI18publishVelocityCmdERK11VelocityCmd">leju::vr::VRBaseAPI::publishVelocityCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI20publishVrVelocityCmdERK13VrVelocityCmd">leju::vr::VRBaseAPI::publishVrVelocityCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI20publishWaistJointCmdERK20JointTrajectoryPoint">leju::vr::VRBaseAPI::publishWaistJointCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler">leju::vr::VRBaseAPI::registerGetStateHandler（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI25registerSetArmModeHandlerE14SetModeHandler">leju::vr::VRBaseAPI::registerSetArmModeHandler（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI26registerSetHeadModeHandlerE14SetModeHandler">leju::vr::VRBaseAPI::registerSetHeadModeHandler（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI27registerSetWaistModeHandlerE14SetModeHandler">leju::vr::VRBaseAPI::registerSetWaistModeHandler（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler">leju::vr::VRBaseAPI::registerSwitchControllerHandler（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI10setArmModeE11ControlModei">leju::vr::VRBaseAPI::setArmMode（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI11setHeadModeE11ControlModei">leju::vr::VRBaseAPI::setHeadMode（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI12setWaistModeE11ControlModei">leju::vr::VRBaseAPI::setWaistMode（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI8shutdownEv">leju::vr::VRBaseAPI::shutdown（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI20subscribeArmJointCmdE21ArmTrajectoryCallback">leju::vr::VRBaseAPI::subscribeArmJointCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI21subscribeHeadJointCmdE22HeadTrajectoryCallback">leju::vr::VRBaseAPI::subscribeHeadJointCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI23subscribeQuestBonePosesE22QuestBonePosesCallback">leju::vr::VRBaseAPI::subscribeQuestBonePoses（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI26subscribeQuestJoystickDataE25QuestJoystickDataCallback">leju::vr::VRBaseAPI::subscribeQuestJoystickData（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI20subscribeVelocityCmdE19VelocityCmdCallback">leju::vr::VRBaseAPI::subscribeVelocityCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI22subscribeVrVelocityCmdE21VrVelocityCmdCallback">leju::vr::VRBaseAPI::subscribeVrVelocityCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI22subscribeWaistJointCmdE23WaistTrajectoryCallback">leju::vr::VRBaseAPI::subscribeWaistJointCmd（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI16switchControllerERKNSt6stringEi">leju::vr::VRBaseAPI::switchController（C++ function）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK12RobotVersion">leju::vr::VRBaseAPI::VRBaseAPI（C++ function）</a>, <a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK9VRBaseAPI">[1]</a>
+</li>
+      <li><a href="modules/lejusdk-vr/api.html#_CPPv4N4leju2vr9VRBaseAPIE">leju::vr::VRBaseAPI（C++ class）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr13VrVelocityCmd9angular_zE">leju::vr::VrVelocityCmd::angular_z（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr13VrVelocityCmd8linear_xE">leju::vr::VrVelocityCmd::linear_x（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr13VrVelocityCmd8linear_yE">leju::vr::VrVelocityCmd::linear_y（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr13VrVelocityCmd9timestampE">leju::vr::VrVelocityCmd::timestamp（C++ member）</a>
+</li>
+      <li><a href="modules/lejusdk-vr/datatypes.html#_CPPv4N4leju2vr13VrVelocityCmdE">leju::vr::VrVelocityCmd（C++ struct）</a>
 </li>
       <li><a href="modules/lejusdk-utils/api.html#c.LOG_D">LOG_D（C macro）</a>
 </li>

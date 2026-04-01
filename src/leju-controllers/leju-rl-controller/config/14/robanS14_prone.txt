@@ -1,0 +1,120 @@
+
+    actuators:
+      motor:
+        class_type: leju_robot.actuators.actuator_pd:LejuDelayedPDActuator
+        joint_names_expr:
+        - waist_yaw_joint
+        - leg_.*
+        - zarm_.*
+        effort_limit: null
+        velocity_limit: null
+        effort_limit_sim:
+          waist_yaw_joint: 80.0
+          leg_[lr]1_joint: 80.0
+          leg_[lr]2_joint: 63.0
+          leg_[lr]3_joint: 80.0
+          leg_[lr]4_joint: 63.0
+          leg_[lr]5_joint: 25.0
+          leg_[lr]6_joint: 25.0
+          zarm_[lr]1_joint: 14.1
+          zarm_[lr]2_joint: 14.1
+          zarm_[lr]3_joint: 14.1
+          zarm_[lr]4_joint: 14.1
+        velocity_limit_sim:
+          waist_yaw_joint: 10.5
+          leg_[lr]1_joint: 10.5
+          leg_[lr]2_joint: 10.5
+          leg_[lr]3_joint: 10.5
+          leg_[lr]4_joint: 10.5
+          leg_[lr]5_joint: 10.5
+          leg_[lr]6_joint: 10.5
+          zarm_[lr]1_joint: 10.5
+          zarm_[lr]2_joint: 10.5
+          zarm_[lr]3_joint: 10.5
+          zarm_[lr]4_joint: 10.5
+        stiffness:
+          waist_yaw_joint: 100.0
+          leg_[lr]1_joint: 100.0
+          leg_[lr]2_joint: 100.0
+          leg_[lr]3_joint: 100.0
+          leg_[lr]4_joint: 150.0
+          leg_[lr]5_joint: 20.0
+          leg_[lr]6_joint: 20.0
+          zarm_[lr]1_joint: 20.0
+          zarm_[lr]2_joint: 20.0
+          zarm_[lr]3_joint: 20.0
+          zarm_[lr]4_joint: 20.0
+        damping:
+          waist_yaw_joint: 2.0
+          leg_[lr]1_joint: 2.0
+          leg_[lr]2_joint: 2.0
+          leg_[lr]3_joint: 2.0
+          leg_[lr]4_joint: 2.0
+          leg_[lr]5_joint: 1.0
+          leg_[lr]6_joint: 1.0
+          zarm_[lr]1_joint: 1.0
+          zarm_[lr]2_joint: 1.0
+          zarm_[lr]3_joint: 1.0
+          zarm_[lr]4_joint: 1.0
+        armature:
+          waist_yaw_joint: 0.05
+          leg_[lr]1_joint: 0.05
+          leg_[lr]2_joint: 0.05
+          leg_[lr]3_joint: 0.05
+          leg_[lr]4_joint: 0.05
+          leg_[lr]5_joint: 0.02
+          leg_[lr]6_joint: 0.02
+          zarm_[lr]1_joint: 0.02
+          zarm_[lr]2_joint: 0.02
+          zarm_[lr]3_joint: 0.02
+          zarm_[lr]4_joint: 0.02
+        friction: 0
+        min_delay: 0
+        max_delay: 4
+        friction_static:
+          waist_yaw_joint: 2.0
+          leg_[lr]1_joint: 2.0
+          leg_[lr]2_joint: 2.0
+          leg_[lr]3_joint: 2.0
+          leg_[lr]4_joint: 2.0
+          leg_[lr]5_joint: 2.0
+          leg_[lr]6_joint: 2.0
+          zarm_[lr]1_joint: 1.0
+          zarm_[lr]2_joint: 1.0
+          zarm_[lr]3_joint: 1.0
+          zarm_[lr]4_joint: 1.0
+        activation_vel: 0.01
+        friction_dynamic:
+          waist_yaw_joint: 0.2
+          leg_[lr]1_joint: 0.2
+          leg_[lr]2_joint: 0.2
+          leg_[lr]3_joint: 0.2
+          leg_[lr]4_joint: 0.2
+          leg_[lr]5_joint: 0.2
+          leg_[lr]6_joint: 0.2
+          zarm_[lr]1_joint: 0.1
+          zarm_[lr]2_joint: 0.1
+          zarm_[lr]3_joint: 0.1
+          zarm_[lr]4_joint: 0.1
+    scale:
+      waist_yaw_joint: 0.2
+      leg_l1_joint: 0.2
+      leg_l2_joint: 0.1575
+      leg_l3_joint: 0.2
+      leg_l4_joint: 0.105
+      leg_l5_joint: 0.3125
+      leg_l6_joint: 0.3125
+      leg_r1_joint: 0.2
+      leg_r2_joint: 0.1575
+      leg_r3_joint: 0.2
+      leg_r4_joint: 0.105
+      leg_r5_joint: 0.3125
+      leg_r6_joint: 0.3125
+      zarm_l1_joint: 0.17625
+      zarm_l2_joint: 0.17625
+      zarm_l3_joint: 0.17625
+      zarm_l4_joint: 0.17625
+      zarm_r1_joint: 0.17625
+      zarm_r2_joint: 0.17625
+      zarm_r3_joint: 0.17625
+      zarm_r4_joint: 0.17625

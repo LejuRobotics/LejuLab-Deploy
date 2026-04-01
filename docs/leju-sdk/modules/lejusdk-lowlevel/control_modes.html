@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>电机控制模式 (CSP/CST) &mdash; LejuSDK dbf55ca 文档</title>
+  <title>电机控制模式 (CSP/CST) &mdash; LejuSDK 81a896c 文档</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                dbf55ca
+                81a896c
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#docker">Docker 运行</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
 </ul>
@@ -123,6 +125,37 @@
 <li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
 </ul>
 </li>
 </ul>
@@ -216,7 +249,6 @@
           <li class="breadcrumb-item"><a href="index.html">lejusdk-lowlevel</a></li>
       <li class="breadcrumb-item active">电机控制模式 (CSP/CST)</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/modules/lejusdk-lowlevel/control_modes.rst.txt" rel="nofollow"> 查看页面源码</a>
       </li>
   </ul>
   <hr/>
@@ -317,8 +349,8 @@ Legend:
   q_target  : Target position (rad)
   v_target  : Target velocity (rad/s)
   tau_ff    : Feedforward torque (N.m)
-  Kp        : Position gain, Simulation: N.m/rad, Real robot: driver internal unit
-  Kd        : Velocity gain, Simulation: N.m.s/rad, Real robot: driver internal unit
+  Kp        : Position gain (N.m/rad)
+  Kd        : Velocity gain (N.m.s/rad)
 </pre></div>
 </div>
 <p>参数对应关系：</p>
@@ -349,11 +381,11 @@ Legend:
 </tr>
 <tr class="row-odd"><td><p>Kp</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">cmd.kp</span></code></p></td>
-<td><p>位置增益，仿真: N·m/rad，实物: 驱动器内部单位，CST 模式下必须为 0</p></td>
+<td><p>位置增益 (N·m/rad)，CST 模式下必须为 0</p></td>
 </tr>
 <tr class="row-even"><td><p>Kd</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">cmd.kd</span></code></p></td>
-<td><p>速度增益，仿真: N·m·s/rad，实物: 驱动器内部单位，CST 模式下必须为 0</p></td>
+<td><p>速度增益 (N·m·s/rad)，CST 模式下必须为 0</p></td>
 </tr>
 </tbody>
 </table>
@@ -374,8 +406,8 @@ Legend:
 <span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target_position</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w">  </span><span class="c1">// 目标位置 (rad)</span>
 <span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">                 </span><span class="c1">// 目标速度 (rad/s)</span>
 <span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">tau</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span><span class="w">               </span><span class="c1">// 前馈力矩 (N·m)</span>
-<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="p">;</span><span class="w">              </span><span class="c1">// 位置增益，仿真: N·m/rad，实物: 驱动器内部单位</span>
-<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.0</span><span class="p">;</span><span class="w">               </span><span class="c1">// 速度增益，仿真: N·m·s/rad，实物: 驱动器内部单位</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="p">;</span><span class="w">              </span><span class="c1">// 位置增益 (N·m/rad)</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">kd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10.0</span><span class="p">;</span><span class="w">               </span><span class="c1">// 速度增益 (N·m·s/rad)</span>
 <span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MotorControlMode</span><span class="o">::</span><span class="n">CSP</span><span class="p">);</span>
 <span class="p">}</span>
 
@@ -384,20 +416,15 @@ Legend:
 </div>
 <div class="admonition warning">
 <p class="admonition-title">警告</p>
-<p>实物运行时，CSP 模式的 Kp/Kd 参数需要设置成驱动器的 Kp/Kd 参数，非国际单位。</p>
+<p>CSP 模式下，用户层的 Kp/Kd 参数需要设置成国际单位的值 (N·m/rad, N·m·s/rad)</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">警告</p>
-<p>我们会在下一个版本补充用户层 Kp/Kd 到内部转换，届时用户只需要关心用户层的 Kp/Kd 即可。</p>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>已实现</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">警告</p>
-<p>由于上述因素，仿真和实物上的 CSP 运行使用 Kp/Kd 会有所差异：</p>
-<ul class="simple">
-<li><p><strong>仿真时</strong>：使用用户层国际单位的 Kp/Kd (N·m/rad, N·m·s/rad)</p></li>
-<li><p><strong>实物时</strong>：使用驱动器内部的 Kp/Kd</p></li>
-</ul>
-</div>
+<del>我们会在下一个版本补充用户层 Kp/Kd 到内部转换，届时用户只需要关心用户层的 Kp/Kd 即可。</del></div>
 </section>
 </section>
 <section id="cst">

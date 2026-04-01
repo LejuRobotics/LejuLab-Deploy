@@ -98,7 +98,34 @@ deploy() {
 
     # 创建 iceoryx 用户组 (多用户共享访问)
     getent group iceoryx > /dev/null || sudo groupadd iceoryx
-    sudo usermod -aG iceoryx "$USER"
+
+    ensure_user_in_group() {
+        local u="$1" g="$2"
+        # 用户不存在就跳过
+        getent passwd "$u" >/dev/null || return 0
+
+        # 已经在组里就不重复操作
+        if id -nG "$u" | tr ' ' '\n' | grep -qx "$g"; then
+            echo "用户 $u 已在组 $g 中"
+            return 0
+        fi
+
+        echo "将用户 $u 加入组 $g"
+        sudo usermod -aG "$g" "$u"
+    }
+
+    # root 和 $USER 一定有；lab 有才加
+    declare -A _seen=()
+    for u in root "$USER"; do
+        _seen["$u"]=1
+    done
+    if getent passwd lab >/dev/null; then
+        _seen["lab"]=1
+    fi
+
+    for u in "${!_seen[@]}"; do
+        ensure_user_in_group "$u" iceoryx
+    done
 
     # 安装 iox-roudi 到系统目录
     sudo mkdir -p "${ICEORYX_INSTALL}/bin"
@@ -147,7 +174,9 @@ EOF
     echo ""
     echo "=== 部署完成 ==="
     echo ""
-    echo -e "\033[1;33m【重要】当前用户已加入 iceoryx 组，需要注销当前用户重新登录或重启系统才能生效\033[0m"
+    echo -e "\033[1;33m【重要】当前用户与 root 已加入 iceoryx 组，但需要重新获取组身份后才生效：\033[0m"
+    echo -e "\033[1;33m  - 对普通用户：注销/重新登录 或 newgrp iceoryx\033[0m"
+    echo -e "\033[1;33m  - 对 root：重新登录 root shell 或 newgrp iceoryx（或用 sg iceoryx -c '...' 运行程序）\033[0m"
 }
 
 remove() {

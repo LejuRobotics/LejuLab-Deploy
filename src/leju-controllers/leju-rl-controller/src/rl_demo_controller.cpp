@@ -15,6 +15,7 @@ bool RLDemoConfig::loadFromYaml(YAML::Node root_node) {
 
   YAML::Node robot = humanoid_cfg["env"]["robot"];
   joint_names = robot["joint_names"].as<std::vector<std::string>>();
+  auto joint_direction_vec = robot["joint_direction"].as<std::vector<double>>();
   auto joint_default_pos = robot["joint_default_pos"].as<std::vector<double>>();
   auto joint_torque_limit =
       robot["joint_torque_limit"].as<std::vector<double>>();
@@ -24,6 +25,8 @@ bool RLDemoConfig::loadFromYaml(YAML::Node root_node) {
       robot["actuator_control_mode"].as<std::vector<int>>();
   auto v_action_scale = robot["action_scale"].as<std::vector<double>>();
 
+  joint_direction = Eigen::Map<const Eigen::ArrayXd>(joint_direction_vec.data(),
+                                                     joint_direction_vec.size());
   q_default = Eigen::Map<const Eigen::ArrayXd>(joint_default_pos.data(),
                                                joint_default_pos.size());
   torque_limit = Eigen::Map<const Eigen::ArrayXd>(joint_torque_limit.data(),
@@ -105,8 +108,7 @@ void RLDemoController::jointStateCallback(
   robot_state_msg_cnt_++;
 }
 
-void RLDemoController::hwStateCallback(
-    const StringDataConstPtr& hw_state) {
+void RLDemoController::hwStateCallback(const StringDataConstPtr& hw_state) {
   std::lock_guard<std::mutex> lock(hw_state_mutex_);
   hw_state_ = leju::String2HwState(hw_state->data);
   hw_state_msg_cnt_++;
@@ -116,12 +118,15 @@ void RLDemoController::joyDataCallback(const JoyDataConstPtr& joy) {
   std::lock_guard<std::mutex> joy_lock(joy_data_mutex_);
   joy_prev_ = joy_;
   joy_ = *joy;
-  // for (int i = 0; i < 16; i++) {
-  //   if (joy_.buttons[i] && (!joy_prev_.buttons[i])) {
-  //     buttons_press_[i]++;
-  //   }
-  // }
-  #define CALC_PRESS(name) {buttons_press_.name += joy_.buttons.name && !joy_prev_.buttons.name;}
+// for (int i = 0; i < 16; i++) {
+//   if (joy_.buttons[i] && (!joy_prev_.buttons[i])) {
+//     buttons_press_[i]++;
+//   }
+// }
+#define CALC_PRESS(name)                                                 \
+  {                                                                      \
+    buttons_press_.name += joy_.buttons.name && !joy_prev_.buttons.name; \
+  }
   CALC_PRESS(south)
   CALC_PRESS(east)
   CALC_PRESS(west)
@@ -138,7 +143,7 @@ void RLDemoController::joyDataCallback(const JoyDataConstPtr& joy) {
   CALC_PRESS(dpad_left)
   CALC_PRESS(dpad_right)
   CALC_PRESS(misc1)
-  #undef CALC_PRESS
+#undef CALC_PRESS
 
   joy_data_msg_cnt_++;
 }
@@ -146,6 +151,29 @@ void RLDemoController::joyDataCallback(const JoyDataConstPtr& joy) {
 bool RLDemoController::load_cfg(const std::string& config_file) {
   YAML::Node cfg_node = YAML::LoadFile(config_file);
   cfg_.loadFromYaml(cfg_node);
+
+  // Load cmd_stance config (optional)
+  YAML::Node humanoid_cfg = cfg_node["HumanoidRobotCfg"];
+  if (humanoid_cfg["cmd_stance"]) {
+    CmdStanceConfig cs_cfg;
+    auto cs_node = humanoid_cfg["cmd_stance"];
+    if (cs_node["smart_stop"]) {
+      cs_cfg.smart_stop_enabled =
+          cs_node["smart_stop"]["enabled"].as<bool>(true);
+      cs_cfg.torso_velocity_threshold =
+          cs_node["smart_stop"]["torso_velocity_threshold"]
+              .as<double>(0.05);
+      cs_cfg.feet_alignment_threshold =
+          cs_node["smart_stop"]["feet_alignment_threshold"]
+              .as<double>(0.08);
+    }
+    if (cs_node["velocity_magnitude_threshold"]) {
+      cs_cfg.velocity_magnitude_threshold =
+          cs_node["velocity_magnitude_threshold"].as<double>(0.01);
+    }
+    cmd_stance_calculator_.setConfig(cs_cfg);
+  }
+
   decimation_ = std::round(cfg_.policy_dt / cfg_.loop_dt);
   if (decimation_ != cfg_.policy_dt / cfg_.loop_dt) {
     std::cerr << "[WARN] [RLDemoController::load_cfg] "
@@ -174,6 +202,7 @@ bool RLDemoController::load_cfg(const std::string& config_file) {
   }
   policy_obs_shape_ = shape_single_obs * cfg_.history_length;
   policy_obs_.resize(policy_obs_shape_);
+  policy_obs_ = 0.;
   if (cfg_.stack_order_is_isaaclab) {
     obs_term_stacks_.resize(cfg_.obs_terms.size());
     for (int i = 0; i < cfg_.obs_terms.size(); i++) {
@@ -194,6 +223,41 @@ bool RLDemoController::load_cfg(const std::string& config_file) {
     }
   }
   policy_action_.resize(policy_joint_count_);
+  policy_action_ = 0.;
+
+  // Load arm_controller config (optional)
+  if (humanoid_cfg["arm_controller"]) {
+    ArmControllerConfig ac_cfg;
+    auto ac_node = humanoid_cfg["arm_controller"];
+    ac_cfg.enabled = ac_node["enabled"].as<bool>(true);
+    ac_cfg.interpolation_velocity =
+        ac_node["interpolation_velocity"].as<double>(1.0);
+    ac_cfg.min_duration = ac_node["min_duration"].as<double>(0.2);
+    ac_cfg.max_duration = ac_node["max_duration"].as<double>(2.0);
+    arm_controller_.setConfig(ac_cfg);
+
+    int leg_count = ac_node["leg_joint_count"].as<int>(12);
+    int waist_count = ac_node["waist_joint_count"].as<int>(0);
+    arm_start_index_ = leg_count + waist_count;
+    arm_joint_count_ = policy_joint_count_ - arm_start_index_;
+    if (arm_joint_count_ > 0 && arm_start_index_ < policy_joint_count_) {
+      Eigen::VectorXd default_arm(arm_joint_count_);
+      for (int i = 0; i < arm_joint_count_; i++) {
+        default_arm[i] = cfg_.q_default[arm_start_index_ + i];
+      }
+      arm_controller_.init(arm_start_index_, arm_joint_count_, default_arm);
+    }
+  }
+
+  // Load hardware_override_kp_kd (optional): 前 15 关节下发时覆盖 kp/kd，与 kuavo.json 一致
+  if (humanoid_cfg["hardware_override_kp_kd"]) {
+    auto kp_vec = humanoid_cfg["hardware_override_kp_kd"]["kp"].as<std::vector<double>>();
+    auto kd_vec = humanoid_cfg["hardware_override_kp_kd"]["kd"].as<std::vector<double>>();
+    if (kp_vec.size() == 15u && kd_vec.size() == 15u) {
+      hardware_override_kp_15_ = std::move(kp_vec);
+      hardware_override_kd_15_ = std::move(kd_vec);
+    }
+  }
 
   // std::cout << "cfg:" << std::endl;
   // std::cout << "\tloop_dt: " << cfg.loop_dt << std::endl;
@@ -209,7 +273,8 @@ bool RLDemoController::load_cfg(const std::string& config_file) {
 bool RLDemoController::load_policy() {
   // Extract config directory from config file path using filesystem
   std::filesystem::path config_path(config_file_path_);
-  std::string policy_path = (config_path.parent_path() / cfg_.policy_path).string();
+  std::string policy_path =
+      (config_path.parent_path() / cfg_.policy_path).string();
 
   compiled_model_ = core_.compile_model(policy_path, "CPU");
   input_port_ = compiled_model_.input();
@@ -310,10 +375,26 @@ void RLDemoController::jointMoveTo(const std::vector<double>& joint_target_pos,
     cmd.modes = mode;
     cmd.v = joint_demand_vel;
     cmd.tau = joint_demand_tau;
+    applyHardwareKpKdOverride(cmd);
     robot.publishRobotCmd(cmd);
     // TODO use loop rate sleep
     std::this_thread::sleep_for(
         std::chrono::milliseconds(static_cast<int>(cfg_.loop_dt * 1000)));
+  }
+}
+
+void RLDemoController::applyHardwareKpKdOverride(RobotCmd& cmd) {
+  if (hardware_override_kp_15_.size() != 15u || hardware_override_kd_15_.size() != 15u ||
+      cmd.kp.size() < 21u || cmd.kd.size() < 21u) {
+    return;
+  }
+  // 15 个值对应：左腿6(0-5) + 右腿6(6-11) + 腰1(12) + 左臂第1(13) + 右臂第1(20，左臂7个之后)
+  // 索引 14-19 左臂其余、21-26 右臂其余、27-28 头部：不覆盖，保持 cmd 原值（主循环中头部为 updateRobotCmd 的默认 100/10）
+  const size_t kOverrideIndices[15] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 20};
+  for (size_t i = 0; i < 15u; i++) {
+    size_t j = kOverrideIndices[i];
+    cmd.kp[j] = hardware_override_kp_15_[i];
+    cmd.kd[j] = hardware_override_kd_15_[i];
   }
 }
 
@@ -406,28 +487,73 @@ void RLDemoController::updateRobotCmd() {
     policy_q[i] = robot_state.q[policy_joint_ids_[i]];
     policy_v[i] = robot_state.v[policy_joint_ids_[i]];
   }
-  // std::cout << "hello" << std::endl;
   Eigen::ArrayXd policy_q_target =
-      cfg_.q_default + policy_action_ * cfg_.action_scale;
-  // TODO assume control_mode is 0 or 2 now
-  Eigen::ArrayXd policy_torque_demand =
-      (cfg_.control_mode == 0)
-          .select(
-              cfg_.kp * (policy_q_target - policy_q) + cfg_.kd * (-policy_v),
-              cfg_.kp * (policy_q_target - policy_q));
+      cfg_.joint_direction * (cfg_.q_default + policy_action_ * cfg_.action_scale);
   for (int i = 0; i < motor_count_; i++) {
     cmd_.modes[i] = 2;  // set default to position control
     cmd_.kp[i] = 100.;  // TODO load default value from config
     cmd_.kd[i] = 10.;
   }
   for (int i = 0; i < policy_joint_count_; i++) {
-    cmd_.q[policy_joint_ids_[i]] = policy_q[i];
-    cmd_.v[policy_joint_ids_[i]] = 0.;
-    cmd_.tau[policy_joint_ids_[i]] = policy_torque_demand[i];
-    cmd_.modes[policy_joint_ids_[i]] = cfg_.control_mode[i];
-    cmd_.kp[policy_joint_ids_[i]] = cfg_.kp[i];
-    cmd_.kd[policy_joint_ids_[i]] = cfg_.kd[i];
+    int motor_id = policy_joint_ids_[i];
+    cmd_.v[motor_id] = 0.;
+
+    if (cfg_.control_mode[i] == 2) {
+      // CSP: 软件PD计算力矩，通过前馈力矩发送，位置设为当前值
+      cmd_.q[motor_id] = policy_q[i];
+      cmd_.tau[motor_id] = cfg_.kp[i] * (policy_q_target[i] - policy_q[i]);
+    } else if (cfg_.control_mode[i] == 1) {
+      // CSV: 位置误差 → 力矩
+      cmd_.q[motor_id] = policy_q[i];
+      cmd_.tau[motor_id] = cfg_.kp[i] * (policy_q_target[i] - policy_q[i]);
+    } else {
+      // CST: PD 控制 → 力矩
+      cmd_.q[motor_id] = policy_q[i];
+      cmd_.tau[motor_id] = cfg_.kp[i] * (policy_q_target[i] - policy_q[i]) +
+                           cfg_.kd[i] * (-policy_v[i]);
+    }
+    cmd_.modes[motor_id] = cfg_.control_mode[i] == 0 ? 0 : 2;
+    if (cfg_.control_mode[i] == 0) {
+      ////////////////////////////////////////////////
+      // mode 0 (CST): 软件已计算完整PD力矩，硬件层不需要再做PD反馈
+      // 硬件控制律: final = tau + kp*(q_cmd-q) + kd*(v_cmd-v)
+      // 设 kp=kd=0 避免双重阻尼
+      /////////////////////////////////////////////////
+      cmd_.kp[motor_id] = 0.;
+      cmd_.kd[motor_id] = 0.;
+    } else {
+      cmd_.kp[motor_id] = cfg_.kp[i];
+      cmd_.kd[motor_id] = cfg_.kd[i];
+    }
     cmd_.timestamp = leju::common::GetUnixTimestampS();
+  }
+
+  // 手臂控制器：站立时平滑插值到默认姿态，行走时使用 RL 输出
+  if (arm_joint_count_ > 0) {
+    double cmd_stance = get_obs_cmd_stance()(0);
+    Eigen::VectorXd current_arm_pos(arm_joint_count_);
+    Eigen::VectorXd current_arm_vel(arm_joint_count_);
+    for (int i = 0; i < arm_joint_count_; i++) {
+      current_arm_pos[i] = policy_q[arm_start_index_ + i];
+      current_arm_vel[i] = policy_v[arm_start_index_ + i];
+    }
+    Eigen::VectorXd desire_arm_q, desire_arm_v;
+    if (arm_controller_.update(cmd_stance, current_arm_pos, current_arm_vel,
+                              std::chrono::steady_clock::now(), &desire_arm_q,
+                              &desire_arm_v)) {
+      for (int i = 0; i < arm_joint_count_; i++) {
+        int policy_idx = arm_start_index_ + i;
+        int motor_idx = policy_joint_ids_[policy_idx];
+        cmd_.q[motor_idx] = desire_arm_q[i];
+        cmd_.v[motor_idx] = desire_arm_v[i];
+        if (cfg_.control_mode[policy_idx] == 2) {
+          cmd_.tau[motor_idx] = 0.;
+        } else {
+          cmd_.tau[motor_idx] =
+              cfg_.kp[policy_idx] * (desire_arm_q[i] - policy_q[policy_idx]);
+        }
+      }
+    }
   }
   // std::cout << "[DEBUG] [RLDemoController::updateRobotCmd] "
   //           << "policy_q: " << policy_q.transpose() << std::endl;
@@ -447,6 +573,8 @@ Eigen::ArrayXd RLDemoController::get_obs_term(const std::string& name) {
     return get_obs_projected_gravity();
   } else if (name == "velocity_commands") {
     return get_obs_velocity_commands();
+  } else if (name == "cmd_stance") {
+    return get_obs_cmd_stance();
   } else if (name == "joint_pos") {
     return get_obs_joint_pos();
   } else if (name == "joint_vel") {
@@ -468,6 +596,8 @@ int RLDemoController::get_shape_obs_term(const std::string& name) {
     return get_shape_obs_projected_gravity();
   } else if (name == "velocity_commands") {
     return get_shape_obs_velocity_commands();
+  } else if (name == "cmd_stance") {
+    return get_shape_obs_cmd_stance();
   } else if (name == "joint_pos") {
     return get_shape_obs_joint_pos();
   } else if (name == "joint_vel") {
@@ -520,6 +650,16 @@ Eigen::ArrayXd RLDemoController::get_obs_velocity_commands() {
   return ans;
 }
 
+Eigen::ArrayXd RLDemoController::get_obs_cmd_stance() {
+  Eigen::ArrayXd velocity_commands = get_obs_velocity_commands();
+  Eigen::Vector3d vel(velocity_commands(0), velocity_commands(1),
+                     velocity_commands(2));
+  double cmd_stance = cmd_stance_calculator_.computeSimple(vel);
+  Eigen::ArrayXd ans(1);
+  ans(0) = cmd_stance;
+  return ans;
+}
+
 Eigen::ArrayXd RLDemoController::get_obs_joint_pos() {
   RobotState robot_state = getRobotState();
   Eigen::ArrayXd policy_q(policy_joint_count_);
@@ -527,7 +667,7 @@ Eigen::ArrayXd RLDemoController::get_obs_joint_pos() {
     policy_q(i) = robot_state.q[policy_joint_ids_[i]];
   }
   Eigen::ArrayXd ans(policy_joint_count_);
-  ans = policy_q - cfg_.q_default;
+  ans = cfg_.joint_direction * (policy_q - cfg_.q_default);
   return ans;
 }
 
@@ -538,7 +678,7 @@ Eigen::ArrayXd RLDemoController::get_obs_joint_vel() {
     policy_v(i) = robot_state.v[policy_joint_ids_[i]];
   }
   Eigen::ArrayXd ans(policy_joint_count_);
-  ans = policy_v;
+  ans = cfg_.joint_direction * policy_v;
   return ans;
 }
 
@@ -549,6 +689,8 @@ int RLDemoController::get_shape_obs_base_ang_vel() const { return 3; }
 int RLDemoController::get_shape_obs_projected_gravity() const { return 3; }
 
 int RLDemoController::get_shape_obs_velocity_commands() const { return 3; }
+
+int RLDemoController::get_shape_obs_cmd_stance() const { return 1; }
 
 int RLDemoController::get_shape_obs_joint_pos() const {
   return policy_joint_count_;
@@ -649,12 +791,12 @@ void RLDemoController::start() {
   std::cout << std::endl;
   std::cout << "[INFO] [RLDemoController::start] "
             << "data available now." << std::endl;
-  
+
   while (true) {
-    if (getHardwareState()==leju::HardwareState::READY_OK) break;
+    if (getHardwareState() == leju::HardwareState::READY_OK) break;
     std::cout << "wait for hardware state ready..." << std::endl;
   }
-  
+
   std::cout
       << "[INFO] [RLDemoController::start] robot move to joint default pos"
       << std::endl;
@@ -662,18 +804,27 @@ void RLDemoController::start() {
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   std::vector<double> joint_target_pos(motor_count_);
   for (int i = 0; i < policy_joint_count_; i++) {
-    joint_target_pos[policy_joint_ids_[i]] = cfg_.q_default[i];
+    joint_target_pos[policy_joint_ids_[i]] = cfg_.joint_direction[i] * cfg_.q_default[i];
   }
+  // std::cout << "[DEBUG] [RLDemoController::start] cfg_.joint_direction: " << cfg_.joint_direction.transpose() << std::endl;
+  // std::cout << "[DEBUG] [RLDemoController::start] cfg_.q_default: " << cfg_.q_default.transpose() << std::endl;
+  // std::cout << "policy_joint_count_: " << policy_joint_count_ << std::endl;
   jointMoveTo(joint_target_pos, 3.0);
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   std::cout << "[INFO] [RLDemoController::start] joint default pos reached."
             << std::endl;
 
-  std::cout << std::endl;          
-  std::cout << "\033[1;32m------------------------------------------------\033[0m" << std::endl;
-  std::cout << "\033[1;32m- press gamepad button `start` to run rl policy.  \033[0m"<< std::endl;
-  std::cout << "\033[1;32m------------------------------------------------\033[0m" << std::endl;
-  
+  std::cout << std::endl;
+  std::cout
+      << "\033[1;32m------------------------------------------------\033[0m"
+      << std::endl;
+  std::cout
+      << "\033[1;32m- press gamepad button `start` to run rl policy.  \033[0m"
+      << std::endl;
+  std::cout
+      << "\033[1;32m------------------------------------------------\033[0m"
+      << std::endl;
+
   while (true) {
     bool press_start = false;
     {
@@ -715,6 +866,7 @@ void RLDemoController::mainLoop() {
     // std::cout << "end update robot cmd." << std::endl;
 
     // publish command;
+    applyHardwareKpKdOverride(cmd_);
     bool success = robot.publishRobotCmd(cmd_);
     if (!success) {
       std::cout << "Failed to publish cmd." << std::endl;
@@ -735,14 +887,15 @@ void RLDemoController::mainLoop() {
     // std::this_thread::sleep_for(
     //     std::chrono::milliseconds(static_cast<int>(1000 * cfg_.loop_dt)));
   }
-  for (int i=0; i<50; i++) {
+  for (int i = 0; i < 50; i++) {
     RobotCmd cmd;
     cmd.resize(motor_count_);
+    applyHardwareKpKdOverride(cmd);
     robot.publishRobotCmd(cmd);
     std::this_thread::sleep_for(
         std::chrono::milliseconds(static_cast<int>(1000 * cfg_.loop_dt)));
   }
-  
+
   // Stop Robot
   robot.publishStopRobot();
   robot.publishStopRobot();

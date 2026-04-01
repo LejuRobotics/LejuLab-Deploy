@@ -1,8 +1,8 @@
-prefix=/media/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab
+prefix=/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab
 
 Name: lejusdk-topic-pubsub
 Description: Description of lejusdk-topic-pubsub
 Version: 0.0.0
-Cflags: -I${prefix}/include -I/media/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/src/lejusdk/3rd_party/cyclonedds-0.10.2/include -I/media/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/src/lejusdk/3rd_party/cyclonedds-cxx-0.10.2/include/ddscxx
+Cflags: -I${prefix}/include -I/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/src/lejusdk/3rd_party/cyclonedds-0.10.2/include -I/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/src/lejusdk/3rd_party/cyclonedds-cxx-0.10.2/include/ddscxx
 Libs: -L${prefix}/lib 
 Requires: 

@@ -10,8 +10,11 @@
 
 #include "leju-rl-controller/controllers/controller_base.h"
 #include "leju-rl-controller/robot_data.h"
+#include "lejusdk-vr/lejusdk_vr.h"
 
 namespace leju {
+
+class VelocityManager;
 
 /**
  * @brief 控制器条目
@@ -90,6 +93,8 @@ class ControllerManager {
    */
   void dispatchJoyInput(const JoyData& joy, const JoyData::Buttons& prev_buttons);
 
+  void setVelocityManager(VelocityManager* mgr) { velocity_manager_ = mgr; }
+
   /////////////////////////////// Controller Interface ///////////////////////////////////
 
     /**
@@ -146,6 +151,19 @@ class ControllerManager {
    */
   std::vector<std::string> getControllerNames() const;
 
+  // ==================== 外部接口 ====================
+
+  /**
+   * @brief 初始化外部接口（VR SDK）
+   *
+   * 在 initialize() 内部调用，设置：
+   * - DDS Topic 订阅（手臂/腰部/速度指令）
+   * - RPC 服务处理函数（切换控制器/设置模式/获取状态）
+   *
+   * @return true 成功，false 失败
+   */
+  bool initExternalInterface();
+
  private:
   /**
    * @brief 从配置文件加载控制器列表
@@ -161,11 +179,72 @@ class ControllerManager {
   bool waitForDataReady();
 
   /**
-  /**
    * @brief 将机器人移动到默认关节位置
    * @param elapse 过渡时间（秒）
    */
   void moveToDefaultPos(double elapse = 3.0);
+
+  // ==================== 外部接口回调 ====================
+
+  /**
+   * @brief 处理手臂关节指令
+   * @param cmd 关节轨迹点
+   */
+  void onArmJointCmd(const vr::JointTrajectoryPoint& cmd);
+
+  /**
+   * @brief 处理腰部关节指令
+   * @param cmd 关节轨迹点
+   */
+  void onWaistJointCmd(const vr::JointTrajectoryPoint& cmd);
+
+  /**
+   * @brief 处理头部关节指令
+   * @param cmd 关节轨迹点
+   */
+  void onHeadJointCmd(const vr::JointTrajectoryPoint& cmd);
+
+  /**
+   * @brief 处理 VR 输入速度指令
+   * @param cmd VR 速度指令
+   */
+  void onVrVelocityCmd(const vr::VrVelocityCmd& cmd);
+
+  /**
+   * @brief 处理控制器输入速度指令
+   * @param cmd 速度指令
+   */
+  void onResolvedVelocityCmd(const vr::VelocityCmd& cmd);
+
+  /**
+   * @brief 处理切换控制器请求
+   * @param name 目标控制器名称
+   * @param[out] message 返回消息
+   * @return 是否成功
+   */
+  bool onSwitchController(const std::string& name, std::string& message);
+
+  /**
+   * @brief 处理设置手臂模式请求
+   * @param mode 目标模式
+   * @param[out] message 返回消息
+   * @return 是否成功
+   */
+  bool onSetArmMode(vr::ControlMode mode, std::string& message);
+
+  /**
+   * @brief 处理设置腰部模式请求
+   * @param mode 目标模式
+   * @param[out] message 返回消息
+   * @return 是否成功
+   */
+  bool onSetWaistMode(vr::ControlMode mode, std::string& message);
+
+  /**
+   * @brief 处理获取控制器状态请求
+   * @return 控制器状态
+   */
+  vr::ControllerState onGetState();
 
 private:  
   mutable std::recursive_mutex controllers_mutex_;              ///< 控制器列表锁
@@ -181,6 +260,20 @@ private:
   std::condition_variable start_cv_;                            ///< 启动信号条件变量
   std::atomic<bool> start_triggered_{false};                    ///< 启动信号标志
   std::atomic<bool> ready_for_start_{false};                    ///< 数据就绪，可接受启动信号
+
+  // 外部接口
+  std::unique_ptr<vr::VRBaseAPI> vr_api_;                       ///< VR SDK 接口
+  VelocityManager* velocity_manager_ = nullptr;                 ///< 统一速度管理器（非拥有）
+
+  // 头部指令缓存（直接透传，无需控制器）
+  mutable std::mutex head_cmd_mutex_;
+  vr::JointTrajectoryPoint head_cmd_;
+  bool head_cmd_received_{false};
+
+  // 速度指令缓存
+  mutable std::mutex velocity_cmd_mutex_;
+  vr::VelocityCmd velocity_cmd_;
+  bool velocity_cmd_received_{false};
 };
 
 }  // namespace leju

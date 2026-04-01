@@ -18,6 +18,7 @@ ROBAN2_1_SINGLE_SOURCE_CONFIG_FILE="$PROJECT_DIR/src/leju-hardware/config/roban2
 
 # Kuavo5
 KUAVO5_DUAL_SOURCE_CONFIG_FILE="$PROJECT_DIR/src/leju-hardware/config/kuavo5_dual_canbus_cofig.yaml"
+KUAVO5_V53_DUAL_SOURCE_CONFIG_FILE="$PROJECT_DIR/src/leju-hardware/config/kuavo5_v53_dual_canbus_cofig.yaml"
 
 # 打印带颜色的标题
 echo_title() {
@@ -448,7 +449,7 @@ configure_kuavo() {
     local robot_type="$1"
     echo_success "🤖 配置 $robot_type 机器人"
 
-    # kuavo5 只支持双总线，直接设置为双总线
+    # kuavo5 / kuavo5_v53 只支持双总线，直接设置为双总线
     local wiring_type="dual_bus"
 
     # 选择手部协议类型
@@ -460,6 +461,9 @@ configure_kuavo() {
     case "$robot_type" in
         "kuavo5")
             dual_config_file="$KUAVO5_DUAL_SOURCE_CONFIG_FILE"
+            ;;
+        "kuavo5_v53")
+            dual_config_file="$KUAVO5_V53_DUAL_SOURCE_CONFIG_FILE"
             ;;
     esac
 
@@ -535,9 +539,9 @@ main() {
     fi
 
     # 选择机器人类型
-    local robot_options=("roban2.0" "roban2.1" "kuavo5")
+    local robot_options=("roban2.0" "roban2.1" "kuavo5" "kuavo5_v53")
     show_menu "选择机器人类型" "${robot_options[@]}"
-    get_user_selection 3 robot_selection
+    get_user_selection 4 robot_selection
 
     local robot_type="${robot_options[$((robot_selection-1))]}"
     echo_success "选择机器人类型: $robot_type"
@@ -548,7 +552,7 @@ main() {
         "roban2.0"|"roban2.1")
             configure_roban2 "$robot_type"
             ;;
-        "kuavo5")
+        "kuavo5"|"kuavo5_v53")
             configure_kuavo "$robot_type"
             ;;
     esac

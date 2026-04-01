@@ -1,0 +1,52 @@
+# Quest3 增量 IK 参数（与 kuavo launch_quest3_ik.launch 对齐）
+quest3:
+  # 增量控制 - IncrementalControlConfig
+  fhan_r: 3000.0
+  fhan_kh0: 4.0
+  delta_scale: [1.36, 1.36, 1.36]
+  delta_scale_roll: 1.0
+  delta_scale_pitch: 1.0
+  delta_scale_yaw: 1.0
+  max_pos_diff: 0.45
+  arm_move_threshold: 0.002
+  use_incremental_hand_orientation: true
+  # 四元数限制 (rad)
+  zyx_limits_final: [1.4923, 1.4923, 1.4923]
+  zyx_limits_ee: [1.4923, 1.4923, 1.4923]
+  zyx_limits_link4: [1.5708, 0.6, 0.6]
+  # 手部约束
+  sphere_radius_limit: 0.6
+  min_reachable_distance: 0.08
+  elbow_min_distance: 0.16
+  elbow_max_distance: 0.24
+  box_min_bound: [0.0, -0.6, -0.19]
+  box_max_bound: [0.4, 0.6, 0.4]
+  chest_offset_y_ax: 0.05
+  left_center: [0.0, 0.02, 0.0]
+  right_center: [0.0, -0.02, 0.0]
+  default_left_hand_pos_on_exit: [0.0, 0.293, -0.16]
+  default_right_hand_pos_on_exit: [0.0, -0.293, -0.16]
+  hand_changing_mode_threshold: 0.085
+  drake_velocity_ik_weights:
+    q11: 0.5
+    q12: 0.5
+    q2: 500.0
+    qv1: 0.05
+    qv2: 0.001
+  drake_velocity_ik_bounds:
+    x_upper_offset: 0.6
+    z_lower: -0.3
+    z_upper_offset: 0.1
+    left_y_lower: -0.2
+    left_y_upper_offset: 0.5
+    right_y_lower_offset: -0.5
+    right_y_upper: 0.2
+  drake_velocity_ik_geometry:
+    l1: 0.2837
+    l2: 0.2335
+    left_p0: [-0.017499853, 0.2927, 0.4245]
+    right_p0: [-0.017499853, -0.2927, 0.4245]
+  # 关节滤波（lejulab 若未实现可忽略）
+  fhan_r_joint: 3000.0
+  fhan_kh0_joint: 4.0
+  max_joint_velocity: 300.0

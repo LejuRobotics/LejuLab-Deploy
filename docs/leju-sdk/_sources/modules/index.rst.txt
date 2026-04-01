@@ -7,6 +7,4 @@
    lejusdk-utils/index
    lejusdk-lowlevel/index
    lejusdk-highlevel/index
-
-.. 预留模块 (开发中，暂不包含在文档中):
-.. lejusdk-vr/index
+   lejusdk-vr/index

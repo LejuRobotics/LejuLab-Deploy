@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lejusdk-utils &mdash; LejuSDK dbf55ca 文档</title>
+  <title>lejusdk-utils &mdash; LejuSDK 81a896c 文档</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                dbf55ca
+                81a896c
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#docker">Docker 运行</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
 </ul>
@@ -123,6 +125,37 @@
 <li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
 </ul>
 </li>
 </ul>
@@ -215,7 +248,6 @@
           <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
       <li class="breadcrumb-item active">lejusdk-utils</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/modules/lejusdk-utils/index.rst.txt" rel="nofollow"> 查看页面源码</a>
       </li>
   </ul>
   <hr/>

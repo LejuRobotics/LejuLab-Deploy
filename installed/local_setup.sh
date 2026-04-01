@@ -3,7 +3,7 @@
 
 # since this file is sourced either use the provided _CATKIN_SETUP_DIR
 # or fall back to the destination set at configure time
-: ${_CATKIN_SETUP_DIR:=/media/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab}
+: ${_CATKIN_SETUP_DIR:=/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab}
 CATKIN_SETUP_UTIL_ARGS="--extend --local"
 . "$_CATKIN_SETUP_DIR/setup.sh"
 unset CATKIN_SETUP_UTIL_ARGS

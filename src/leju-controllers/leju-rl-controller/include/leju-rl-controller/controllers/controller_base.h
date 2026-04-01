@@ -4,9 +4,12 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 #include "leju-rl-controller/inference/inference_model.h"
+#include "leju-rl-controller/rl/multi_mode_arm_controller.h"
 #include "leju-rl-controller/rl/rl_controller_types.h"
+#include "leju-rl-controller/rl/waist_controller.h"
 #include "lejusdk-lowlevel/leju_sdk.h"
 
 namespace leju {
@@ -42,24 +45,6 @@ class ControllerBase {
   virtual void reset();
 
   /**
-   * @brief 执行一次控制更新
-   *
-   * Robot -> [RobotState/ImuData] -> ControllerManager -> controller->update() -> [RobotCmd] -> Robot
-   *                                                              |
-   *            +-----------------------------------------------------------------------------------------+
-   *            | computeObservation() -> model_->infer() -> computeActions() -> updateRobotCmd()         |
-   *            +-----------------------------------------------------------------------------------------+
-   *
-   * @param time 当前时间戳 [s]
-   * @param state 当前关节状态
-   * @param imu IMU 数据
-   * @param[out] cmd 输出的控制指令
-   * @return 成功返回 true
-   */
-  virtual bool update(double time, const RobotState& state, const ImuData& imu,
-                      RobotCmd& cmd) = 0;
-
-  /**
    * @brief 暂停控制器（kRunning -> kPaused），保留内部状态
    */
   virtual void pause();
@@ -68,6 +53,27 @@ class ControllerBase {
    * @brief 恢复控制器（-> kRunning），内部调用 reset() 重置状态
    */
   virtual void resume();
+
+  /**
+   * @brief 执行一次控制更新（模板方法，不可覆写）
+   *
+   * Data flow:
+   *
+   * Robot -> [RobotState/ImuData] -> ControllerManager -> controller->update() -> [RobotCmd] -> Robot
+   *                                                              |
+   *     +--------------------------------------------------------------------------------------------+
+   *     | 1. updateImpl() [子类: computeObservation -> infer -> computeActions -> updateRobotCmd]   |
+   *     | 2. updateArmCommand()  [覆盖手臂关节]                                                      |
+   *     | 3. updateWaistCommand() [覆盖腰部关节]                                                     |
+   *     +--------------------------------------------------------------------------------------------+
+   *
+   * @param time 当前时间戳 [s]
+   * @param state 当前关节状态
+   * @param imu IMU 数据
+   * @param[out] cmd 输出的控制指令
+   * @return 成功返回 true
+   */
+  bool update(double time, const RobotState& state, const ImuData& imu, RobotCmd& cmd);
 
   /**
    * @brief 设置速度指令（用于遥控）
@@ -111,7 +117,7 @@ class ControllerBase {
   virtual void waitNextCycle(std::chrono::steady_clock::time_point cycle_start);
 
   /// @brief 获取控制频率 [Hz]
-  int getControlFrequency() const { return control_frequency_; }
+  int getControlFrequency() const { return static_cast<int>(1.0 / loop_dt_); }
 
   /**
    * @brief 接收手柄原生输入
@@ -124,13 +130,72 @@ class ControllerBase {
    */
   virtual void onJoyInput(const JoyData& joy, const JoyData::Buttons& prev_buttons);
 
+  // ===================== 部位控制器访问接口 =====================
+
+  /**
+   * @brief 获取手臂控制器
+   * @return 手臂控制器指针，如果不存在则返回 nullptr
+   */
+  MultiModeArmController* getArmController() { return arm_controller_.get(); }
+
+  /**
+   * @brief 获取腰部控制器
+   * @return 腰部控制器指针，如果不存在则返回 nullptr
+   */
+  WaistController* getWaistController() { return waist_controller_.get(); }
+
  protected:
+  // ===================== 模板方法：子类必须实现 =====================
+
+  /**
+   * @brief 执行具体的控制更新逻辑（子类实现）
+   *
+   * 由 update() 调用，子类在此实现 RL 推理或其他控制逻辑。
+   * 注意：current_state_ 和 current_imu_ 已由 update() 缓存。
+   *
+   * @param time 当前时间戳 [s]
+   * @param state 当前关节状态
+   * @param imu IMU 数据
+   * @param[out] cmd 输出的控制指令
+   * @return 成功返回 true
+   */
+  virtual bool updateImpl(double time, const RobotState& state,
+                          const ImuData& imu, RobotCmd& cmd) = 0;
+
+  // ===================== 部位控制器更新（有默认实现，子类可 override）=====================
+
+  /**
+   * @brief 更新手臂控制指令
+   *
+   * 默认实现：调用 arm_controller_->update() 并覆盖 cmd 中手臂关节的目标位置。
+   * 子类可 override 实现自定义逻辑。
+   *
+   * @param[in,out] cmd 控制指令（会修改手臂关节部分）
+   */
+  virtual void updateArmCommand(RobotCmd& cmd);
+
+  /**
+   * @brief 更新腰部控制指令
+   *
+   * 默认实现：调用 waist_controller_->update() 并覆盖 cmd 中腰部关节的目标位置。
+   * 子类可 override 实现自定义逻辑。
+   *
+   * @param[in,out] cmd 控制指令（会修改腰部关节部分）
+   */
+  virtual void updateWaistCommand(RobotCmd& cmd);
+
+  // ===================== 配置加载接口 =====================
+
   /**
    * @brief 加载 YAML 配置
+   *
+   * Base 实现解析通用配置（部位控制器开关、关节名称等）。
+   * 子类 override 时应先调用 ControllerBase::loadConfig()。
+   *
    * @param config_path 配置文件路径
    * @return 成功返回 true
    */
-  virtual bool loadConfig(const std::string& config_path) = 0;
+  virtual bool loadConfig(const std::string& config_path);
 
   /**
    * @brief 加载策略模型
@@ -151,21 +216,43 @@ class ControllerBase {
    */
   virtual void updateRobotCmd(RobotCmd& cmd) = 0;
 
+  // ===================== 部位控制器配置解析 =====================
+
+  /**
+   * @brief 初始化部位控制器
+   *
+   * 根据 enable_arm_controller_、enable_waist_controller_ 配置创建控制器实例。
+   * 调用前必须先调用 buildPartJointMapping() 构建关节映射。
+   */
+  void initPartControllers();
+
+  /**
+   * @brief 构建部位关节映射
+   *
+   * 将 arm_joint_names_、waist_joint_names_ 映射到
+   * SDK 电机索引（arm_joint_ids_、waist_joint_ids_）和策略索引。
+   * 需要在 joint_names_ 和 policy_joint_ids_ 初始化后调用。
+   */
+  void buildPartJointMapping();
+
   // ===================== 控制器标识 =====================
   std::string name_;                                          ///< 名称
   ControllerState state_ = ControllerState::kUninitialized;   ///< 当前状态
 
   // ===================== 时序配置 =====================
-  int control_frequency_ = 1000;  ///< 控制频率 [Hz]
   int decimation_ = 1;            ///< 策略降采样因子
+  double loop_dt_ = 0.001;        ///< 控制周期 [s]
 
   // ===================== 关节配置 =====================
+  std::vector<std::string> joint_names_;  ///< 策略关节名称（按策略顺序）
+  std::vector<int> policy_joint_ids_;     ///< 策略关节对应的 SDK 电机索引
   array_t default_joint_pos_;   ///< 默认关节位置 [rad]
   array_t joint_kp_;            ///< 位置增益
   array_t joint_kd_;            ///< 速度增益
   array_t joint_action_scale_;  ///< 动作缩放系数
   array_t joint_torque_limit_;  ///< 力矩限制 [Nm]
   array_i joint_control_mode_;  ///< 控制模式 (0=CST, 1=CSV, 2=CSP)
+  array_t joint_direction_;     ///< 关节方向系数
 
   // ===================== 观测与动作 =====================
   array_t observations_;   ///< 当前观测向量
@@ -179,6 +266,61 @@ class ControllerBase {
   // ===================== 指令输入 =====================
   mutable std::mutex cmd_mutex_;  ///< 速度指令锁
   VelocityCommand velocity_cmd_;  ///< 当前速度指令
+
+  // ===================== 传感器数据缓存 =====================
+  RobotState current_state_;  ///< 缓存的关节状态
+  ImuData current_imu_;       ///< 缓存的 IMU 数据
+
+  // ===================== 控制步数 =====================
+  uint64_t step_count_ = 0;   ///< 策略步数计数
+
+  // ===================== 部位控制器开关 =====================
+  bool enable_arm_controller_ = false;    ///< 是否启用手臂控制器
+  bool enable_waist_controller_ = false;  ///< 是否启用腰部控制器
+
+  // ===================== 部位关节映射 =====================
+  //
+  // 【三个空间的映射关系】
+  //
+  //  Config Space          Policy Space              SDK Space
+  //  (YAML配置)            (RL策略数组)              (硬件电机)
+  //  ─────────────         ─────────────             ─────────────
+  //                        joint_names_[]:
+  //                        ┌───┬───────────┐
+  //                        │ 0 │ leg_l1    │─────────┐
+  //                        │ 1 │ leg_l2    │         │ policy_joint_ids_[]
+  //                        │...│ ...       │         │ 将策略索引转为电机号
+  //  arm_joint_names_:     │12 │ zarm_l1   │◄─┐      │
+  //  ┌─────────────┐       │13 │ zarm_l2   │  │      ▼
+  //  │ "zarm_l1"   │───────┼───┼───────────┤  │    cmd.q[]:
+  //  │ "zarm_l2"   │       │14 │ zarm_l3   │  │    ┌───┬────────┐
+  //  │ "zarm_l3"   │       │15 │ zarm_l4   │  │    │ 0 │ leg_l1 │
+  //  │ "zarm_l4"   │       └───┴───────────┘  │    │...│ ...    │
+  //  └─────────────┘              ▲           │    │12 │ zarm_l1│◄──写入
+  //        │                      │           │    │13 │ zarm_l2│◄──写入
+  //        │               arm_policy_start_  │    │14 │ zarm_l3│◄──写入
+  //        │               idx_ = 12          │    │15 │ zarm_l4│◄──写入
+  //        │                                  │    └───┴────────┘
+  //        └──────────────────────────────────┘          ▲
+  //          buildPartJointMapping() 查找                │
+  //          手臂关节在 joint_names_ 中的位置      arm_joint_ids_[]
+  //                                              = [12, 13, 14, 15]
+  //
+  // 【变量说明】
+  //   arm_joint_names_     : 配置中指定的手臂关节名 (Config Space)
+  //   arm_policy_start_idx_: 手臂在 default_joint_pos_[] 中的起始索引 (Policy Space)
+  //   arm_joint_ids_       : 手臂关节对应的 cmd.q[] 索引 (SDK Space)
+  //
+  std::vector<std::string> arm_joint_names_;
+  std::vector<std::string> waist_joint_names_;
+  std::vector<int> arm_joint_ids_;
+  std::vector<int> waist_joint_ids_;
+  int arm_policy_start_idx_ = -1;
+  int waist_policy_start_idx_ = -1;
+
+  // ===================== 部位控制器 =====================
+  std::unique_ptr<MultiModeArmController> arm_controller_;   ///< 手臂控制器
+  std::unique_ptr<WaistController> waist_controller_;        ///< 腰部控制器
 };
 
 }  // namespace leju

@@ -31,6 +31,18 @@ public:
   /// @brief 获取所有关节名称
   std::vector<std::string> getMotorNames() const override;
 
+  /// @brief 获取手臂关节名称
+  std::vector<std::string> getArmJointNames() const override;
+
+  /// @brief 获取腰部关节名称
+  std::vector<std::string> getWaistJointNames() const override;
+
+  /// @brief 获取头部关节名称
+  std::vector<std::string> getHeadJointNames() const override;
+
+  /// @brief 获取腿部关节名称
+  std::vector<std::string> getLegJointNames() const override;
+
 /** @cond INTERNAL */
 private:
   explicit KuavoHumanoid(const RobotVersion& version);

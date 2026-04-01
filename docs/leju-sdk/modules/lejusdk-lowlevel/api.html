@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lejusdk-lowlevel API &mdash; LejuSDK dbf55ca 文档</title>
+  <title>lejusdk-lowlevel API &mdash; LejuSDK 81a896c 文档</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                dbf55ca
+                81a896c
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#docker">Docker 运行</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
 </ul>
@@ -123,6 +125,37 @@
 <li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
 </ul>
 </li>
 </ul>
@@ -216,7 +249,6 @@
           <li class="breadcrumb-item"><a href="index.html">lejusdk-lowlevel</a></li>
       <li class="breadcrumb-item active">lejusdk-lowlevel API</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/modules/lejusdk-lowlevel/api.rst.txt" rel="nofollow"> 查看页面源码</a>
       </li>
   </ul>
   <hr/>
@@ -374,6 +406,12 @@
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-驱动端接口">驱动端接口</p>
 <p>底层驱动或仿真程序使用：发布传感器数据，订阅控制指令 </p>
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback">
+<span id="_CPPv3N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback"></span><span id="leju::RobotBaseAPI::subscribeStopRobot__StringDataCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a09e328c65934dc25653359370c9afbbc"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeStopRobot</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">StringDataCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅停止指令 </p>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback">
 <span id="_CPPv3N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback"></span><span id="leju::RobotBaseAPI::subscribeRobotCmd__RobotCmdCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1ab7a4f4b0e2d8ca8599f7398f6d90a40a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeRobotCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">RobotCmdCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback" title="永久链接至目标"></a><br /></dt>
 <dd><p>订阅控制指令 </p>
@@ -430,6 +468,30 @@
 </dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotBaseAPI16getArmJointNamesEv">
+<span id="_CPPv3NK4leju12RobotBaseAPI16getArmJointNamesEv"></span><span id="_CPPv2NK4leju12RobotBaseAPI16getArmJointNamesEv"></span><span id="leju::RobotBaseAPI::getArmJointNamesC"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a1128d0c54cbc9335b406cba08e76a505"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getArmJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotBaseAPI16getArmJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取手臂关节名称（左右臂） </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotBaseAPI18getWaistJointNamesEv">
+<span id="_CPPv3NK4leju12RobotBaseAPI18getWaistJointNamesEv"></span><span id="_CPPv2NK4leju12RobotBaseAPI18getWaistJointNamesEv"></span><span id="leju::RobotBaseAPI::getWaistJointNamesC"></span><span class="target" id="classleju_1_1RobotBaseAPI_1abfad689ba7ce194efbf537724164003a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getWaistJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotBaseAPI18getWaistJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取腰部关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotBaseAPI17getHeadJointNamesEv">
+<span id="_CPPv3NK4leju12RobotBaseAPI17getHeadJointNamesEv"></span><span id="_CPPv2NK4leju12RobotBaseAPI17getHeadJointNamesEv"></span><span id="leju::RobotBaseAPI::getHeadJointNamesC"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a2728bc56748d06d60c2afcfde8606be4"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getHeadJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotBaseAPI17getHeadJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取头部关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotBaseAPI16getLegJointNamesEv">
+<span id="_CPPv3NK4leju12RobotBaseAPI16getLegJointNamesEv"></span><span id="_CPPv2NK4leju12RobotBaseAPI16getLegJointNamesEv"></span><span id="leju::RobotBaseAPI::getLegJointNamesC"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a4643eb466a8ebbd8548a877b48b4efd2"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getLegJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotBaseAPI16getLegJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取腿部关节名称（左右腿） </p>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK4leju12RobotBaseAPI15getRobotVersionEv">
 <span id="_CPPv3NK4leju12RobotBaseAPI15getRobotVersionEv"></span><span id="_CPPv2NK4leju12RobotBaseAPI15getRobotVersionEv"></span><span id="leju::RobotBaseAPI::getRobotVersionC"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a98ac91375d894b9d01922e8a6983e959"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../lejusdk-utils/api.html#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">getRobotVersion</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju12RobotBaseAPI15getRobotVersionEv" title="永久链接至目标"></a><br /></dt>
 <dd><p>获取机器人版本信息 </p>
@@ -466,6 +528,30 @@
 <dd><p>获取所有关节名称 </p>
 </dd></dl>
 
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13KuavoHumanoid16getArmJointNamesEv">
+<span id="_CPPv3NK4leju13KuavoHumanoid16getArmJointNamesEv"></span><span id="_CPPv2NK4leju13KuavoHumanoid16getArmJointNamesEv"></span><span id="leju::KuavoHumanoid::getArmJointNamesC"></span><span class="target" id="classleju_1_1KuavoHumanoid_1a484d35e418013431a318d08311fa75ac"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getArmJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13KuavoHumanoid16getArmJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取手臂关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13KuavoHumanoid18getWaistJointNamesEv">
+<span id="_CPPv3NK4leju13KuavoHumanoid18getWaistJointNamesEv"></span><span id="_CPPv2NK4leju13KuavoHumanoid18getWaistJointNamesEv"></span><span id="leju::KuavoHumanoid::getWaistJointNamesC"></span><span class="target" id="classleju_1_1KuavoHumanoid_1a1c8f008e6255d0ba7a7e80ceb8221cda"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getWaistJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13KuavoHumanoid18getWaistJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取腰部关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13KuavoHumanoid17getHeadJointNamesEv">
+<span id="_CPPv3NK4leju13KuavoHumanoid17getHeadJointNamesEv"></span><span id="_CPPv2NK4leju13KuavoHumanoid17getHeadJointNamesEv"></span><span id="leju::KuavoHumanoid::getHeadJointNamesC"></span><span class="target" id="classleju_1_1KuavoHumanoid_1a7a6e7e583268023fd731dd117e73b5b7"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getHeadJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13KuavoHumanoid17getHeadJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取头部关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13KuavoHumanoid16getLegJointNamesEv">
+<span id="_CPPv3NK4leju13KuavoHumanoid16getLegJointNamesEv"></span><span id="_CPPv2NK4leju13KuavoHumanoid16getLegJointNamesEv"></span><span id="leju::KuavoHumanoid::getLegJointNamesC"></span><span class="target" id="classleju_1_1KuavoHumanoid_1ace7eeb2d7ab5237de83e882e076f6abc"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getLegJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13KuavoHumanoid16getLegJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取腿部关节名称 </p>
+</dd></dl>
+
 </div>
 </dd></dl>
 
@@ -489,6 +575,30 @@
 <dt class="sig sig-object cpp" id="_CPPv4NK4leju13RobanHumanoid13getMotorNamesEv">
 <span id="_CPPv3NK4leju13RobanHumanoid13getMotorNamesEv"></span><span id="_CPPv2NK4leju13RobanHumanoid13getMotorNamesEv"></span><span id="leju::RobanHumanoid::getMotorNamesC"></span><span class="target" id="classleju_1_1RobanHumanoid_1aae5554b94cd019f2343fbe5e9d6a0c7e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getMotorNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13RobanHumanoid13getMotorNamesEv" title="永久链接至目标"></a><br /></dt>
 <dd><p>获取所有关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13RobanHumanoid16getArmJointNamesEv">
+<span id="_CPPv3NK4leju13RobanHumanoid16getArmJointNamesEv"></span><span id="_CPPv2NK4leju13RobanHumanoid16getArmJointNamesEv"></span><span id="leju::RobanHumanoid::getArmJointNamesC"></span><span class="target" id="classleju_1_1RobanHumanoid_1aa4d6cb3797e8276d34fcb203f3602cf9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getArmJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13RobanHumanoid16getArmJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取手臂关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13RobanHumanoid18getWaistJointNamesEv">
+<span id="_CPPv3NK4leju13RobanHumanoid18getWaistJointNamesEv"></span><span id="_CPPv2NK4leju13RobanHumanoid18getWaistJointNamesEv"></span><span id="leju::RobanHumanoid::getWaistJointNamesC"></span><span class="target" id="classleju_1_1RobanHumanoid_1a287134f3bb55abb5f988ea16f93204b4"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getWaistJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13RobanHumanoid18getWaistJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取腰部关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13RobanHumanoid17getHeadJointNamesEv">
+<span id="_CPPv3NK4leju13RobanHumanoid17getHeadJointNamesEv"></span><span id="_CPPv2NK4leju13RobanHumanoid17getHeadJointNamesEv"></span><span id="leju::RobanHumanoid::getHeadJointNamesC"></span><span class="target" id="classleju_1_1RobanHumanoid_1aa315e889e699f1041ab7ec62f1b185de"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getHeadJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13RobanHumanoid17getHeadJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取头部关节名称 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju13RobanHumanoid16getLegJointNamesEv">
+<span id="_CPPv3NK4leju13RobanHumanoid16getLegJointNamesEv"></span><span id="_CPPv2NK4leju13RobanHumanoid16getLegJointNamesEv"></span><span id="leju::RobanHumanoid::getLegJointNamesC"></span><span class="target" id="classleju_1_1RobanHumanoid_1acc9cfe3eec724feaa173eefa63ad62e7"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getLegJointNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="k"><span class="pre">override</span></span><a class="headerlink" href="#_CPPv4NK4leju13RobanHumanoid16getLegJointNamesEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取腿部关节名称 </p>
 </dd></dl>
 
 </div>

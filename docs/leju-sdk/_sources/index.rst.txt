@@ -1,6 +1,29 @@
 LejuSDK 文档
 ============
 
+|License| |Platform| |C++| |Roban2.1| |Kuavo4pro| |Kuavo5|
+
+.. |License| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+   :alt: License: MIT
+
+.. |Platform| image:: https://img.shields.io/badge/Platform-Ubuntu%2020.04-orange.svg
+   :target: https://ubuntu.com/
+   :alt: Platform: Ubuntu 20.04
+
+.. |C++| image:: https://img.shields.io/badge/C%2B%2B-17-blue.svg
+   :target: https://isocpp.org/
+   :alt: C++ 17
+
+.. |Roban2.1| image:: https://img.shields.io/badge/Robot-Roban2.1-green.svg
+   :alt: Robot: Roban2.1
+
+.. |Kuavo4pro| image:: https://img.shields.io/badge/Robot-Kuavo4pro-green.svg
+   :alt: Robot: Kuavo4pro
+
+.. |Kuavo5| image:: https://img.shields.io/badge/Robot-Kuavo5-green.svg
+   :alt: Robot: Kuavo5
+
 LejuSDK 是 Leju 机器人软件开发工具包，提供多层次的机器人控制接口。
 
 .. toctree::

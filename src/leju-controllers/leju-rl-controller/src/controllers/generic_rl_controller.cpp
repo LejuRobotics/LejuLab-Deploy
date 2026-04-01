@@ -2,12 +2,14 @@
 
 #include <Eigen/Geometry>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <thread>
 
-#include "leju-rl-controller/inference/openvino_model.h"
+#include "leju-rl-controller/inference/model_factory.h"
 #include "leju-rl-controller/rl_log.h"
+#include "leju-rl-controller/utils/uri_path_resolver.h"
 #include "lejusdk-utils/time_utils.hpp"
 
 namespace leju {
@@ -49,6 +51,10 @@ bool GenericRLController::initialize() {
       return false;
     }
 
+    // 2.5 初始化部位控制器（手臂、腰部）
+    // 调用基类方法，会自动调用 buildPartJointMapping()
+    initPartControllers();
+
     std::filesystem::path config_dir = std::filesystem::path(config_path_).parent_path();
 
     // 3. 加载所有 motion 轨迹文件
@@ -57,8 +63,8 @@ bool GenericRLController::initialize() {
     // 4. 初始化观测历史缓冲区（obs_stacks_ 和 observations_）
     initObsHistory();
 
-    // 5. 加载 ONNX 策略模型
-    std::string policy_full_path = (config_dir / policy_path_).string();
+    // 5. 加载 ONNX 策略模型（支持 URI 和绝对/相对路径）
+    std::string policy_full_path = UriPathResolver::resolve(policy_path_, config_dir.string());
     if (!loadPolicy(policy_full_path)) {
       RL_LOG_FAILURE("Failed to load policy: %s", policy_full_path.c_str());
       return false;
@@ -86,15 +92,11 @@ bool GenericRLController::initialize() {
 }
 
 
-bool GenericRLController::update(double time, const RobotState& state,
-                                  const ImuData& imu, RobotCmd& cmd) {
-  if (state_ != ControllerState::kRunning) {
-    return false;
-  }
-
-  // 缓存当前传感器数据，供观测计算使用
-  current_state_ = state;
-  current_imu_ = imu;
+bool GenericRLController::updateImpl(double time, const RobotState& state,
+                                      const ImuData& imu, RobotCmd& cmd) {
+  (void)time;
+  (void)state;
+  (void)imu;
 
   // 首次 update 时初始化 dummy_world_yaw_（与 rl_mimic_controller 时序一致）
   MotionTrajectory* loader = getCurrentMotion();
@@ -119,15 +121,16 @@ bool GenericRLController::update(double time, const RobotState& state,
     }
   }
 
-  step_count_++;
   return true;
 }
 
 void GenericRLController::reset() {
+  // 调用基类 reset（会重置 step_count_）
+  ControllerBase::reset();
+
   resetObsHistory();
   actions_.setZero();
   last_actions_.setZero();
-  step_count_ = 0;
   motion_playing_ = false;
   dummy_world_yaw_ = 0.0;
   velocity_cmd_.setZero();
@@ -223,15 +226,7 @@ void GenericRLController::onJoyInput(const JoyData& joy, const JoyData::Buttons&
   // guide 键触发 motion 播放
   if (joy.buttons.guide && !prev.guide) {
     startMotion();
-    return;
   }
-
-  // 摇杆映射为速度命令
-  VelocityCommand vel;
-  vel.linear_x  = -joy.axes.left_y;
-  vel.linear_y  = -joy.axes.left_x;
-  vel.angular_z = -joy.axes.right_x;
-  setVelocityCommand(vel);
 }
 
 // ============================================================================
@@ -280,18 +275,7 @@ void GenericRLController::moveToDefaultPos(const RobotState& current_state, doub
       cmd.v[i] = 0.0;
       cmd.tau[i] = 0.0;
     }
-    //////////////////////////////////////////////
-    // DEBUG: ROBAN 系列: EC电机 CSP PDO 的 kp/kd 参数
-    // 从 kuavo.json 复制
-    if (IS_ROBAN_LEGGED(robot_version_)) {
-      constexpr double ec_motor_kp[] = {200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200};
-      constexpr double ec_motor_kd[] = {5000, 5000, 5000, 5000, 10000, 10000, 5000, 5000, 5000, 5000, 10000, 10000, 5000};
-      for (int i = 0; i < 13; i++) {
-        cmd.kp[i] = ec_motor_kp[i];
-        cmd.kd[i] = ec_motor_kd[i];
-      }
-    }
-    /////////////////////////////////////////////////
+
     robot.publishRobotCmd(cmd);
     std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(loop_dt_ * 1000)));
   }
@@ -304,14 +288,43 @@ void GenericRLController::moveToDefaultPos(const RobotState& current_state, doub
 // ============================================================================
 
 bool GenericRLController::loadConfig(const std::string& config_path) {
-  try {
-    YAML::Node root = YAML::LoadFile(config_path);
-    YAML::Node cfg = root["HumanoidRobotCfg"];
+  // 检查文件是否存在
+  if (!std::filesystem::exists(config_path)) {
+    RL_LOG_FAILURE("Config file not found: %s", config_path.c_str());
+    return false;
+  }
 
-    // --- 控制时序 ---
-    loop_dt_ = cfg["loop_dt"].as<double>();
+  // 先调用基类解析通用配置（loop_dt_, 部位控制器配置等）
+  if (!ControllerBase::loadConfig(config_path)) {
+    return false;
+  }
+
+  YAML::Node root;
+  try {
+    root = YAML::LoadFile(config_path);
+  } catch (const std::exception& e) {
+    RL_LOG_FAILURE("Failed to parse YAML: %s\n  Error: %s", config_path.c_str(), e.what());
+    return false;
+  }
+
+  try {
+    YAML::Node cfg = root["HumanoidRobotCfg"];
+    if (!cfg) {
+      RL_LOG_FAILURE("Missing 'HumanoidRobotCfg' section in: %s", config_path.c_str());
+      return false;
+    }
+
+    // --- RL 特有时序配置 ---
     policy_dt_ = cfg["env"]["policy_dt"].as<double>();
     policy_path_ = cfg["policy_path"].as<std::string>();
+
+    // --- 推理引擎选择 (可选，未指定时默认使用 OpenVINO) ---
+    if (cfg["inference_engine"]) {
+      inference_engine_ = cfg["inference_engine"].as<std::string>();
+      RL_LOG_INFO("Inference engine: %s", inference_engine_.c_str());
+    } else {
+      inference_engine_ = "openvino";  // 未指定时默认使用 OpenVINO
+    }
 
     // --- 关节配置 ---
     YAML::Node robot = cfg["env"]["robot"];
@@ -391,18 +404,29 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
 
     return true;
   } catch (const std::exception& e) {
-    RL_LOG_FAILURE("Failed to load config: %s", e.what());
+    RL_LOG_FAILURE("Config error in %s\n  %s", config_path.c_str(), e.what());
     return false;
   }
 }
 
 bool GenericRLController::loadPolicy(const std::string& policy_path) {
-  model_ = std::make_unique<OpenVINOModel>();
+  // 使用工厂模式创建推理模型
+  model_ = ModelFactory::create(inference_engine_);
+
+  if (!model_) {
+    RL_LOG_FAILURE("Failed to create inference model: %s (supported: openvino, onnxruntime)",
+                   inference_engine_.c_str());
+    return false;
+  }
+
   if (!model_->load(policy_path)) {
     RL_LOG_FAILURE("Failed to load policy model: %s", policy_path.c_str());
     return false;
   }
-  RL_LOG_SUCCESS("Policy model loaded: %s", policy_path.c_str());
+
+  RL_LOG_SUCCESS("Policy model loaded: %s (engine: %s)",
+                 policy_path.c_str(),
+                 ModelFactory::typeToString(model_->getModelType()).c_str());
   return true;
 }
 
@@ -572,6 +596,36 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
 }
 
 // ============================================================================
+// 手臂控制指令（发布 arm_mode 话题）
+// ============================================================================
+
+void GenericRLController::updateArmCommand(RobotCmd& cmd) {
+  // 调用基类实现
+  ControllerBase::updateArmCommand(cmd);
+
+  // 发布手臂控制器模式
+  if (logger_ && arm_controller_) {
+    logger_->publishValue("/" + name_ + "/arm_mode",
+                          static_cast<double>(arm_controller_->getMode()));
+  }
+}
+
+// ============================================================================
+// 腰部控制指令（发布 waist_mode 话题）
+// ============================================================================
+
+void GenericRLController::updateWaistCommand(RobotCmd& cmd) {
+  // 调用基类实现
+  ControllerBase::updateWaistCommand(cmd);
+
+  // 发布腰部控制器模式
+  if (logger_ && waist_controller_) {
+    logger_->publishValue("/" + name_ + "/waist_mode",
+                          static_cast<double>(waist_controller_->getMode()));
+  }
+}
+
+// ============================================================================
 // 关节映射
 // ============================================================================
 
@@ -608,9 +662,14 @@ bool GenericRLController::buildJointMapping() {
 
 /// 从配置目录加载所有 motion 轨迹文件
 void GenericRLController::loadMotionTrajectories(const std::string& config_dir) {
-  std::filesystem::path config_path(config_dir);
   for (const auto& [name, path] : motion_paths_) {
-    std::string motion_full_path = (config_path / path).string();
+    std::string motion_full_path;
+    try {
+      motion_full_path = UriPathResolver::resolve(path, config_dir);
+    } catch (const UriResolveError& e) {
+      RL_LOG_WARNING("Failed to resolve motion path '%s': %s", path.c_str(), e.what());
+      continue;
+    }
     RL_LOG_INFO("Loading motion '%s' from: %s", name.c_str(), motion_full_path.c_str());
 
     auto motion_traj = std::make_unique<MotionTrajectory>();
@@ -744,6 +803,12 @@ array_t GenericRLController::getObsTerm(const std::string& name) const {
     return array_t::Constant(1, motion->getBodyPos()[2]);
   } else if (name == "motion_anchor_ori_b") {
     return getMotionAnchorOriB();
+  } else if (name == "cmd_stance") {
+    // 站立/行走状态：1.0=站立, 0.0=行走
+    double stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
+                     std::abs(velocity_cmd_.linear_y) < 0.01 &&
+                     std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
+    return array_t::Constant(1, stance);
   }
 
   RL_LOG_WARNING("Unknown obs term: %s", name.c_str());
@@ -762,6 +827,8 @@ int GenericRLController::getObsTermShape(const std::string& name) const {
     return 1;
   } else if (name == "motion_anchor_ori_b") {
     return 6;
+  } else if (name == "cmd_stance") {
+    return 1;
   }
   RL_LOG_WARNING("Unknown obs term shape: %s", name.c_str());
   return 0;

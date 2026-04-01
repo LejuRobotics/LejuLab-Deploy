@@ -11,6 +11,7 @@
 
   <depend>lejusdk-utils</depend>
   <depend>lejusdk-lowlevel</depend>
+  <depend>lejusdk-vr</depend>
 
   <export>
   </export>

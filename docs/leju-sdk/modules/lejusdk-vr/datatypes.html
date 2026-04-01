@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lejusdk-vr 数据类型 &mdash; LejuSDK 81a896c 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/translations.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="lejusdk-vr API" href="api.html" />
+    <link rel="prev" title="lejusdk-vr" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                81a896c
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#docker">Docker 运行</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">模块列表</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-lowlevel/index.html">lejusdk-lowlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">lejusdk-vr</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id6">交互式控制器命令行工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
+          <li class="breadcrumb-item"><a href="index.html">lejusdk-vr</a></li>
+      <li class="breadcrumb-item active">lejusdk-vr 数据类型</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lejusdk-vr">
+<h1>lejusdk-vr 数据类型<a class="headerlink" href="#lejusdk-vr" title="此标题的永久链接"></a></h1>
+<p>VR SDK 中使用的核心数据结构定义。示例代码中涉及的类型可点击跳转至本页对应说明。</p>
+<section id="pose">
+<span id="vr-datatypes-pose"></span><h2>Pose<a class="headerlink" href="#pose" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4PoseE">
+<span id="_CPPv3N4leju2vr4PoseE"></span><span id="_CPPv2N4leju2vr4PoseE"></span><span id="leju::vr::Pose"></span><span class="target" id="structleju_1_1vr_1_1Pose"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Pose</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr4PoseE" title="永久链接至目标"></a><br /></dt>
+<dd><p>位姿数据 </p>
+<p>表示单个骨骼节点在机器人坐标系下的位置与四元数姿态。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose1xE">
+<span id="_CPPv3N4leju2vr4Pose1xE"></span><span id="_CPPv2N4leju2vr4Pose1xE"></span><span id="leju::vr::Pose::x__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1a2cd60256f5593b85742d78da564c5998"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose1xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>位置 X 分量 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose1yE">
+<span id="_CPPv3N4leju2vr4Pose1yE"></span><span id="_CPPv2N4leju2vr4Pose1yE"></span><span id="leju::vr::Pose::y__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1a88f9ef095bfbfe776377aa7f16c509dd"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose1yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>位置 Y 分量 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose1zE">
+<span id="_CPPv3N4leju2vr4Pose1zE"></span><span id="_CPPv2N4leju2vr4Pose1zE"></span><span id="leju::vr::Pose::z__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1a1f54c43640e45d22ea56cebf9cd8347d"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">z</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose1zE" title="永久链接至目标"></a><br /></dt>
+<dd><p>位置 Z 分量 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose2qxE">
+<span id="_CPPv3N4leju2vr4Pose2qxE"></span><span id="_CPPv2N4leju2vr4Pose2qxE"></span><span id="leju::vr::Pose::qx__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1a11d55734daadc2f4ed01501fc6cd0ff8"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qx</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose2qxE" title="永久链接至目标"></a><br /></dt>
+<dd><p>姿态四元数 X 分量 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose2qyE">
+<span id="_CPPv3N4leju2vr4Pose2qyE"></span><span id="_CPPv2N4leju2vr4Pose2qyE"></span><span id="leju::vr::Pose::qy__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1a826df1b849855aa2714e82016a225ffc"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qy</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose2qyE" title="永久链接至目标"></a><br /></dt>
+<dd><p>姿态四元数 Y 分量 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose2qzE">
+<span id="_CPPv3N4leju2vr4Pose2qzE"></span><span id="_CPPv2N4leju2vr4Pose2qzE"></span><span id="leju::vr::Pose::qz__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1add56eb138e90ed5d030f8de7db22e704"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qz</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose2qzE" title="永久链接至目标"></a><br /></dt>
+<dd><p>姿态四元数 Z 分量 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr4Pose2qwE">
+<span id="_CPPv3N4leju2vr4Pose2qwE"></span><span id="_CPPv2N4leju2vr4Pose2qwE"></span><span id="leju::vr::Pose::qw__float"></span><span class="target" id="structleju_1_1vr_1_1Pose_1a4e84f2dea87151e22e6c9a5cc4b5b89a"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">qw</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr4Pose2qwE" title="永久链接至目标"></a><br /></dt>
+<dd><p>姿态四元数 W 分量 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="questboneposesdata">
+<span id="vr-datatypes-questboneposes"></span><h2>QuestBonePosesData<a class="headerlink" href="#questboneposesdata" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesDataE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesDataE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesDataE"></span><span id="leju::vr::QuestBonePosesData"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">QuestBonePosesData</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesDataE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Quest 骨骼位姿数据 </p>
+<p>包含时间戳、置信度以及整帧骨骼节点位姿数组。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesData10header_secE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesData10header_secE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesData10header_secE"></span><span id="leju::vr::QuestBonePosesData::header_sec__int32_t"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData_1a5dffc074377fec20f78d9963b727677c"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">header_sec</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesData10header_secE" title="永久链接至目标"></a><br /></dt>
+<dd><p>头部秒时间戳 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesData14header_nanosecE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesData14header_nanosecE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesData14header_nanosecE"></span><span id="leju::vr::QuestBonePosesData::header_nanosec__uint32_t"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData_1a85e5256c73bffd4b24f4b1fa80f95877"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">header_nanosec</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesData14header_nanosecE" title="永久链接至目标"></a><br /></dt>
+<dd><p>头部纳秒时间戳 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesData12timestamp_msE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesData12timestamp_msE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesData12timestamp_msE"></span><span id="leju::vr::QuestBonePosesData::timestamp_ms__int64_t"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData_1aa20e76b037287aa816967d54ad0695eb"></span><span class="n"><span class="pre">int64_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp_ms</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesData12timestamp_msE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Quest 原始毫秒时间戳 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesData18is_high_confidenceE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesData18is_high_confidenceE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesData18is_high_confidenceE"></span><span id="leju::vr::QuestBonePosesData::is_high_confidence__b"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData_1a851af0e6b374c6475646271474d434c0"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">is_high_confidence</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesData18is_high_confidenceE" title="永久链接至目标"></a><br /></dt>
+<dd><p>本帧是否高置信度 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesData16is_hand_trackingE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesData16is_hand_trackingE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesData16is_hand_trackingE"></span><span id="leju::vr::QuestBonePosesData::is_hand_tracking__b"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData_1a797b1ed1c93a5ff856e6a1e466067044"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">is_hand_tracking</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesData16is_hand_trackingE" title="永久链接至目标"></a><br /></dt>
+<dd><p>本帧是否来自手势跟踪模式 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr18QuestBonePosesData5posesE">
+<span id="_CPPv3N4leju2vr18QuestBonePosesData5posesE"></span><span id="_CPPv2N4leju2vr18QuestBonePosesData5posesE"></span><span id="leju::vr::QuestBonePosesData::poses__std::vector:Pose:"></span><span class="target" id="structleju_1_1vr_1_1QuestBonePosesData_1aa39a30171ab195818b259f54b9dbd1f3"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4leju2vr4PoseE" title="leju::vr::Pose"><span class="n"><span class="pre">Pose</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">poses</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr18QuestBonePosesData5posesE" title="永久链接至目标"></a><br /></dt>
+<dd><p>骨骼位姿数组 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="questjoystickdata">
+<span id="vr-datatypes-questjoystick"></span><h2>QuestJoystickData<a class="headerlink" href="#questjoystickdata" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickDataE">
+<span id="_CPPv3N4leju2vr17QuestJoystickDataE"></span><span id="_CPPv2N4leju2vr17QuestJoystickDataE"></span><span id="leju::vr::QuestJoystickData"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">QuestJoystickData</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickDataE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Quest 摇杆数据 </p>
+<p>包含左右手摇杆、扳机、握把和按钮状态。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData10header_secE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData10header_secE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData10header_secE"></span><span id="leju::vr::QuestJoystickData::header_sec__int32_t"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a7cd793e9018339d745d29058af9ebff7"></span><span class="n"><span class="pre">int32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">header_sec</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData10header_secE" title="永久链接至目标"></a><br /></dt>
+<dd><p>头部秒时间戳 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData14header_nanosecE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData14header_nanosecE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData14header_nanosecE"></span><span id="leju::vr::QuestJoystickData::header_nanosec__uint32_t"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a5d722ce4feb1c1f2293d39b0c39b95a5"></span><span class="n"><span class="pre">uint32_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">header_nanosec</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData14header_nanosecE" title="永久链接至目标"></a><br /></dt>
+<dd><p>头部纳秒时间戳 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData6left_xE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData6left_xE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData6left_xE"></span><span id="leju::vr::QuestJoystickData::left_x__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1abc92887b078955e4526fa57e5634a64d"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData6left_xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手摇杆 X 轴 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData6left_yE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData6left_yE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData6left_yE"></span><span id="leju::vr::QuestJoystickData::left_y__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a78665561bf3053502b7b12926aeabfd2"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData6left_yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手摇杆 Y 轴 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData12left_triggerE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData12left_triggerE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData12left_triggerE"></span><span id="leju::vr::QuestJoystickData::left_trigger__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1adf8eee124535fdcd2a8814f82c114f6b"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_trigger</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData12left_triggerE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手扳机值 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData9left_gripE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData9left_gripE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData9left_gripE"></span><span id="leju::vr::QuestJoystickData::left_grip__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1afee069592a2f6874f11aea10a905379f"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_grip</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData9left_gripE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手握把值 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData25left_first_button_pressedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData25left_first_button_pressedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData25left_first_button_pressedE"></span><span id="leju::vr::QuestJoystickData::left_first_button_pressed__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1ad82f8e33f8723a5d27118d84fbe7db0f"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_first_button_pressed</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData25left_first_button_pressedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手主按钮按下状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData26left_second_button_pressedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData26left_second_button_pressedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData26left_second_button_pressedE"></span><span id="leju::vr::QuestJoystickData::left_second_button_pressed__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1aae9c85f01df5910ee9e3b16dae5babc7"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_second_button_pressed</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData26left_second_button_pressedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手次按钮按下状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData25left_first_button_touchedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData25left_first_button_touchedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData25left_first_button_touchedE"></span><span id="leju::vr::QuestJoystickData::left_first_button_touched__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1aace181caf37283df5b14ca4e2de037fd"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_first_button_touched</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData25left_first_button_touchedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手主按钮触摸状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData26left_second_button_touchedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData26left_second_button_touchedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData26left_second_button_touchedE"></span><span id="leju::vr::QuestJoystickData::left_second_button_touched__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a9d63b60e93dea8a23c2604b968434615"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">left_second_button_touched</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData26left_second_button_touchedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>左手次按钮触摸状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData7right_xE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData7right_xE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData7right_xE"></span><span id="leju::vr::QuestJoystickData::right_x__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1aba6ef1b456545ed39e568605120165f5"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData7right_xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手摇杆 X 轴 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData7right_yE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData7right_yE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData7right_yE"></span><span id="leju::vr::QuestJoystickData::right_y__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a5c0059358fc773726740188adccf369d"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData7right_yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手摇杆 Y 轴 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData13right_triggerE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData13right_triggerE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData13right_triggerE"></span><span id="leju::vr::QuestJoystickData::right_trigger__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1ab2d0a9184ccc1587ebdc0b5310ffc720"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_trigger</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData13right_triggerE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手扳机值 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData10right_gripE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData10right_gripE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData10right_gripE"></span><span id="leju::vr::QuestJoystickData::right_grip__float"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a3d96d9027fd5b04a240041a844a780c2"></span><span class="kt"><span class="pre">float</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_grip</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0f</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData10right_gripE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手握把值 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData26right_first_button_pressedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData26right_first_button_pressedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData26right_first_button_pressedE"></span><span id="leju::vr::QuestJoystickData::right_first_button_pressed__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a915551318ee89365a92a9bc8a2dc62eb"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_first_button_pressed</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData26right_first_button_pressedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手主按钮按下状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData27right_second_button_pressedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData27right_second_button_pressedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData27right_second_button_pressedE"></span><span id="leju::vr::QuestJoystickData::right_second_button_pressed__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1ac492ad7d938e44130395b39968bd06f2"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_second_button_pressed</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData27right_second_button_pressedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手次按钮按下状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData26right_first_button_touchedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData26right_first_button_touchedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData26right_first_button_touchedE"></span><span id="leju::vr::QuestJoystickData::right_first_button_touched__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1a9662a050591eb0d940a22ced8097db6b"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_first_button_touched</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData26right_first_button_touchedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手主按钮触摸状态 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr17QuestJoystickData27right_second_button_touchedE">
+<span id="_CPPv3N4leju2vr17QuestJoystickData27right_second_button_touchedE"></span><span id="_CPPv2N4leju2vr17QuestJoystickData27right_second_button_touchedE"></span><span id="leju::vr::QuestJoystickData::right_second_button_touched__b"></span><span class="target" id="structleju_1_1vr_1_1QuestJoystickData_1abc476c2236302625e8316b480b1c5477"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">right_second_button_touched</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><a class="headerlink" href="#_CPPv4N4leju2vr17QuestJoystickData27right_second_button_touchedE" title="永久链接至目标"></a><br /></dt>
+<dd><p>右手次按钮触摸状态 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="jointtrajectorypoint">
+<span id="vr-datatypes-jointtrajectorypoint"></span><h2>JointTrajectoryPoint<a class="headerlink" href="#jointtrajectorypoint" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr20JointTrajectoryPointE">
+<span id="_CPPv3N4leju2vr20JointTrajectoryPointE"></span><span id="_CPPv2N4leju2vr20JointTrajectoryPointE"></span><span id="leju::vr::JointTrajectoryPoint"></span><span class="target" id="structleju_1_1vr_1_1JointTrajectoryPoint"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">JointTrajectoryPoint</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr20JointTrajectoryPointE" title="永久链接至目标"></a><br /></dt>
+<dd><p>关节轨迹点 </p>
+<p>表示单个时刻的关节目标状态，包含位置、速度和加速度。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr20JointTrajectoryPoint1qE">
+<span id="_CPPv3N4leju2vr20JointTrajectoryPoint1qE"></span><span id="_CPPv2N4leju2vr20JointTrajectoryPoint1qE"></span><span id="leju::vr::JointTrajectoryPoint::q__std::vector:double:"></span><span class="target" id="structleju_1_1vr_1_1JointTrajectoryPoint_1ae084254844d016cd146a54bc78c16713"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">q</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr20JointTrajectoryPoint1qE" title="永久链接至目标"></a><br /></dt>
+<dd><p>目标关节位置（rad） </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr20JointTrajectoryPoint1vE">
+<span id="_CPPv3N4leju2vr20JointTrajectoryPoint1vE"></span><span id="_CPPv2N4leju2vr20JointTrajectoryPoint1vE"></span><span id="leju::vr::JointTrajectoryPoint::v__std::vector:double:"></span><span class="target" id="structleju_1_1vr_1_1JointTrajectoryPoint_1afacda79c7209932af312dfd4ba113190"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">v</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr20JointTrajectoryPoint1vE" title="永久链接至目标"></a><br /></dt>
+<dd><p>目标关节速度（rad/s） </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr20JointTrajectoryPoint3accE">
+<span id="_CPPv3N4leju2vr20JointTrajectoryPoint3accE"></span><span id="_CPPv2N4leju2vr20JointTrajectoryPoint3accE"></span><span id="leju::vr::JointTrajectoryPoint::acc__std::vector:double:"></span><span class="target" id="structleju_1_1vr_1_1JointTrajectoryPoint_1a395dcd0f864d8fcdeb131bc0200bb2b1"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">acc</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr20JointTrajectoryPoint3accE" title="永久链接至目标"></a><br /></dt>
+<dd><p>目标关节加速度（rad/s²） </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="velocitycmd">
+<span id="vr-datatypes-velocitycmd"></span><h2>VelocityCmd<a class="headerlink" href="#velocitycmd" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11VelocityCmdE">
+<span id="_CPPv3N4leju2vr11VelocityCmdE"></span><span id="_CPPv2N4leju2vr11VelocityCmdE"></span><span id="leju::vr::VelocityCmd"></span><span class="target" id="structleju_1_1vr_1_1VelocityCmd"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VelocityCmd</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr11VelocityCmdE" title="永久链接至目标"></a><br /></dt>
+<dd><p>速度指令 </p>
+<p>用于底盘速度控制，采用机器人坐标系。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11VelocityCmd8linear_xE">
+<span id="_CPPv3N4leju2vr11VelocityCmd8linear_xE"></span><span id="_CPPv2N4leju2vr11VelocityCmd8linear_xE"></span><span id="leju::vr::VelocityCmd::linear_x__double"></span><span class="target" id="structleju_1_1vr_1_1VelocityCmd_1a4d592ffa0463245726d8045d8482ca3d"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">linear_x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr11VelocityCmd8linear_xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>X 方向线速度（m/s），正向前进 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11VelocityCmd8linear_yE">
+<span id="_CPPv3N4leju2vr11VelocityCmd8linear_yE"></span><span id="_CPPv2N4leju2vr11VelocityCmd8linear_yE"></span><span id="leju::vr::VelocityCmd::linear_y__double"></span><span class="target" id="structleju_1_1vr_1_1VelocityCmd_1a632d8d60ef1b0db3d88a0b895f8fc7f5"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">linear_y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr11VelocityCmd8linear_yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Y 方向线速度（m/s），正向左 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11VelocityCmd9angular_zE">
+<span id="_CPPv3N4leju2vr11VelocityCmd9angular_zE"></span><span id="_CPPv2N4leju2vr11VelocityCmd9angular_zE"></span><span id="leju::vr::VelocityCmd::angular_z__double"></span><span class="target" id="structleju_1_1vr_1_1VelocityCmd_1a81f1ac2b3df8c17509ce4232c57e20e0"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">angular_z</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr11VelocityCmd9angular_zE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Z 轴角速度（rad/s），正为逆时针 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11VelocityCmd9timestampE">
+<span id="_CPPv3N4leju2vr11VelocityCmd9timestampE"></span><span id="_CPPv2N4leju2vr11VelocityCmd9timestampE"></span><span id="leju::vr::VelocityCmd::timestamp__double"></span><span class="target" id="structleju_1_1vr_1_1VelocityCmd_1a03d40affb7a50f994721c8d43139282d"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr11VelocityCmd9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="vrvelocitycmd">
+<span id="vr-datatypes-vrvelocitycmd"></span><h2>VrVelocityCmd<a class="headerlink" href="#vrvelocitycmd" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr13VrVelocityCmdE">
+<span id="_CPPv3N4leju2vr13VrVelocityCmdE"></span><span id="_CPPv2N4leju2vr13VrVelocityCmdE"></span><span id="leju::vr::VrVelocityCmd"></span><span class="target" id="structleju_1_1vr_1_1VrVelocityCmd"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VrVelocityCmd</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr13VrVelocityCmdE" title="永久链接至目标"></a><br /></dt>
+<dd><p>VR 输入速度指令 </p>
+<p>用于 vr 的速度指令，采用机器人坐标系。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr13VrVelocityCmd8linear_xE">
+<span id="_CPPv3N4leju2vr13VrVelocityCmd8linear_xE"></span><span id="_CPPv2N4leju2vr13VrVelocityCmd8linear_xE"></span><span id="leju::vr::VrVelocityCmd::linear_x__double"></span><span class="target" id="structleju_1_1vr_1_1VrVelocityCmd_1aff1f861452fa9534ff8780a7b48f973c"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">linear_x</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr13VrVelocityCmd8linear_xE" title="永久链接至目标"></a><br /></dt>
+<dd><p>X 方向线速度（m/s），正向前进 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr13VrVelocityCmd8linear_yE">
+<span id="_CPPv3N4leju2vr13VrVelocityCmd8linear_yE"></span><span id="_CPPv2N4leju2vr13VrVelocityCmd8linear_yE"></span><span id="leju::vr::VrVelocityCmd::linear_y__double"></span><span class="target" id="structleju_1_1vr_1_1VrVelocityCmd_1a772f7227d28e5b6b088a5b9045f506ef"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">linear_y</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr13VrVelocityCmd8linear_yE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Y 方向线速度（m/s），正向左 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr13VrVelocityCmd9angular_zE">
+<span id="_CPPv3N4leju2vr13VrVelocityCmd9angular_zE"></span><span id="_CPPv2N4leju2vr13VrVelocityCmd9angular_zE"></span><span id="leju::vr::VrVelocityCmd::angular_z__double"></span><span class="target" id="structleju_1_1vr_1_1VrVelocityCmd_1af49555d9cfb8398fa788cc3900dec9f7"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">angular_z</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr13VrVelocityCmd9angular_zE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Z 轴角速度（rad/s），正为逆时针 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr13VrVelocityCmd9timestampE">
+<span id="_CPPv3N4leju2vr13VrVelocityCmd9timestampE"></span><span id="_CPPv2N4leju2vr13VrVelocityCmd9timestampE"></span><span id="leju::vr::VrVelocityCmd::timestamp__double"></span><span class="target" id="structleju_1_1vr_1_1VrVelocityCmd_1a7ca486f06a7c5f7851dc09c0390dbfc3"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">timestamp</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0.0</span></span><a class="headerlink" href="#_CPPv4N4leju2vr13VrVelocityCmd9timestampE" title="永久链接至目标"></a><br /></dt>
+<dd><p>时间戳，单位: s </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="controlmode">
+<span id="vr-datatypes-controlmode"></span><h2>ControlMode<a class="headerlink" href="#controlmode" title="此标题的永久链接"></a></h2>
+<dl class="cpp enum-class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11ControlModeE">
+<span id="_CPPv3N4leju2vr11ControlModeE"></span><span id="_CPPv2N4leju2vr11ControlModeE"></span><span class="target" id="namespaceleju_1_1vr_1a397b29dffcd59118906f2218d8db4a0c"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vr</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">ControlMode</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><a class="headerlink" href="#_CPPv4N4leju2vr11ControlModeE" title="永久链接至目标"></a><br /></dt>
+<dd><p>部位控制模式 </p>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11ControlMode9kKeepPoseE">
+<span id="_CPPv3N4leju2vr11ControlMode9kKeepPoseE"></span><span id="_CPPv2N4leju2vr11ControlMode9kKeepPoseE"></span><span class="target" id="namespaceleju_1_1vr_1a397b29dffcd59118906f2218d8db4a0cad6e0e4c346e21e11a49cb344c66f45b7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kKeepPose</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr11ControlMode9kKeepPoseE" title="永久链接至目标"></a><br /></dt>
+<dd><p>保持当前姿态 </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11ControlMode5kAutoE">
+<span id="_CPPv3N4leju2vr11ControlMode5kAutoE"></span><span id="_CPPv2N4leju2vr11ControlMode5kAutoE"></span><span class="target" id="namespaceleju_1_1vr_1a397b29dffcd59118906f2218d8db4a0caa8c857c2f1b000c92f9794ebf53888d7"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kAuto</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr11ControlMode5kAutoE" title="永久链接至目标"></a><br /></dt>
+<dd><p>自动模式（RL 控制） </p>
+</dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr11ControlMode9kExternalE">
+<span id="_CPPv3N4leju2vr11ControlMode9kExternalE"></span><span id="_CPPv2N4leju2vr11ControlMode9kExternalE"></span><span class="target" id="namespaceleju_1_1vr_1a397b29dffcd59118906f2218d8db4a0ca2d147c7119731e0732790134e089e4b3"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">kExternal</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr11ControlMode9kExternalE" title="永久链接至目标"></a><br /></dt>
+<dd><p>外部控制模式 </p>
+</dd></dl>
+
+</dd></dl>
+
+<p>部位控制模式枚举，定义各部位（手臂、头部、腰部）的控制方式。</p>
+<p><strong>枚举值：</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">kKeepPose</span></code> (0) - 保持当前姿态，不接受外部指令</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kAuto</span></code> (1) - 自动模式，由 RL 控制器控制</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kExternal</span></code> (2) - 外部控制模式，接受 VR 指令</p></li>
+</ul>
+<p><strong>使用场景：</strong></p>
+<p>在发布关节指令前，需要先将对应部位切换到 <code class="docutils literal notranslate"><span class="pre">kExternal</span></code> 模式：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="c1">// 切换手臂到外部控制模式</span>
+<span class="n">vr_api</span><span class="p">.</span><span class="n">setArmMode</span><span class="p">(</span><span class="n">ControlMode</span><span class="o">::</span><span class="n">kExternal</span><span class="p">);</span>
+
+<span class="c1">// 发布手臂关节指令</span>
+<span class="n">vr_api</span><span class="p">.</span><span class="n">publishArmJointCmd</span><span class="p">(</span><span class="n">arm_cmd</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="controllerstate">
+<span id="vr-datatypes-controllerstate"></span><h2>ControllerState<a class="headerlink" href="#controllerstate" title="此标题的永久链接"></a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr15ControllerStateE">
+<span id="_CPPv3N4leju2vr15ControllerStateE"></span><span id="_CPPv2N4leju2vr15ControllerStateE"></span><span id="leju::vr::ControllerState"></span><span class="target" id="structleju_1_1vr_1_1ControllerState"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ControllerState</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr15ControllerStateE" title="永久链接至目标"></a><br /></dt>
+<dd><p>控制器状态 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr15ControllerState18current_controllerE">
+<span id="_CPPv3N4leju2vr15ControllerState18current_controllerE"></span><span id="_CPPv2N4leju2vr15ControllerState18current_controllerE"></span><span id="leju::vr::ControllerState::current_controller__ss"></span><span class="target" id="structleju_1_1vr_1_1ControllerState_1ab54a7af66e995b6cc1fcb5e4a71a3752"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">current_controller</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr15ControllerState18current_controllerE" title="永久链接至目标"></a><br /></dt>
+<dd><p>当前控制器名称 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr15ControllerState8arm_modeE">
+<span id="_CPPv3N4leju2vr15ControllerState8arm_modeE"></span><span id="_CPPv2N4leju2vr15ControllerState8arm_modeE"></span><span id="leju::vr::ControllerState::arm_mode__ControlMode"></span><span class="target" id="structleju_1_1vr_1_1ControllerState_1a5525f1eb15c4b05d4fb872c19b2a0adf"></span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">arm_mode</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlMode5kAutoE" title="leju::vr::ControlMode::kAuto"><span class="n"><span class="pre">kAuto</span></span></a><a class="headerlink" href="#_CPPv4N4leju2vr15ControllerState8arm_modeE" title="永久链接至目标"></a><br /></dt>
+<dd><p>手臂控制模式 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr15ControllerState9head_modeE">
+<span id="_CPPv3N4leju2vr15ControllerState9head_modeE"></span><span id="_CPPv2N4leju2vr15ControllerState9head_modeE"></span><span id="leju::vr::ControllerState::head_mode__ControlMode"></span><span class="target" id="structleju_1_1vr_1_1ControllerState_1a2e4fffc873acc419f19301ac4fc875da"></span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">head_mode</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlMode5kAutoE" title="leju::vr::ControlMode::kAuto"><span class="n"><span class="pre">kAuto</span></span></a><a class="headerlink" href="#_CPPv4N4leju2vr15ControllerState9head_modeE" title="永久链接至目标"></a><br /></dt>
+<dd><p>头部控制模式 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr15ControllerState10waist_modeE">
+<span id="_CPPv3N4leju2vr15ControllerState10waist_modeE"></span><span id="_CPPv2N4leju2vr15ControllerState10waist_modeE"></span><span id="leju::vr::ControllerState::waist_mode__ControlMode"></span><span class="target" id="structleju_1_1vr_1_1ControllerState_1a6e78c7e33006b90ea6bbbce4cd82e409"></span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">waist_mode</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4leju2vr11ControlMode5kAutoE" title="leju::vr::ControlMode::kAuto"><span class="n"><span class="pre">kAuto</span></span></a><a class="headerlink" href="#_CPPv4N4leju2vr15ControllerState10waist_modeE" title="永久链接至目标"></a><br /></dt>
+<dd><p>腰部控制模式 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr15ControllerState21available_controllersE">
+<span id="_CPPv3N4leju2vr15ControllerState21available_controllersE"></span><span id="_CPPv2N4leju2vr15ControllerState21available_controllersE"></span><span id="leju::vr::ControllerState::available_controllers__std::vector:ss:"></span><span class="target" id="structleju_1_1vr_1_1ControllerState_1a8bae9c0bffbaf24d3337645c1939d940"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">available_controllers</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr15ControllerState21available_controllersE" title="永久链接至目标"></a><br /></dt>
+<dd><p>可用控制器列表 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="index.html" class="btn btn-neutral float-left" title="lejusdk-vr" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="lejusdk-vr API" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

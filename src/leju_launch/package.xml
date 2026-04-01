@@ -16,6 +16,13 @@
   <exec_depend>humanoid_hw</exec_depend>
   <exec_depend>mujoco_cpp</exec_depend>
   <exec_depend>dds_ros_bridge</exec_depend>
+
+  <!-- VR teleop dependencies -->
+  <exec_depend>leju-remote</exec_depend>
+  <exec_depend>leju-vr-control</exec_depend>
+  <exec_depend>leju-ik</exec_depend>
+  <exec_depend>leju_assets</exec_depend>
+  <exec_depend>leju-hardware</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
