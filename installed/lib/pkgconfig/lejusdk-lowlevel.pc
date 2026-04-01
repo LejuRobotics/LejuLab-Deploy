@@ -1,0 +1,8 @@
+prefix=/media/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: lejusdk-lowlevel
+Description: Description of lejusdk-lowlevel
+Version: 0.0.1
+Cflags: -I${prefix}/include -I/usr/include/eigen3
+Libs: -L${prefix}/lib -llejusdk-lowlevel
+Requires: lejusdk-dds-idl lejusdk-topic-pubsub

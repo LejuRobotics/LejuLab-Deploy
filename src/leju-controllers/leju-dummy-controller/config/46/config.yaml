@@ -1,0 +1,37 @@
+HumanoidRobotCfg:
+  joint_range:
+    # - [-0.314159 , 0.663225] # leg_l1_joint
+    - [0.        , 0.2     ] # leg_l1_joint avoid collision
+    # - [-0.872665 , 0.785398] # leg_l2_joint
+    - [-0.6      , 0.785398] # leg_l2_joint avoid collision
+    # - [-2.00713  , 1.5708  ] # leg_l3_joint
+    - [-1.6      , 1.5708  ] # leg_l3_joint avoid collision
+    - [ 0.       , 2.53073 ] # leg_l4_joint
+    - [-0.872665 , 0.349066] # leg_l5_joint
+    - [-0.261799 , 0.261799] # leg_l6_joint
+    - [-0.2      , 0.      ] # leg_r1_joint
+    - [-0.785398 , 0.6     ] # leg_r2_joint
+    - [-1.6      , 1.5708  ] # leg_r3_joint
+    - [ 0.       , 2.53073 ] # leg_r4_joint
+    - [-0.872665 , 0.349066] # leg_r5_joint
+    - [-0.261799 , 0.261799] # leg_r6_joint
+    - [-3.14159  , 1.5708  ] # zarm_l1_joint
+    # - [-0.349066 , 2.0944  ] # zarm_l2_joint
+    - [-0.0      , 2.0944  ] # zarm_l2_joint avoid collision
+    - [-1.5708   , 1.5708  ] # zarm_l3_joint
+    - [-2.61799  , 0.      ] # zarm_l4_joint
+    - [-1.5708   , 1.5708  ] # zarm_l5_joint
+    # - [-1.309    , 0.698132] # zarm_l6_joint
+    - [-0.3    , 0.698132] # zarm_l6_joint avoid collision
+    - [-0.698132 , 0.698132] # zarm_l7_joint
+    - [-3.14159  , 1.5708  ] # zarm_l1_joint
+    - [-2.0944   , 0.0     ] # zarm_l2_joint
+    - [-1.5708   , 1.5708  ] # zarm_l3_joint
+    - [-2.61799  , 0.      ] # zarm_l4_joint
+    - [-1.5708   , 1.5708  ] # zarm_l5_joint
+    - [-0.698132 , 0.3     ] # zarm_l6_joint
+    - [-0.698132 , 0.698132] # zarm_l7_joint
+    - [-1.5708   , 1.5708  ] # zhead_1_link
+    - [-0.523599 , 0.523599] # zhead_2_link
+        
+

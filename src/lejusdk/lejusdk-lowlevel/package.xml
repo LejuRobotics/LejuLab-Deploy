@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lejusdk-lowlevel</name>
+  <version>0.0.1</version>
+  <description>lejusdk-lowlevel</description>
+
+  <maintainer email="edu@lejurobot.com">Leju Robotics</maintainer>
+  <maintainer email="1779012028@qq.com">Li Sishu</maintainer>
+  <license>MIT</license>
+
+  <url type="repository">https://www.lejuhub.com/highlydynamic/lejulab</url>
+  <author>Leju Robotics Team</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies on other packages -->
+  <depend>lejusdk-utils</depend>
+
+  <export>
+    <cpp_libraries>
+      <!-- This library is built and installed by this package -->
+      <cpp_library name="lejusdk-lowlevel" />
+    </cpp_libraries>
+  </export>
+</package>

@@ -1,0 +1,38 @@
+# iceoryx RouDi 配置文件
+# 用于配置共享内存池大小和数量
+# RouDi 随 roslaunch 自动启动，参见 leju_launch/scripts/start_roudi.sh
+
+[general]
+version = 1
+
+# 共享内存段配置
+# 每个 mempool 定义一种大小的内存块
+# size: 内存块大小 (字节)
+# count: 该大小内存块的数量
+
+[[segment]]
+
+# 小消息 (128 字节)
+[[segment.mempool]]
+size = 128
+count = 10000
+
+# 中等消息 (1KB)
+[[segment.mempool]]
+size = 1024
+count = 5000
+
+# 较大消息 (16KB)
+[[segment.mempool]]
+size = 16384
+count = 1000
+
+# 大消息 (128KB)
+[[segment.mempool]]
+size = 131072
+count = 200
+
+# 超大消息 (1MB)
+[[segment.mempool]]
+size = 1048576
+count = 50

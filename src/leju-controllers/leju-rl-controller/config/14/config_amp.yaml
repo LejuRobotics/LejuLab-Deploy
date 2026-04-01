@@ -1,0 +1,88 @@
+HumanoidRobotCfg:
+  loop_dt: 0.001
+  policy_path: "policy/policy_1212.onnx" # 相对于配置文件的路径
+
+  env:
+    policy_dt: 0.02
+    robot:
+      joint_names: 
+        ["waist_yaw_joint",
+         "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint", 
+         "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint", 
+         "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
+         "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
+      # notes: index=0即waist_yaw_joint的方向这里默认设置为-1，是因为:
+      # - 训练的模型模型中base和当前实物的可能存在差异
+      # - 如何确定此处的方向值:以躯干为base,如果腰部的旋转方向是符合右手定则，那么此处设置为-1，否则为1
+      joint_direction:
+        [-1.,
+         1.,1.,1.,1.,1.,1.,
+         1.,1.,1.,1.,1.,1.,
+         1.,1.,1.,1.,
+         1.,1.,1.,1.]
+      joint_default_pos:
+        [0.,
+         -0.412, -0.0437, -0.287, 0.5, -0.2, 0.,
+         0.412, 0.0437, 0.287, 0.5, -0.2, 0.,
+         0.2, 0.16, -0.4, -0.5,
+         0.2, -0.16, 0.4, -0.5,]
+      joint_torque_limit:
+        [89.,
+         89., 63., 89., 63., 30., 30., 
+         89., 63., 89., 63., 30., 30., 
+         14., 14., 14., 14.,
+         14., 14., 14., 14.,]
+      actuator_kp:
+        [50.,
+         50., 50., 50., 75., 15., 15., 
+         50., 50., 50., 75., 15., 15., 
+         20., 20., 20., 20., 
+         20., 20., 20., 20., ]
+      actuator_kd:
+        [4.,
+         4., 4., 4., 8., 4., 4.,
+         4., 4., 4., 8., 4., 4.,
+         3., 3., 3., 3., 
+         3., 3., 3., 3.]
+      actuator_control_mode:
+        [0,
+         0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 
+         2, 2, 2, 2,
+         2, 2, 2, 2,]
+      action_scale: 
+        [0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 
+         0.25, 0.25, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.25,]
+
+    observations:
+      history_length: 1
+      stack_order: "classic" # classic
+      terms:
+        base_ang_vel:
+          scale: 1.
+          clip: [-9999., 9999.]
+        projected_gravity:
+          scale: 1.
+          clip: [-9999., 9999.]
+        velocity_commands:
+          scale: 1.
+          clip: [-9999., 9999.]
+        joint_pos:
+          scale: 1.
+          clip: [-9999., 9999.]
+        joint_vel:
+          scale: 1.
+          clip: [-9999., 9999.]
+        actions:
+          scale: 1.
+          clip: [-18., 18.]
+    
+    command_range:
+      lin_vel_x: [-0.5, 0.5]
+      lin_vel_y: [-0.5, 0.5]
+      ang_vel_z: [-1.0, 1.0]
+        
+

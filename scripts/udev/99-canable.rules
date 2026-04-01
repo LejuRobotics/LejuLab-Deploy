@@ -1,0 +1,3 @@
+KERNEL=="ttyACM*", MODE="0666", GROUP="dialout"
+ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", ATTRS{manufacturer}=="CANable1", SYMLINK+="canable1"
+ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", ATTRS{manufacturer}=="CANable2", SYMLINK+="canable2"

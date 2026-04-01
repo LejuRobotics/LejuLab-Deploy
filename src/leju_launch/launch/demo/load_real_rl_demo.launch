@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="coredump" default="false"/>
+  <arg name="with_coredump" value="--with-coredump" if="$(arg coredump)"/>
+  <arg name="with_coredump" value="" unless="$(arg coredump)"/>
+
+  <!-- iceoryx 共享内存开关 -->
+  <arg name="enable_iceoryx_shm" default="true"/>
+  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds_shm.xml" if="$(arg enable_iceoryx_shm)"/>
+  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds.xml" unless="$(arg enable_iceoryx_shm)"/>
+  <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)" />
+
+  <!-- Hardware node for Leju humanoid robot -->
+  <node pkg="leju-hardware" type="leju-hardware" name="leju_hardware" output="screen"
+        args="$(find leju-hardware)/"
+        required="true"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"/>
+
+  <!-- Load joystick control -->
+  <node name="leju_joystick" pkg="leju-joystick" type="leju-joystick" output="screen"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
+        required="true"/>
+
+  <!-- Load RL demo controller -->
+  <node name="leju_rl_controller" pkg="leju-rl-controller" type="run_rl_demo_controller" output="screen"
+        args="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/config_amp.yaml"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
+        required="true"/>
+
+  <!-- Load DDS recorder -->
+  <node name="lejusdk_recorder" pkg="lejusdk-recorder" type="lejusdk_recorder" output="screen"
+        args="--config=$(find leju_launch)/config/recorder.yaml"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"/>
+
+</launch>

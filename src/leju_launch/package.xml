@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>leju_launch</name>
+  <version>0.0.1</version>
+  <description>Launch files for Leju humanoid robot platform</description>
+
+  <maintainer email="edu@lejurobot.com">Leju Robotics</maintainer>
+  <license>MIT</license>
+
+  <url type="repository">https://www.lejuhub.com/highlydynamic/lejulab</url>
+  <author>Leju Robotics Team</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Core platform dependencies -->
+  <exec_depend>humanoid_hw</exec_depend>
+  <exec_depend>mujoco_cpp</exec_depend>
+  <exec_depend>dds_ros_bridge</exec_depend>
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

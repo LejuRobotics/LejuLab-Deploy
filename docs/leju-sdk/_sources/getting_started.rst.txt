@@ -1,0 +1,172 @@
+快速入门
+========
+
+环境要求
+--------
+
+- Ubuntu 20.04+
+- ROS Noetic
+- C++17
+
+依赖安装
+--------
+
+.. code-block:: bash
+
+   sudo apt-get update && sudo apt-get install -y \
+       build-essential cmake \
+       libacl1-dev libncurses5-dev
+
+编译
+----
+
+.. code-block:: bash
+
+   # 克隆仓库
+   git clone https://gitee.com/leju-robot/lejulab.git
+
+   # 编译
+   cd lejulab
+   catkin build
+
+部署 iceoryx 共享内存（首次使用需执行）
+----------------------------------------
+
+项目支持通过 iceoryx 共享内存加速进程间通信，建议部署以获得更优的实时性能：
+
+.. code-block:: bash
+
+   ./src/leju_launch/scripts/setup_cyclonedds_config.sh
+
+部署脚本会完成以下操作：
+
+- 安装 RouDi 守护进程为系统服务（开机自启）
+- 部署 CycloneDDS 配置文件到 ``/etc/cyclonedds/``
+- 设置 ``CYCLONEDDS_URI`` 环境变量默认为 ``cyclonedds_shm.xml``
+
+.. warning::
+
+   部署完成后需要 **注销当前用户重新登录** 或 **重启系统** 才能生效。
+
+卸载共享内存支持（还原为普通网络通信）：
+
+.. code-block:: bash
+
+   ./src/leju_launch/scripts/setup_cyclonedds_config.sh --remove
+
+基本使用
+--------
+
+启动前需设置机器人版本并加载工作空间，再选择启动 **实物** 或 **仿真**。
+
+1. 设置机器人版本（必选）
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+通过环境变量 ``ROBOT_VERSION`` 指定当前机型，取值与 :ref:`RobotVersions（Kuavo / Roban 系列）<api-robot-versions>` 对应，例如：
+
+- **Kuavo 系列**：``45`` （4.5 PRO 灵巧手）、``46`` （4.6 UAE）、``47`` （4.7 夹爪）、``42`` （4.2 基础版）、``50`` （5.0 基础版）等，详见 :ref:`Kuavo 系列 <api-kuavo-versions>`。
+- **Roban 系列**：``14`` （2 代基础版）等，详见 :ref:`Roban 系列 <api-roban-versions>`。
+
+.. code-block:: bash
+
+   export ROBOT_VERSION=46   # 示例：Kuavo 4.6 UAE
+
+2. 加载工作空间（必选）
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   cd lejulab_platform
+   source devel/setup.bash
+
+3. 启动实物
+~~~~~~~~~~~
+
+.. code-block:: bash
+
+   roslaunch leju_launch load_real.launch
+
+4. 启动仿真（MuJoCo）
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   roslaunch leju_launch load_mujoco_sim.launch
+
+遥控器操作
+----------
+
+**leju-joystick** 提供手柄/遥控器输入：插入实体手柄时可可视化手柄状态；未插入手柄时可用键盘和鼠标模拟手柄输入。不论哪种方式，都会将手柄数据通过 LejuSDK 以 :ref:`JoyData <datatypes-joydata>` 类型发布到 DDS，控制器可通过 ``subscribeJoyData()`` 订阅。
+
+插入手柄时，界面会显示当前手柄状态（按键与摇杆实时反馈），例如：
+
+.. image:: images/onmouseover.webp
+   :alt: 插入手柄时的可视化界面
+   :align: center
+
+未插入手柄时，可用键盘和鼠标模拟手柄输入，界面示意如下：
+
+.. image:: images/no_gamepad.png
+   :alt: 无手柄时键盘/鼠标模拟界面
+   :align: center
+
+键盘映射（无手柄时）
+~~~~~~~~~~~~~~~~~~~~
+
+**摇杆轴** （对应 :ref:`JoyData.axes <datatypes-joydata>`）
+
+.. list-table::
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - 键盘
+     - 映射
+     - 说明
+   * - W / S
+     - 左摇杆 Y
+     - 左摇杆上下（W 负向，S 正向）
+   * - A / D
+     - 左摇杆 X
+     - 左摇杆左右（A 负向，D 正向）
+   * - I / K
+     - 右摇杆 Y
+     - 右摇杆上下（I 负向，K 正向）
+   * - J / Q / L / E
+     - 右摇杆 X
+     - J 或 Q 负向，L 或 E 正向
+   * - Space
+     - 重置
+     - 所有摇杆与扳机归零
+
+**按钮** （对应 :ref:`JoyData.buttons <datatypes-joydata>`）
+
+.. list-table::
+   :widths: 20 25 55
+   :header-rows: 1
+
+   * - 键盘
+     - 映射
+     - 说明
+   * - C
+     - south
+     - 底部面键 (Xbox A / PS Cross)
+   * - T
+     - east
+     - 右侧面键 (Xbox B / PS Circle)
+   * - R
+     - north
+     - 顶部面键 (Xbox Y / PS Triangle)
+   * - B
+     - back
+     - 返回键 (Xbox Back / PS Select)
+   * - G
+     - guide
+     - 指南键 (Xbox 按钮 / PS 按钮)
+   * - O / F
+     - start
+     - 开始键 (Xbox Start / PS Start)
+   * - P
+     - left_shoulder
+     - 左肩键 (LB / L1)
+
+**鼠标**：界面上的按钮可用鼠标左键点击，摇杆区域可用鼠标拖拽；效果与键盘映射一致。

@@ -1,0 +1,109 @@
+HumanoidRobotCfg:
+  loop_dt: 0.001
+  policy_path: "policy/ampjzx250126_27.onnx"
+
+  env:
+    policy_dt: 0.02
+    robot:
+      joint_names: 
+        ["l_leg_roll", "l_leg_yaw", "l_leg_pitch", "l_knee", "l_foot_pitch", "l_foot_roll", 
+         "r_leg_roll", "r_leg_yaw", "r_leg_pitch", "r_knee", "r_foot_pitch", "r_foot_roll", 
+         "waist_yaw",
+         "l_arm_pitch", "l_arm_roll", "l_arm_yaw", "l_forearm", "l_hand_yaw", "l_hand_roll", "l_hand_pitch", 
+         "r_arm_pitch", "r_arm_roll", "r_arm_yaw", "r_forearm", "r_hand_yaw", "r_hand_roll", "r_hand_pitch"]
+      joint_direction:
+        [1.,1.,1.,1.,1.,1.,
+         1.,1.,1.,1.,1.,1.,
+         1.,
+         1.,1.,1.,1.,1.,1.,1.,
+         1.,1.,1.,1.,1.,1.,1.]
+      joint_default_pos:
+        [0., 0., -0.25, 0.5, -0.25, 0., 
+         0., 0., -0.25, 0.5, -0.25, 0., 
+         0.,
+         0., 0., 0., 0., 0., 0., 0., 
+         0., 0., 0., 0., 0., 0., 0.]
+      joint_torque_limit:
+        [127., 71., 132., 280., 57., 57., 
+         127., 71., 132., 280., 57., 57., 
+         102.,
+         66., 75., 57., 75., 14.1, 14.1, 14.1, 
+         66., 75., 57., 75., 14.1, 14.1, 14.1]
+      actuator_kp:
+        [100., 100., 80., 80., 30., 30., 
+         100., 100., 80., 80., 30., 30., 
+         30.,
+         30., 30., 15., 30., 15., 15., 15., 
+         30., 30., 15., 30., 15., 15., 15.]
+      actuator_kd:
+        [5., 5., 5., 6., 7.5, 7.5,
+         5., 5., 5., 6., 7.5, 7.5,
+         3.,
+         3., 3., 3., 3., 3., 3., 3., 
+         3., 3., 3., 3., 3., 3., 3.]
+      actuator_control_mode:
+        [2, 2, 2, 2, 2, 2,
+         2, 2, 2, 2, 2, 2,
+         2,
+         2, 2, 2, 2, 2, 2, 2,
+         2, 2, 2, 2, 2, 2, 2]
+      action_scale: 
+        [0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 
+         0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+
+    observations:
+      history_length: 1
+      stack_order: "classic" # classic
+      terms:
+        base_ang_vel:
+          scale: 1.
+          clip: [-9999., 9999.]
+        projected_gravity:
+          scale: 1.
+          clip: [-9999., 9999.]
+        velocity_commands:
+          scale: 1.
+          clip: [-9999., 9999.]
+        cmd_stance:
+          scale: 1.
+          clip: [0., 1.]
+        joint_pos:
+          scale: 1.
+          clip: [-9999., 9999.]
+        joint_vel:
+          scale: 1.
+          clip: [-9999., 9999.]
+        actions:
+          scale: 1.
+          clip: [-18., 18.]
+    
+    command_range:
+      lin_vel_x: [-1.0, 1.0]
+      lin_vel_y: [-0.6, 0.6]
+      ang_vel_z: [-0.3, 0.3]
+
+  # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态
+  arm_controller:
+    enabled: true
+    leg_joint_count: 12
+    waist_joint_count: 1
+    interpolation_velocity: 1.0   # rad/s
+    min_duration: 0.2
+    max_duration: 2.0
+
+  # cmd_stance 计算参数（velocity_commands 来自 JoyData 轴缩放，无 cmd_vel DDS）
+  cmd_stance:
+    smart_stop:
+      enabled: true
+      torso_velocity_threshold: 0.05  # m/s
+      feet_alignment_threshold: 0.08  # m
+    velocity_magnitude_threshold: 0.01  # 速度低于此值视为"小"
+
+  # 下发电机使用的 kp 和 kd。顺序：左腿6 + 右腿6 + 腰1 + 左臂第1 + 右臂第1；其余关节仍用 cmd 内原有 kp/kd
+  hardware_override_kp_kd:
+    kp: [220, 100, 224, 224, 58, 58, 220, 100, 224, 224, 58, 58, 250, 586, 586]
+    kd: [1506, 516, 1506, 881, 2260, 2260, 1506, 516, 1506, 881, 2260, 2260, 929, 1627, 1627]
+

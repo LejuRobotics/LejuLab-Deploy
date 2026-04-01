@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lejusdk-lowlevel 示例 &mdash; LejuSDK dbf55ca 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/translations.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="lejusdk-highlevel" href="../lejusdk-highlevel/index.html" />
+    <link rel="prev" title="lejusdk-lowlevel API" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                dbf55ca
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">模块列表</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">lejusdk-lowlevel</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
+          <li class="breadcrumb-item"><a href="index.html">lejusdk-lowlevel</a></li>
+      <li class="breadcrumb-item active">lejusdk-lowlevel 示例</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/modules/lejusdk-lowlevel/examples.rst.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lejusdk-lowlevel">
+<h1>lejusdk-lowlevel 示例<a class="headerlink" href="#lejusdk-lowlevel" title="此标题的永久链接"></a></h1>
+<p>底层 SDK 使用示例，展示传感器数据订阅、控制指令发布等功能。文中数据类型可点击跳转至 <a class="reference internal" href="datatypes.html"><span class="doc">数据类型</span></a> 查看详细说明。</p>
+<section id="imu">
+<h2>IMU 数据订阅<a class="headerlink" href="#imu" title="此标题的永久链接"></a></h2>
+<p>订阅并打印 IMU 传感器数据，包括角速度、加速度和姿态四元数。</p>
+<p><strong>功能说明：</strong></p>
+<ul class="simple">
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">subscribeImuData()</span></code> 订阅 IMU 数据</p></li>
+<li><p>通过回调函数接收 <a class="reference internal" href="datatypes.html#datatypes-imudata"><span class="std std-ref">ImuDataConstPtr</span></a> 数据</p></li>
+<li><p>支持 Ctrl+C 信号优雅退出</p></li>
+</ul>
+<p><strong>运行方式：</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span><span class="w">  </span><span class="c1"># 设置机器人版本</span>
+rosrun<span class="w"> </span>lejusdk_examples<span class="w"> </span>imu_data_subscriber
+</pre></div>
+</div>
+<p><strong>源代码：</strong></p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">imu_data_subscriber.cpp</span><a class="headerlink" href="#id5" title="此代码块的永久链接"></a></div>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;csignal&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;atomic&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-lowlevel/leju_sdk.h&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-utils/robot_version.hpp&quot;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">IMUDataSubscriber</span><span class="w"> </span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">RobotBaseAPI</span><span class="o">*</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="n">IMUDataSubscriber</span><span class="p">()</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">running_</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">(</span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="o">~</span><span class="n">IMUDataSubscriber</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">initialize</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">robot_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotVersion</span><span class="o">::</span><span class="n">from_env</span><span class="p">();</span>
+<span class="w">            </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">init_env</span><span class="p">(</span><span class="n">robot_version</span><span class="p">);</span>
+<span class="w">            </span><span class="n">robot_api_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+
+<span class="w">            </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">subscribeImuData</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">ImuDataConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Received IMU data: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="o">*</span><span class="n">msg</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">});</span>
+
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize IMU subscriber: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;IMU data subscriber started.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;IMU data subscriber stopped.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">stop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">isRunning</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">IMUDataSubscriber</span><span class="o">*</span><span class="w"> </span><span class="n">g_subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">signalHandler</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">signal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Received signal &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">signal</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, shutting down...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">g_subscriber</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">g_subscriber</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">IMUDataSubscriber</span><span class="w"> </span><span class="n">subscriber</span><span class="p">;</span>
+<span class="w">    </span><span class="n">g_subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">subscriber</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Set up signal handlers</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">subscriber</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize IMU subscriber&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Press Ctrl+C to exit.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Run the subscriber</span>
+<span class="w">    </span><span class="n">subscriber</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Exiting...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id1">
+<h2>关节状态订阅<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h2>
+<p>订阅并打印关节状态数据，包括位置、速度、加速度和力矩。</p>
+<p><strong>功能说明：</strong></p>
+<ul class="simple">
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">subscribeRobotState()</span></code> 订阅关节状态</p></li>
+<li><p>通过回调函数接收 <a class="reference internal" href="datatypes.html#datatypes-robotstate"><span class="std std-ref">RobotStateConstPtr</span></a> 数据</p></li>
+<li><p>适用于状态监控和数据记录场景</p></li>
+</ul>
+<p><strong>运行方式：</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span>
+rosrun<span class="w"> </span>lejusdk_examples<span class="w"> </span>joint_state_subscriber
+</pre></div>
+</div>
+<p><strong>源代码：</strong></p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">joint_state_subscriber.cpp</span><a class="headerlink" href="#id6" title="此代码块的永久链接"></a></div>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;csignal&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;atomic&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-lowlevel/leju_sdk.h&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-utils/robot_version.hpp&quot;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">JointStateSubscriber</span><span class="w"> </span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">RobotBaseAPI</span><span class="o">*</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="n">JointStateSubscriber</span><span class="p">()</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">running_</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">(</span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="o">~</span><span class="n">JointStateSubscriber</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">initialize</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">robot_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotVersion</span><span class="o">::</span><span class="n">from_env</span><span class="p">();</span>
+<span class="w">            </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">init_env</span><span class="p">(</span><span class="n">robot_version</span><span class="p">);</span>
+<span class="w">            </span><span class="n">robot_api_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+
+<span class="w">            </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">subscribeRobotState</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">RobotStateConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Received robot state: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="o">*</span><span class="n">msg</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">});</span>
+
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize subscriber: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Joint state subscriber started.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Joint state subscriber stopped.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">stop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">isRunning</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">JointStateSubscriber</span><span class="o">*</span><span class="w"> </span><span class="n">g_subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">signalHandler</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">signal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Received signal &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">signal</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, shutting down...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">g_subscriber</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">g_subscriber</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">JointStateSubscriber</span><span class="w"> </span><span class="n">subscriber</span><span class="p">;</span>
+<span class="w">    </span><span class="n">g_subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">subscriber</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Set up signal handlers</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">subscriber</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize subscriber&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Press Ctrl+C to exit.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Run the subscriber</span>
+<span class="w">    </span><span class="n">subscriber</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Exiting...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id2">
+<h2>硬件状态订阅<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h2>
+<p>订阅硬件状态，监控机器人底层驱动的运行状态。</p>
+<p><strong>功能说明：</strong></p>
+<ul class="simple">
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">subscribeHardwareState()</span></code> 订阅硬件状态</p></li>
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">String2HwState()</span></code> 将字符串转换为 <a class="reference internal" href="datatypes.html#datatypes-hardwarestate"><span class="std std-ref">HardwareState</span></a> 枚举</p></li>
+<li><p>硬件状态包括：<code class="docutils literal notranslate"><span class="pre">UNKNOWN</span></code>, <code class="docutils literal notranslate"><span class="pre">INITIALIZING</span></code>, <code class="docutils literal notranslate"><span class="pre">READY_OK</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>, <code class="docutils literal notranslate"><span class="pre">STOPPED</span></code></p></li>
+</ul>
+<p><strong>重要提示：</strong></p>
+<p>只有当硬件状态为 <code class="docutils literal notranslate"><span class="pre">READY_OK</span></code> 时，发布的控制指令才会生效。</p>
+<p><strong>运行方式：</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span>
+rosrun<span class="w"> </span>lejusdk_examples<span class="w"> </span>hw_state_subscriber
+</pre></div>
+</div>
+<p><strong>源代码：</strong></p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">hw_state_subscriber.cpp</span><a class="headerlink" href="#id7" title="此代码块的永久链接"></a></div>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;csignal&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;atomic&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-lowlevel/leju_sdk.h&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-utils/robot_version.hpp&quot;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">HardwareStateSubscriber</span><span class="w"> </span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">RobotBaseAPI</span><span class="o">*</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="n">HardwareStateSubscriber</span><span class="p">()</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">running_</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">(</span><span class="k">nullptr</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="o">~</span><span class="n">HardwareStateSubscriber</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">initialize</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">robot_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotVersion</span><span class="o">::</span><span class="n">from_env</span><span class="p">();</span>
+<span class="w">            </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">init_env</span><span class="p">(</span><span class="n">robot_version</span><span class="p">);</span>
+<span class="w">            </span><span class="n">robot_api_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+
+<span class="w">            </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">subscribeHardwareState</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">StringDataConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// Convert string to enum for better understanding</span>
+<span class="w">                </span><span class="n">HardwareState</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">String2HwState</span><span class="p">(</span><span class="n">msg</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">);</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Hardware state : &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">HardwareState2String</span><span class="p">(</span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">});</span>
+
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize hardware state subscriber: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Hardware state subscriber started.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Waiting for hardware state updates...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">100</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Hardware state subscriber stopped.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">stop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">isRunning</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">HardwareStateSubscriber</span><span class="o">*</span><span class="w"> </span><span class="n">g_subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">signalHandler</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">signal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Received signal &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">signal</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, shutting down...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">g_subscriber</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">g_subscriber</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">HardwareStateSubscriber</span><span class="w"> </span><span class="n">subscriber</span><span class="p">;</span>
+<span class="w">    </span><span class="n">g_subscriber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">subscriber</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Set up signal handlers</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">subscriber</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize hardware state subscriber&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Press Ctrl+C to exit.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Run the subscriber</span>
+<span class="w">    </span><span class="n">subscriber</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Exiting...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id3">
+<h2>控制指令发布<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h2>
+<p>等待硬件就绪后发布正弦波控制指令，演示完整的控制流程。</p>
+<p><strong>功能说明：</strong></p>
+<ul class="simple">
+<li><p>订阅硬件状态，等待 <code class="docutils literal notranslate"><span class="pre">READY_OK</span></code> 后开始发布</p></li>
+<li><p>使用 <code class="docutils literal notranslate"><span class="pre">publishRobotCmd()</span></code> 发布 <a class="reference internal" href="datatypes.html#datatypes-robotcmd"><span class="std std-ref">RobotCmd</span></a> 控制指令</p></li>
+<li><p>生成正弦波轨迹控制机器人头部关节</p></li>
+<li><p>支持位置控制模式 (CSP)，设置 Kp/Kd 增益</p></li>
+</ul>
+<p><strong>控制参数：</strong></p>
+<ul class="simple">
+<li><p>控制频率：50Hz</p></li>
+<li><p>正弦波频率：0.5Hz</p></li>
+<li><p>振幅：0.2 rad</p></li>
+</ul>
+<p><strong>运行方式：</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span>
+rosrun<span class="w"> </span>lejusdk_examples<span class="w"> </span>joint_cmd_publisher
+</pre></div>
+</div>
+<p><strong>源代码：</strong></p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">joint_cmd_publisher.cpp</span><a class="headerlink" href="#id8" title="此代码块的永久链接"></a></div>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;csignal&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;atomic&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iomanip&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mutex&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-lowlevel/leju_sdk.h&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-utils/robot_version.hpp&quot;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">JointCmdPublisher</span><span class="w"> </span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">running_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">RobotBaseAPI</span><span class="o">*</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">hardware_ready_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">HardwareState</span><span class="w"> </span><span class="n">current_hw_state_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="w"> </span><span class="n">hw_state_mutex_</span><span class="p">;</span>
+
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="n">JointCmdPublisher</span><span class="p">()</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">running_</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span><span class="w"> </span><span class="n">robot_api_</span><span class="p">(</span><span class="k">nullptr</span><span class="p">),</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">                         </span><span class="n">hardware_ready_</span><span class="p">(</span><span class="nb">false</span><span class="p">),</span><span class="w"> </span><span class="n">current_hw_state_</span><span class="p">(</span><span class="n">HardwareState</span><span class="o">::</span><span class="n">UNKNOWN</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="o">~</span><span class="n">JointCmdPublisher</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">initialize</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">robot_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotVersion</span><span class="o">::</span><span class="n">from_env</span><span class="p">();</span>
+<span class="w">            </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">init_env</span><span class="p">(</span><span class="n">robot_version</span><span class="p">);</span>
+<span class="w">            </span><span class="n">robot_api_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+
+<span class="w">            </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">getMotorNumber</span><span class="p">();</span>
+<span class="w">            </span><span class="n">motor_names_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">getMotorNames</span><span class="p">();</span>
+
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Initialized with &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; motors: &quot;</span><span class="p">;</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="p">;</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize publisher: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">hardwareStateCallback</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">StringDataConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">hw_state_data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">hw_state_mutex_</span><span class="p">);</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="w"> </span><span class="n">hw_state_str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hw_state_data</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">;</span>
+<span class="w">        </span><span class="n">current_hw_state_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">String2HwState</span><span class="p">(</span><span class="n">hw_state_str</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">current_hw_state_</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">HardwareState</span><span class="o">::</span><span class="n">READY_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">hardware_ready_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">hardware_ready_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Hardware is READY_OK, starting to publish commands...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hardware_ready_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">hardware_ready_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Hardware state changed from READY_OK to: &quot;</span>
+<span class="w">                         </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">HardwareState2String</span><span class="p">(</span><span class="n">current_hw_state_</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">waitForHardwareReady</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Waiting for hardware to be READY_OK...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">start_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">hardware_ready_</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">current_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">elapsed_seconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">                </span><span class="n">current_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="p">).</span><span class="n">count</span><span class="p">();</span>
+
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">elapsed_seconds</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">elapsed_seconds</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">hw_state_mutex_</span><span class="p">);</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Current hardware state: &quot;</span>
+<span class="w">                         </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">HardwareState2String</span><span class="p">(</span><span class="n">current_hw_state_</span><span class="p">)</span>
+<span class="w">                         </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; (waiting for READY_OK...)&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Return when hardware is ready or running is false</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">RobotCmd</span><span class="w"> </span><span class="n">generateSineWaveCommand</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">time</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">RobotCmd</span><span class="w"> </span><span class="nf">cmd</span><span class="p">(</span><span class="n">motor_count_</span><span class="p">);</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.2</span><span class="p">;</span>
+
+<span class="w">        </span><span class="kt">size_t</span><span class="w"> </span><span class="n">arm_head_base_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">IS_KUAVO4PRO_LEGGED</span><span class="p">(</span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">getRobotVersion</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">arm_head_base_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">IS_ROBAN_LEGGED</span><span class="p">(</span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">getRobotVersion</span><span class="p">()))</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">arm_head_base_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">13</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="p">(</span><span class="n">IS_KUAVO5_LEGGED</span><span class="p">(</span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">getRobotVersion</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">arm_head_base_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">13</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="kt">size_t</span><span class="w"> </span><span class="n">head_index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arm_head_base_index</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">            </span><span class="c1">// cmd.q[i] = amplitude * sin(1.0 * M_PI * frequency * time);</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">tau</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">20.0</span><span class="p">;</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">kd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="p">;</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MotorControlMode</span><span class="o">::</span><span class="n">CSP</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// Only Head</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">head_index</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">cmd</span><span class="p">.</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="mf">1.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">M_PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frequency</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">system_clock</span><span class="o">::</span><span class="n">now</span><span class="p">().</span><span class="n">time_since_epoch</span><span class="p">()).</span><span class="n">count</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">cmd</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Joint command publisher started.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Subscribing to hardware state...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">subscribeHardwareState</span><span class="p">(</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">JointCmdPublisher</span><span class="o">::</span><span class="n">hardwareStateCallback</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">)</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Press Ctrl+C to stop.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">waitForHardwareReady</span><span class="p">();</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Publishing sine wave commands at 50Hz...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">start_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">auto</span><span class="w"> </span><span class="n">current_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="w">            </span><span class="kt">double</span><span class="w"> </span><span class="n">elapsed_seconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">current_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="p">).</span><span class="n">count</span><span class="p">();</span>
+
+<span class="w">            </span><span class="n">RobotCmd</span><span class="w"> </span><span class="n">cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">generateSineWaveCommand</span><span class="p">(</span><span class="n">elapsed_seconds</span><span class="p">);</span>
+
+<span class="w">            </span><span class="kt">bool</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_api_</span><span class="o">-&gt;</span><span class="n">publishRobotCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">success</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Warning: Failed to publish command at iteration &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">iteration</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">cmd</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">iteration</span><span class="o">++</span><span class="p">;</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">20</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Joint command publisher stopped.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="n">stop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">running_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="n">JointCmdPublisher</span><span class="o">*</span><span class="w"> </span><span class="n">g_publisher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">nullptr</span><span class="p">;</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">signalHandler</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">signal</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Received signal &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">signal</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, shutting down...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">g_publisher</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">g_publisher</span><span class="o">-&gt;</span><span class="n">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;=== Joint Command Publisher Example ===&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;This example publishes sine wave joint commands to control the robot.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">JointCmdPublisher</span><span class="w"> </span><span class="n">publisher</span><span class="p">;</span>
+<span class="w">    </span><span class="n">g_publisher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">publisher</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+<span class="w">    </span><span class="n">signal</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span><span class="w"> </span><span class="n">signalHandler</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">publisher</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Failed to initialize publisher&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">publisher</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Exiting...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="id4">
+<h2>综合控制示例<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h2>
+<p>Kuavo 机器人综合控制示例，展示完整的控制流程：初始化、数据订阅、控制指令发布。</p>
+<p><strong>功能说明：</strong></p>
+<ul class="simple">
+<li><p>封装为 <code class="docutils literal notranslate"><span class="pre">KuavoRobotController</span></code> 类，展示面向对象设计</p></li>
+<li><p>同时订阅 IMU 和关节状态数据</p></li>
+<li><p>生成正弦波控制指令并发布</p></li>
+<li><p>每10条消息打印一次，避免日志刷屏</p></li>
+</ul>
+<p><strong>代码结构：</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">initialize()</span></code> - 初始化机器人和订阅</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setupSubscriptions()</span></code> - 设置数据订阅回调</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generateSineWaveCommand()</span></code> - 生成正弦波控制指令</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">runControlLoop()</span></code> - 运行控制循环</p></li>
+</ul>
+<p><strong>运行方式：</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span>
+rosrun<span class="w"> </span>lejusdk_examples<span class="w"> </span>kuavo_control_example
+</pre></div>
+</div>
+<p><strong>源代码：</strong></p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">kuavo_control_example.cpp</span><a class="headerlink" href="#id9" title="此代码块的永久链接"></a></div>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;chrono&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cmath&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;atomic&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mutex&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;vector&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iomanip&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-lowlevel/leju_sdk.h&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-utils/time_utils.hpp&quot;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="p">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * @brief Kuavo机器人控制类</span>
+<span class="cm"> *</span>
+<span class="cm"> * 封装Kuavo机器人的控制功能，包括数据订阅、正弦波控制和状态管理</span>
+<span class="cm"> */</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KuavoRobotController</span><span class="w"> </span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 构造函数</span>
+<span class="cm">     * @param version 机器人版本</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="k">explicit</span><span class="w"> </span><span class="n">KuavoRobotController</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">RobotVersion</span><span class="o">&amp;</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RobotVersions</span><span class="o">::</span><span class="n">KUAVO5_BASE</span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 析构函数</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="o">~</span><span class="n">KuavoRobotController</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 初始化机器人</span>
+<span class="cm">     * @return 初始化是否成功</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="nf">initialize</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 运行控制循环</span>
+<span class="cm">     * @param duration 运行时长（秒）</span>
+<span class="cm">     * @param control_frequency 控制频率（Hz）</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">runControlLoop</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">30.0</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">control_frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">50.0</span><span class="p">);</span>
+
+<span class="w">    </span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">    </span><span class="c1">// 机器人配置</span>
+<span class="w">    </span><span class="n">RobotVersion</span><span class="w"> </span><span class="n">robot_version_</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 数据计数和同步</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">imu_count_</span><span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">atomic</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="n">joint_state_count_</span><span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="w">    </span><span class="k">mutable</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="w"> </span><span class="n">print_mutex_</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="w"> </span><span class="n">robot_state_mutex_</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 保存最新的机器人状态</span>
+<span class="w">    </span><span class="n">RobotState</span><span class="w"> </span><span class="n">latest_robot_state_</span><span class="p">;</span>
+
+<span class="w">  </span>
+<span class="w">    </span>
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief IMU数据订阅回调</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">imuCallback</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ImuDataConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">imu_data</span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 关节状态订阅回调</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">jointStateCallback</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">RobotStateConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot_state</span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 使用正弦波生成关节控制指令</span>
+<span class="cm">     * @param time 时间（秒）</span>
+<span class="cm">     * @return 生成的控制指令</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="n">RobotCmd</span><span class="w"> </span><span class="nf">generateSineWaveCommand</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">time</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 获取关节振幅</span>
+<span class="cm">     * @param joint_name 关节名称</span>
+<span class="cm">     * @return 振幅值（弧度）</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="nf">getJointAmplitude</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">joint_name</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 设置数据订阅</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">setupSubscriptions</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * @brief 打印机器人信息</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">printRobotInfo</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="n">KuavoRobotController</span><span class="o">::</span><span class="n">KuavoRobotController</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">RobotVersion</span><span class="o">&amp;</span><span class="w"> </span><span class="n">version</span><span class="p">)</span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="n">robot_version_</span><span class="p">(</span><span class="n">version</span><span class="p">),</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="p">}</span>
+
+<span class="n">KuavoRobotController</span><span class="o">::~</span><span class="n">KuavoRobotController</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">;</span>
+
+<span class="kt">bool</span><span class="w"> </span><span class="nf">KuavoRobotController::initialize</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;--- Initializing Kuavo Robot ---&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 初始化机器人</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">init_env</span><span class="p">(</span><span class="n">robot_version_</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;❌ Failed to initialize Kuavo robot&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 获取机器人信息</span>
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="w">    </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">getMotorNumber</span><span class="p">();</span>
+<span class="w">    </span><span class="n">motor_names_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">getMotorNames</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">printRobotInfo</span><span class="p">();</span>
+<span class="w">    </span><span class="n">setupSubscriptions</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Kuavo robot initialized successfully&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">KuavoRobotController::printRobotInfo</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;  Motor Count: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;  Motors: &quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, &quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">KuavoRobotController::setupSubscriptions</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;--- Setting Up Data Subscriptions ---&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="w">    </span><span class="n">robot</span><span class="p">.</span><span class="n">subscribeImuData</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">ImuDataConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">imu_data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">imuCallback</span><span class="p">(</span><span class="n">imu_data</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="n">robot</span><span class="p">.</span><span class="n">subscribeRobotState</span><span class="p">([</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">RobotStateConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot_state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="o">-&gt;</span><span class="n">jointStateCallback</span><span class="p">(</span><span class="n">robot_state</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Subscribed to IMU and Joint State topics&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">KuavoRobotController::imuCallback</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">ImuDataConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">imu_data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">++</span><span class="n">imu_count_</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">count</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// 每10条打印一次（第1, 11, 21, ...条）</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">print_mutex_</span><span class="p">);</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">=== IMU Data [&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;] ===&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// 使用重载的&lt;&lt;运算符直接输出</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="o">*</span><span class="n">imu_data</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">KuavoRobotController::jointStateCallback</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">RobotStateConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot_state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">++</span><span class="n">joint_state_count_</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">count</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="c1">// 每10条打印一次（第1, 11, 21, ...条）</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">print_mutex_</span><span class="p">);</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">state_lock</span><span class="p">(</span><span class="n">robot_state_mutex_</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 保存最新的机器人状态</span>
+<span class="w">        </span><span class="n">latest_robot_state_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">robot_state</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">=== Joint State Data [&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;] ===&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// 使用重载的&lt;&lt;运算符直接输出</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="o">*</span><span class="n">robot_state</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">double</span><span class="w"> </span><span class="nf">KuavoRobotController::getJointAmplitude</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">joint_name</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mf">0.2</span><span class="p">;</span><span class="w">  </span><span class="c1">// 所有关节使用统一振幅</span>
+<span class="p">}</span>
+
+<span class="n">RobotCmd</span><span class="w"> </span><span class="nf">KuavoRobotController::generateSineWaveCommand</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">time</span><span class="p">)</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">RobotCmd</span><span class="w"> </span><span class="n">cmd</span><span class="p">(</span><span class="n">motor_count_</span><span class="p">);</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">frequency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="p">;</span><span class="w">  </span><span class="c1">// 基础频率 0.5 Hz</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">joint_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getJointAmplitude</span><span class="p">(</span><span class="n">joint_name</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 生成正弦波位置指令</span>
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">sin</span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">M_PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frequency</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 计算速度（正弦波的导数）</span>
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">amplitude</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">M_PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frequency</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">cos</span><span class="p">(</span><span class="mf">2.0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">M_PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">frequency</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">time</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 力矩设为0（位置控制模式）</span>
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">tau</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// 设置控制增益</span>
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">20.0</span><span class="p">;</span><span class="w">  </span><span class="c1">// 位置增益</span>
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">kd</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.0</span><span class="p">;</span><span class="w">   </span><span class="c1">// 速度增益</span>
+
+<span class="w">        </span><span class="c1">// 控制模式：CSP (位置控制)</span>
+<span class="w">        </span><span class="n">cmd</span><span class="p">.</span><span class="n">modes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">MotorControlMode</span><span class="o">::</span><span class="n">CSP</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 设置时间戳（使用Unix时间戳，与ROS兼容）</span>
+<span class="w">    </span><span class="n">cmd</span><span class="p">.</span><span class="n">timestamp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">common</span><span class="o">::</span><span class="n">GetUnixTimestampS</span><span class="p">();</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">cmd</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">KuavoRobotController::runControlLoop</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">duration</span><span class="p">,</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">control_frequency</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">--- Starting Control Loop ---&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Publishing sine wave commands at &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">control_frequency</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Hz...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Data will be printed every 10 messages&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Press Ctrl+C to stop&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">control_period</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">control_frequency</span><span class="p">;</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">total_iterations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">duration</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">control_frequency</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">start_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">total_iterations</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">iteration</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 计算当前时间</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">current_time</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">double</span><span class="w"> </span><span class="n">elapsed_seconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">current_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="p">).</span><span class="n">count</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 生成正弦波控制指令</span>
+<span class="w">        </span><span class="n">RobotCmd</span><span class="w"> </span><span class="n">cmd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">generateSineWaveCommand</span><span class="p">(</span><span class="n">elapsed_seconds</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 发布控制指令</span>
+<span class="w">        </span><span class="kt">bool</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">publishRobotCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">success</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;⚠ Warning: Failed to publish command at iteration &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 每100次迭代打印一次状态</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">iteration</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Status: Iteration &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">iteration</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;/&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">total_iterations</span>
+<span class="w">                     </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, Time: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">fixed</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">setprecision</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">elapsed_seconds</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;s&quot;</span>
+<span class="w">                     </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, IMU msgs: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">imu_count_</span><span class="p">.</span><span class="n">load</span><span class="p">()</span>
+<span class="w">                     </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;, Joint msgs: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">joint_state_count_</span><span class="p">.</span><span class="n">load</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">            </span><span class="c1">// 打印发送的完整控制指令消息</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Sent command:</span><span class="se">\n</span><span class="s">&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">cmd</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 按照控制频率休眠</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">duration</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">(</span><span class="n">control_period</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Control loop completed&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;=== Leju SDK - Kuavo Robot Example (Class-based) ===&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;Features: IMU &amp; Joint State Subscription (print every 10 msgs), Sine Wave Control&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 创建Kuavo机器人控制器实例</span>
+<span class="w">        </span><span class="n">KuavoRobotController</span><span class="w"> </span><span class="n">controller</span><span class="p">(</span><span class="n">RobotVersions</span><span class="o">::</span><span class="n">KUAVO5_BASE</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 初始化机器人</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">controller</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;❌ Failed to initialize Kuavo robot controller&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 运行控制循环</span>
+<span class="w">        </span><span class="n">controller</span><span class="p">.</span><span class="n">runControlLoop</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span><span class="w"> </span><span class="mf">50.0</span><span class="p">);</span><span class="w">  </span><span class="c1">// 30秒，50Hz</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">✅ Kuavo robot example completed successfully!&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Class-based design benefits:&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Encapsulated functionality with clear separation of concerns&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Private member variables with controlled access&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Modular methods for better maintainability&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Easy to extend and modify for different robot types&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;✓ Clean resource management and error handling&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;❌ Kuavo example failed with exception: &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;❌ Kuavo example failed with unknown exception&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="api.html" class="btn btn-neutral float-left" title="lejusdk-lowlevel API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="../lejusdk-highlevel/index.html" class="btn btn-neutral float-right" title="lejusdk-highlevel" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

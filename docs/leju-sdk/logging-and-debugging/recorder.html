@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>录制工具使用 &mdash; LejuSDK dbf55ca 文档</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/translations.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="Foxglove 分析数据" href="foxglove_usage.html" />
+    <link rel="prev" title="日志数据" href="stdout_log.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                dbf55ca
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/index.html">模块列表</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lejusdk-lowlevel/index.html">lejusdk-lowlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lejusdk-lowlevel/control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lejusdk-lowlevel/api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lejusdk-lowlevel/examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-lowlevel/examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../modules/lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../modules/lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">日志与调试数据分析</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">日志与调试数据分析</a></li>
+      <li class="breadcrumb-item active">录制工具使用</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/logging-and-debugging/recorder.rst.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>录制工具使用<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h1>
+<section id="id2">
+<h2>命令行用法<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h2>
+<section id="id3">
+<h3>基本录制（默认域 0）<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lejusdk_recorder<span class="w"> </span>-o<span class="w"> </span>recording.mcap
+</pre></div>
+</div>
+</section>
+<section id="id">
+<h3>指定域 ID 与录制时长（秒）<a class="headerlink" href="#id" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lejusdk_recorder<span class="w"> </span>-d<span class="w"> </span><span class="m">0</span><span class="w"> </span>-o<span class="w"> </span>recording.mcap<span class="w"> </span>-t<span class="w"> </span><span class="m">60</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>使用配置文件（可配置话题白名单/黑名单等）<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lejusdk_recorder<span class="w"> </span>-c<span class="w"> </span>config/recorder_example.yaml<span class="w"> </span>-o<span class="w"> </span>recording.mcap
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>详细日志输出<a class="headerlink" href="#id5" title="此标题的永久链接"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lejusdk_recorder<span class="w"> </span>-o<span class="w"> </span>recording.mcap<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id6">
+<h2>命令行参数<a class="headerlink" href="#id6" title="此标题的永久链接"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>参数</p></th>
+<th class="head"><p>说明</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-h,</span> <span class="pre">--help</span></code></p></td>
+<td><p>显示帮助信息</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-o,</span> <span class="pre">--output</span></code></p></td>
+<td><p>输出 MCAP 文件路径（必填）</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-c,</span> <span class="pre">--config</span></code></p></td>
+<td><p>配置文件路径 (YAML)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-d,</span> <span class="pre">--domain</span></code></p></td>
+<td><p>DDS 域 ID，默认 0</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-t,</span> <span class="pre">--duration</span></code></p></td>
+<td><p>录制时长（秒），0 表示无限制</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-v,</span> <span class="pre">--verbose</span></code></p></td>
+<td><p>详细日志输出</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id7">
+<h2>配置文件<a class="headerlink" href="#id7" title="此标题的永久链接"></a></h2>
+<p>recorder 支持 YAML 配置文件，可通过 <code class="docutils literal notranslate"><span class="pre">-c</span></code> 参数指定。配置示例位于功能包内 <code class="docutils literal notranslate"><span class="pre">config/recorder_example.yaml</span></code>。</p>
+<section id="id8">
+<h3>配置文件结构<a class="headerlink" href="#id8" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># DDS Configuration</span>
+<span class="nt">dds</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">domain_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                    </span><span class="c1"># DDS 域 ID</span>
+<span class="w">  </span><span class="nt">discovery_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10.0</span><span class="w">         </span><span class="c1"># 话题发现超时（秒）</span>
+<span class="w">  </span><span class="nt">topics</span><span class="p">:</span><span class="w">                         </span><span class="c1"># 话题过滤列表（正则表达式，空则录制全部）</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/imu_state&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/joint_state&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/joint_cmd&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/joy&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/hardware/state&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/hardware/stop&quot;</span>
+
+<span class="c1"># Output Configuration</span>
+<span class="nt">output</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;recording&quot;</span><span class="w">             </span><span class="c1"># 文件名前缀</span>
+<span class="w">  </span><span class="nt">append_date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">               </span><span class="c1"># 是否在文件名后追加日期时间</span>
+<span class="w">  </span><span class="nt">max_file_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span><span class="w">              </span><span class="c1"># 单文件最大大小（MB），0 表示无限制</span>
+<span class="w">  </span><span class="nt">max_duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                 </span><span class="c1"># 单文件最大时长（秒），0 表示无限制</span>
+<span class="w">  </span><span class="nt">split</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                     </span><span class="c1"># 是否启用文件分割（达到大小/时长限制时）</span>
+<span class="w">  </span><span class="nt">max_splits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span><span class="w">                   </span><span class="c1"># 最大分割文件数（0 表示无限制）</span>
+<span class="w">  </span><span class="nt">min_space</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span><span class="w">                 </span><span class="c1"># 最小剩余磁盘空间（MB），低于此值停止录制</span>
+<span class="w">  </span><span class="nt">buffer_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">                  </span><span class="c1"># 写入缓冲区大小（MB）</span>
+<span class="w">  </span><span class="nt">compression</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                 </span><span class="c1"># 是否启用压缩</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;zstd&quot;</span><span class="w">                  </span><span class="c1"># 压缩类型：zstd, lz4, 或 none</span>
+<span class="w">    </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span><span class="w">                      </span><span class="c1"># 压缩级别：zstd 1-19，lz4 1-12</span>
+
+<span class="c1"># Timing Configuration</span>
+<span class="nt">timing</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">use_sim_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">             </span><span class="c1"># 是否使用仿真时间</span>
+<span class="w">  </span><span class="nt">start_immediately</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">         </span><span class="c1"># 是否立即开始录制</span>
+<span class="w">  </span><span class="c1"># start_trigger_topic: &quot;/start_recording&quot;  # 触发话题（可选）</span>
+
+<span class="c1"># Logging Configuration</span>
+<span class="nt">logging</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;info&quot;</span><span class="w">                   </span><span class="c1"># 日志级别：trace, debug, info, warning, error, critical</span>
+<span class="w">  </span><span class="nt">console</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                   </span><span class="c1"># 是否输出到控制台</span>
+<span class="w">  </span><span class="nt">file_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">             </span><span class="c1"># 是否输出到文件</span>
+<span class="w">  </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;recorder.log&quot;</span><span class="w">       </span><span class="c1"># 日志文件路径</span>
+</pre></div>
+</div>
+</section>
+<section id="id9">
+<h3>配置项说明<a class="headerlink" href="#id9" title="此标题的永久链接"></a></h3>
+<p><strong>DDS 配置</strong> （<code class="docutils literal notranslate"><span class="pre">dds</span></code>）</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">domain_id</span></code>：DDS 域 ID，需与机器人/仿真程序一致（默认 0）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">discovery_timeout</span></code>：话题发现超时时间，超过此时间未发现的话题将被跳过</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">topics</span></code>：话题过滤列表，支持正则表达式；空列表表示录制所有话题</p></li>
+</ul>
+<p><strong>输出配置</strong> （<code class="docutils literal notranslate"><span class="pre">output</span></code>）</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">prefix</span></code>：输出文件名前缀</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">append_date</span></code>：若为 <code class="docutils literal notranslate"><span class="pre">true</span></code>，文件名格式为 <code class="docutils literal notranslate"><span class="pre">prefix_YYYY-MM-DD-HH-MM-SS.mcap</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_file_size</span></code>：单文件最大大小（MB），达到后自动分割（需 <code class="docutils literal notranslate"><span class="pre">split:</span> <span class="pre">true</span></code>）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_duration</span></code>：单文件最大录制时长（秒），达到后自动分割</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">split</span></code>：是否启用文件分割</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_splits</span></code>：最大分割文件数，超过后循环覆盖最旧的文件</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">min_space</span></code>：最小剩余磁盘空间（MB），低于此值停止录制并警告</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">buffer_size</span></code>：写入缓冲区大小，影响写入性能</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">compression</span></code>：压缩配置
+- <code class="docutils literal notranslate"><span class="pre">enabled</span></code>：是否启用压缩
+- <code class="docutils literal notranslate"><span class="pre">type</span></code>：<code class="docutils literal notranslate"><span class="pre">zstd``（压缩率高）、``lz4``（速度快）、``none``（不压缩）</span>
+<span class="pre">-</span> <span class="pre">``level</span></code>：压缩级别，数值越大压缩率越高但速度越慢</p></li>
+</ul>
+<p><strong>时间配置</strong> （<code class="docutils literal notranslate"><span class="pre">timing</span></code>）</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">use_sim_time</span></code>：是否使用仿真时间（需 DDS 提供仿真时间支持）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start_immediately</span></code>：是否立即开始录制</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">start_trigger_topic</span></code> （可选）：指定话题作为录制触发，收到该话题消息后才开始录制</p></li>
+</ul>
+<p><strong>日志配置</strong> （<code class="docutils literal notranslate"><span class="pre">logging</span></code>）</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">level</span></code>：日志级别，从低到高：trace &lt; debug &lt; info &lt; warning &lt; error &lt; critical</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">console</span></code>：是否输出到控制台</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">file_enabled</span></code>：是否输出到日志文件</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">file_path</span></code>：日志文件路径（相对或绝对路径）</p></li>
+</ul>
+</section>
+<section id="id10">
+<h3>使用示例<a class="headerlink" href="#id10" title="此标题的永久链接"></a></h3>
+<p><strong>录制 LejuSDK 常用话题</strong>：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">dds</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">domain_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">topics</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/imu_state&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/joint_state&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/joint_cmd&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/joy&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/hardware/state&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/rt/hardware/stop&quot;</span>
+</pre></div>
+</div>
+<p><strong>限制文件大小并启用压缩</strong>：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">output</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;robot_recording&quot;</span>
+<span class="w">  </span><span class="nt">append_date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">max_file_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span><span class="w">      </span><span class="c1"># 500 MB</span>
+<span class="w">  </span><span class="nt">split</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">max_splits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">compression</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;zstd&quot;</span>
+<span class="w">    </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</pre></div>
+</div>
+<p><strong>录制所有话题（无过滤）</strong>：</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">dds</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">domain_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">topics</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w">              </span><span class="c1"># 空列表表示录制所有话题</span>
+</pre></div>
+</div>
+</section>
+<section id="id11">
+<h3>配置文件路径<a class="headerlink" href="#id11" title="此标题的永久链接"></a></h3>
+<p>配置文件路径可以是：</p>
+<ul class="simple">
+<li><p>相对路径：相对于当前工作目录</p></li>
+<li><p>绝对路径：完整文件路径</p></li>
+<li><p>功能包内路径：如 <code class="docutils literal notranslate"><span class="pre">config/recorder_example.yaml</span></code> （需在功能包目录下运行）</p></li>
+</ul>
+<p>完整配置示例见功能包内 <code class="docutils literal notranslate"><span class="pre">config/recorder_example.yaml</span></code>。</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="stdout_log.html" class="btn btn-neutral float-left" title="日志数据" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="foxglove_usage.html" class="btn btn-neutral float-right" title="Foxglove 分析数据" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

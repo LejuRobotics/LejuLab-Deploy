@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lejusdk_examples</name>
+  <version>1.0.0</version>
+  <description>Examples for lejusdk</description>
+
+  <maintainer email="edu@lejurobot.com">Leju Robotics</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>lejusdk-utils</depend>
+  <depend>lejusdk-lowlevel</depend>
+
+  <export>
+  </export>
+</package>

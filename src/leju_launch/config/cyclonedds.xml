@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CycloneDDS>
+    <Domain Id="any">
+        <!--
+            共享内存传输：默认关闭
+            如需启用共享内存，使用 cyclonedds_shm.xml 配置文件
+            export CYCLONEDDS_URI=file:///path/to/cyclonedds_shm.xml
+        -->
+        <General>
+            <Interfaces>
+                <!-- <NetworkInterface autodetermine="true" priority="default" multicast="default" /> -->
+                <NetworkInterface name="lo" multicast="default" />
+            </Interfaces>
+            <AllowMulticast>true</AllowMulticast>
+        </General>
+        <Discovery>
+            <EnableTopicDiscoveryEndpoints>true</EnableTopicDiscoveryEndpoints>
+        </Discovery>
+        <!-- <Tracing> -->
+            <!-- <Verbosity>config</Verbosity> -->
+            <!-- <OutputFile>cdds.log.${CYCLONEDDS_PID}</OutputFile> -->
+            <!-- <OutputFile>stderr</OutputFile> -->
+        <!-- </Tracing> -->
+    </Domain>
+</CycloneDDS>

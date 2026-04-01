@@ -1,0 +1,20 @@
+loop_dt: 0.001
+default_controller: "mimic"
+
+controllers:
+  - name: "amp"
+    type: "GenericRLController"
+    config: "config_amp.yaml"
+    enabled: true
+
+  # 贺年舞蹈
+  - name: "mimic"
+    type: "GenericRLController"
+    config: "config_mimic_HPNY_dance.yaml"
+    enabled: true
+
+  # 查尔斯舞蹈
+  # - name: "mimic"
+  #   type: "GenericRLController"
+  #   config: "config_mimic_charleston_dance.yaml"
+  #   enabled: true

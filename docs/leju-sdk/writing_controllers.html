@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>控制器实践 &mdash; LejuSDK dbf55ca 文档</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/translations.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="搜索" href="search.html" />
+    <link rel="prev" title="MCAP 数据格式" href="logging-and-debugging/mcap_format.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                dbf55ca
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/index.html">模块列表</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-lowlevel/index.html">lejusdk-lowlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">控制器实践</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/writing_controllers.rst.txt" rel="nofollow"> 查看页面源码</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>控制器实践<a class="headerlink" href="#id1" title="此标题的永久链接"></a></h1>
+<p>本文档介绍如何编写机器人控制器，包括控制器架构设计、配置文件参数说明、以及控制器的实践。关于 Lowlevel 接口的详细使用方法和数据类型说明，请参考 <a class="reference internal" href="modules/lejusdk-lowlevel/index.html"><span class="doc">lejusdk-lowlevel 模块文档</span></a>。</p>
+<section id="id2">
+<h2>概述<a class="headerlink" href="#id2" title="此标题的永久链接"></a></h2>
+<p>控制器是机器人控制系统的核心组件，负责：</p>
+<ul class="simple">
+<li><p><strong>订阅传感器数据</strong>：IMU、关节状态、手柄输入、硬件状态</p></li>
+<li><p><strong>执行控制算法</strong>：根据传感器数据和目标生成控制指令</p></li>
+<li><p><strong>发布控制指令</strong>：将计算得到的关节目标位置/速度/力矩发送给硬件</p></li>
+</ul>
+<p>LejuSDK Lowlevel 提供了统一的 DDS 通信接口，控制器通过 <cite>GlobalRobot</cite> 单例访问这些接口，无需直接处理 DDS 细节。</p>
+</section>
+<section id="id3">
+<h2>快速开始<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h2>
+<p>控制器编写的基本流程：</p>
+<ol class="arabic simple">
+<li><p><strong>初始化机器人环境</strong>：设置机器人版本，初始化 DDS 通信</p></li>
+<li><p><strong>订阅传感器数据</strong>：设置回调函数接收 IMU、关节状态等数据</p></li>
+<li><p><strong>加载配置文件</strong>：读取控制器参数（关节配置、控制模式、观测项等）</p></li>
+<li><p><strong>运行控制循环</strong>：周期性读取数据、计算控制指令、发布指令</p></li>
+</ol>
+<p>详细的接口使用方法请参考：</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="modules/lejusdk-lowlevel/examples.html"><span class="doc">lejusdk-lowlevel 示例</span></a>：订阅/发布的完整代码示例</p></li>
+<li><p><a class="reference internal" href="modules/lejusdk-lowlevel/datatypes.html"><span class="doc">lejusdk-lowlevel 数据类型</span></a>：RobotState、RobotCmd、ImuData 等数据结构说明</p></li>
+<li><p><a class="reference internal" href="modules/lejusdk-lowlevel/api.html"><span class="doc">lejusdk-lowlevel API</span></a>：GlobalRobot、RobotBaseAPI 等接口文档</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>控制器架构<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h2>
+<p>典型的控制器类结构：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;lejusdk-lowlevel/leju_sdk.h&quot;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;mutex&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;thread&gt;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyController</span><span class="w"> </span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">initialize</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config_file</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 1. 初始化机器人环境</span>
+<span class="w">    </span><span class="c1">// 方式 1: 从环境变量读取（推荐）</span>
+<span class="w">    </span><span class="c1">// robot_version_ = leju::RobotVersion::from_env();</span>
+<span class="w">    </span><span class="c1">// 方式 2: 显式指定版本</span>
+<span class="w">    </span><span class="n">robot_version_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotVersions</span><span class="o">::</span><span class="n">KUAVO5_BASE</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">leju</span><span class="o">::</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">init_env</span><span class="p">(</span><span class="n">robot_version_</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="w">    </span><span class="n">motor_count_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">getMotorNumber</span><span class="p">();</span>
+<span class="w">    </span><span class="n">motor_names_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">.</span><span class="n">getMotorNames</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// 2. 设置数据订阅（回调在独立线程执行）</span>
+<span class="w">    </span><span class="n">setupSubscriptions</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// 3. 加载配置文件</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">loadConfig</span><span class="p">(</span><span class="n">config_file</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 控制循环</span>
+<span class="w">    </span><span class="n">mainLoop</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="n">setupSubscriptions</span><span class="p">();</span><span class="w">  </span><span class="c1">// 设置订阅回调</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="nf">loadConfig</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config_file</span><span class="p">);</span><span class="w">  </span><span class="c1">// 加载配置</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">mainLoop</span><span class="p">();</span><span class="w">  </span><span class="c1">// 主控制循环</span>
+
+<span class="w">  </span><span class="c1">// 数据成员</span>
+<span class="w">  </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotVersion</span><span class="w"> </span><span class="n">robot_version_</span><span class="p">;</span>
+<span class="w">  </span><span class="kt">size_t</span><span class="w"> </span><span class="n">motor_count_</span><span class="p">;</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">motor_names_</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">// 线程安全的数据存储</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="w"> </span><span class="n">robot_state_mutex_</span><span class="p">;</span>
+<span class="w">  </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotState</span><span class="w"> </span><span class="n">robot_state_</span><span class="p">;</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="w"> </span><span class="n">imu_data_mutex_</span><span class="p">;</span>
+<span class="w">  </span><span class="n">leju</span><span class="o">::</span><span class="n">ImuData</span><span class="w"> </span><span class="n">imu_data_</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<section id="id5">
+<h3>关键设计要点<a class="headerlink" href="#id5" title="此标题的永久链接"></a></h3>
+<dl class="simple">
+<dt><strong>线程安全</strong></dt><dd><p>所有 DDS 回调函数在独立线程中执行，访问共享数据时必须使用互斥锁保护。</p>
+</dd>
+<dt><strong>硬件状态检查</strong></dt><dd><p>发布控制指令前，确保硬件状态为 <code class="docutils literal notranslate"><span class="pre">READY_OK</span></code>，否则指令不会生效。</p>
+</dd>
+<dt><strong>控制频率</strong></dt><dd><ul class="simple">
+<li><p>控制循环通常 1 kHz（<code class="docutils literal notranslate"><span class="pre">loop_dt</span> <span class="pre">=</span> <span class="pre">0.001</span></code>），与硬件同步</p></li>
+<li><p>策略/算法执行频率可降低（如 50 Hz），通过 <code class="docutils literal notranslate"><span class="pre">decimation</span></code> 控制</p></li>
+</ul>
+</dd>
+</dl>
+<p>详细实现示例请参考 <a class="reference internal" href="modules/lejusdk-lowlevel/examples.html"><span class="doc">lejusdk-lowlevel 示例</span></a> 中的综合控制示例。</p>
+</section>
+</section>
+<section id="id6">
+<h2>配置文件参数说明<a class="headerlink" href="#id6" title="此标题的永久链接"></a></h2>
+<p>本节以 KUAVO5_BASE 版本 AMP 控制器的配置文件为例，说明各参数含义。配置文件为 YAML 格式，位于 <code class="docutils literal notranslate"><span class="pre">config/52/config_amp.yaml</span></code>。</p>
+<section id="id7">
+<h3>基础配置<a class="headerlink" href="#id7" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">HumanoidRobotCfg</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">loop_dt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span><span class="w">          </span><span class="c1"># 控制循环周期 (s)，通常 1 kHz</span>
+<span class="w">  </span><span class="nt">policy_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;policy/xxx.onnx&quot;</span><span class="w">  </span><span class="c1"># ONNX 模型文件路径（相对配置文件）</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt><strong>loop_dt</strong></dt><dd><p>控制循环周期，单位秒。通常设置为 0.001（1 kHz），与硬件控制频率一致。控制循环中应保持此频率，确保指令及时发送。</p>
+</dd>
+<dt><strong>policy_path</strong></dt><dd><p>策略模型文件路径，相对于配置文件所在目录。如果控制器不使用模型（如 PID 控制器），可忽略此参数。</p>
+</dd>
+</dl>
+</section>
+<section id="env-robot">
+<h3>机器人参数 (env.robot)<a class="headerlink" href="#env-robot" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">env</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">policy_dt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.02</span><span class="w">         </span><span class="c1"># 策略执行周期 (s)，通常 50 Hz</span>
+<span class="w">  </span><span class="nt">robot</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">joint_names</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">[</span><span class="s">&quot;l_leg_roll&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_leg_yaw&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_leg_pitch&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_knee&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_foot_pitch&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_foot_roll&quot;</span><span class="p p-Indicator">,</span>
+<span class="w">       </span><span class="s">&quot;r_leg_roll&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_leg_yaw&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_leg_pitch&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_knee&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_foot_pitch&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_foot_roll&quot;</span><span class="p p-Indicator">,</span>
+<span class="w">       </span><span class="s">&quot;waist_yaw&quot;</span><span class="p p-Indicator">,</span>
+<span class="w">       </span><span class="s">&quot;l_arm_pitch&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_arm_roll&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_arm_yaw&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_forearm&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_hand_yaw&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_hand_roll&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;l_hand_pitch&quot;</span><span class="p p-Indicator">,</span>
+<span class="w">       </span><span class="s">&quot;r_arm_pitch&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_arm_roll&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_arm_yaw&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_forearm&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_hand_yaw&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_hand_roll&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;r_hand_pitch&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">joint_direction</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">joint_default_pos</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-0.24</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-0.26</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">joint_torque_limit</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">127.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">71.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">14.1</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">actuator_kp</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">100.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">100.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">actuator_kd</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">actuator_control_mode</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">action_scale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">...</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt><strong>policy_dt</strong></dt><dd><p>策略执行周期，单位秒。通常设置为 0.02（50 Hz），用于降低计算负担。在控制循环中使用 <code class="docutils literal notranslate"><span class="pre">decimation</span> <span class="pre">=</span> <span class="pre">round(policy_dt</span> <span class="pre">/</span> <span class="pre">loop_dt)</span></code> 控制策略执行频率。</p>
+</dd>
+<dt><strong>joint_names</strong></dt><dd><p>关节名称列表，顺序必须与机器人关节顺序一致。KUAVO5_BASE 版本共 27 个关节：12 腿 + 1 腰 + 14 臂。控制器会根据此列表匹配 <code class="docutils literal notranslate"><span class="pre">motor_names_</span></code> 获取关节索引。</p>
+</dd>
+<dt><strong>joint_direction</strong></dt><dd><p>关节方向系数数组，用于兼容不同旋转方向的关节。通常为 1.0，若关节旋转方向相反则设为 -1.0。在计算目标位置时使用：<code class="docutils literal notranslate"><span class="pre">target</span> <span class="pre">=</span> <span class="pre">joint_direction[i]</span> <span class="pre">*</span> <span class="pre">(default_pos[i]</span> <span class="pre">+</span> <span class="pre">action[i]</span> <span class="pre">*</span> <span class="pre">scale)</span></code>。</p>
+</dd>
+<dt><strong>joint_default_pos</strong></dt><dd><p>默认关节位置数组（rad），机器人启动时的目标姿态。通常腿为站立姿态（如 <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">-0.24,</span> <span class="pre">0.5,</span> <span class="pre">-0.26,</span> <span class="pre">0]</span></code>），臂为下垂姿态（全 0）。</p>
+</dd>
+<dt><strong>joint_torque_limit</strong></dt><dd><p>关节力矩限制数组（N·m），用于安全保护。超过此值的力矩指令会被限幅。不同关节的限幅值不同，通常腿关节较大（100-280 N·m），手部关节较小（14.1 N·m）。</p>
+</dd>
+<dt><strong>actuator_kp</strong></dt><dd><p>位置增益 Kp 数组（N·m/rad），用于 CSP 模式的位置环控制。值越大，位置跟踪越强，但可能引起振荡。通常腿关节较大（80-100），手部关节较小（15-30）。</p>
+</dd>
+<dt><strong>actuator_kd</strong></dt><dd><p>速度增益 Kd 数组（N·m·s/rad），用于 CSP/CSV 模式的阻尼。值越大，阻尼越强，有助于稳定。通常腿关节较大（5-7.5），手部关节较小（3）。</p>
+</dd>
+<dt><strong>actuator_control_mode</strong></dt><dd><p>控制模式数组，每个关节对应一个值：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">0</span></code>: CST（力矩控制），适用于力控、柔顺控制</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code>: CSV（速度控制），适用于匀速运动</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">2</span></code>: CSP（位置控制），适用于精确定位</p></li>
+</ul>
+</dd>
+<dt><strong>action_scale</strong></dt><dd><p>动作缩放系数数组，用于将模型输出（通常归一化到 [-1, 1]）缩放到关节角度范围。例如 0.25 表示模型输出 ±1 对应 ±0.25 rad。计算公式：<code class="docutils literal notranslate"><span class="pre">target</span> <span class="pre">=</span> <span class="pre">default_pos</span> <span class="pre">+</span> <span class="pre">action</span> <span class="pre">*</span> <span class="pre">action_scale</span></code>。</p>
+</dd>
+</dl>
+</section>
+<section id="env-observations">
+<h3>观测配置 (env.observations)<a class="headerlink" href="#env-observations" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">observations</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">history_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">       </span><span class="c1"># 历史帧数</span>
+<span class="w">  </span><span class="nt">stack_order</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;classic&quot;</span><span class="w">  </span><span class="c1"># 堆叠顺序：&quot;classic&quot; 或 &quot;isaaclab&quot;</span>
+<span class="w">  </span><span class="nt">terms</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">base_ang_vel</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-9999.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9999.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">projected_gravity</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-9999.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9999.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">velocity_commands</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-9999.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9999.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">cmd_stance</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">joint_pos</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-9999.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9999.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">joint_vel</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-9999.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">9999.</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">actions</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">      </span><span class="nt">clip</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-18.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">18.</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt><strong>history_length</strong></dt><dd><p>历史帧数，用于时序模型。<code class="docutils literal notranslate"><span class="pre">1</span></code> 表示仅使用当前帧，<code class="docutils literal notranslate"><span class="pre">2</span></code> 表示使用当前帧 + 上一帧。历史帧会增加观测维度：总维度 = 单帧维度 × history_length。</p>
+</dd>
+<dt><strong>stack_order</strong></dt><dd><p>堆叠顺序，决定历史帧的组织方式：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;classic&quot;</span></code>: 按时间顺序堆叠，<cite>[历史帧0的所有项, 历史帧1的所有项, …]</cite></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;isaaclab&quot;</span></code>: 按观测项堆叠，<cite>[项0的所有历史, 项1的所有历史, …]</cite></p></li>
+</ul>
+</dd>
+<dt><strong>terms</strong></dt><dd><p>观测项配置字典，每个项包含：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code>: 缩放系数，用于归一化观测值</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">clip</span></code>: 裁剪范围 <cite>[min, max]</cite>，超出范围的值会被裁剪到边界</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>常用观测项</strong>：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base_ang_vel</span></code>: 基座角速度（3 维），来自 IMU gyro</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">projected_gravity</span></code>: 投影重力（3 维），IMU quat 旋转后的重力向量</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">velocity_commands</span></code>: 速度指令（3 维：lin_vel_x, lin_vel_y, ang_vel_z），来自手柄摇杆</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cmd_stance</span></code>: 站立/行走指令（1 维：1=站立，0=行走），由 CmdStanceCalculator 计算</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">joint_pos</span></code>: 关节位置（N 维，N 为关节数），相对默认位置的残差</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">joint_vel</span></code>: 关节速度（N 维）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">actions</span></code>: 上一帧动作（N 维），用于时序模型</p></li>
+</ul>
+</section>
+<section id="command-range">
+<h3>命令范围 (command_range)<a class="headerlink" href="#command-range" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">command_range</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lin_vel_x</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-1.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.0</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># 线速度 x 范围 (m/s)</span>
+<span class="w">  </span><span class="nt">lin_vel_y</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-0.6</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.6</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># 线速度 y 范围 (m/s)</span>
+<span class="w">  </span><span class="nt">ang_vel_z</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-0.3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.3</span><span class="p p-Indicator">]</span><span class="w">    </span><span class="c1"># 角速度 z 范围 (rad/s)</span>
+</pre></div>
+</div>
+<p>定义速度指令的允许范围。手柄摇杆输入会按此范围缩放：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">left_y</span></code> → <code class="docutils literal notranslate"><span class="pre">lin_vel_x</span></code> （前推为正）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">left_x</span></code> → <code class="docutils literal notranslate"><span class="pre">lin_vel_y</span></code> （左推为正）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">right_x</span></code> → <code class="docutils literal notranslate"><span class="pre">ang_vel_z</span></code> （左推为正）</p></li>
+</ul>
+<p>手柄轴值范围是 [-1, 1]，乘以 <code class="docutils literal notranslate"><span class="pre">command_range</span></code> 的上下界得到实际速度指令。</p>
+</section>
+<section id="arm-controller">
+<h3>手臂控制器 (arm_controller)<a class="headerlink" href="#arm-controller" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">arm_controller</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">leg_joint_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">  </span><span class="nt">waist_joint_count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">interpolation_velocity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">   </span><span class="c1"># rad/s</span>
+<span class="w">  </span><span class="nt">min_duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="w">  </span><span class="nt">max_duration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+</pre></div>
+</div>
+<p>手臂控制器用于在行走时使用 RL 摆手，站立时平滑插值到默认姿态。</p>
+<dl class="simple">
+<dt><strong>enabled</strong></dt><dd><p>是否启用手臂控制器。启用后，当 <code class="docutils literal notranslate"><span class="pre">cmd_stance</span> <span class="pre">==</span> <span class="pre">1</span></code> （站立）时，手臂会从当前姿态平滑插值到 <code class="docutils literal notranslate"><span class="pre">joint_default_pos</span></code> 的手臂段。</p>
+</dd>
+<dt><strong>leg_joint_count</strong></dt><dd><p>腿部关节数，KUAVO5_BASE 版本为 12（左右腿各 6）。用于计算手臂在 <code class="docutils literal notranslate"><span class="pre">joint_names</span></code> 中的起始索引：<code class="docutils literal notranslate"><span class="pre">arm_start_index</span> <span class="pre">=</span> <span class="pre">leg_joint_count</span> <span class="pre">+</span> <span class="pre">waist_joint_count</span></code>。</p>
+</dd>
+<dt><strong>waist_joint_count</strong></dt><dd><p>腰部关节数，KUAVO5_BASE 版本为 1（waist_yaw）。</p>
+</dd>
+<dt><strong>interpolation_velocity</strong></dt><dd><p>插值最大速度（rad/s），用于计算从当前手臂姿态到默认姿态的插值时长。时长计算公式：<code class="docutils literal notranslate"><span class="pre">duration</span> <span class="pre">=</span> <span class="pre">1.5</span> <span class="pre">*</span> <span class="pre">max_joint_displacement</span> <span class="pre">/</span> <span class="pre">interpolation_velocity</span></code>。</p>
+</dd>
+<dt><strong>min_duration / max_duration</strong></dt><dd><p>插值时长范围（秒），避免插值过快或过慢。计算出的时长会被限制在此范围内。</p>
+</dd>
+</dl>
+</section>
+<section id="cmd-stance">
+<h3>cmd_stance 配置<a class="headerlink" href="#cmd-stance" title="此标题的永久链接"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">cmd_stance</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">smart_stop</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">torso_velocity_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span><span class="w">  </span><span class="c1"># m/s</span>
+<span class="w">    </span><span class="nt">feet_alignment_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.08</span><span class="w">   </span><span class="c1"># m</span>
+<span class="w">  </span><span class="nt">velocity_magnitude_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">  </span><span class="c1"># 速度低于此值视为&quot;小&quot;</span>
+</pre></div>
+</div>
+<p>cmd_stance 用于区分站立（1）和行走（0）状态，影响手臂控制器的行为。</p>
+<dl>
+<dt><strong>smart_stop</strong></dt><dd><p>智能停止配置，当速度小时自动切换到站立：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">enabled</span></code>: 是否启用智能停止</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">torso_velocity_threshold</span></code>: 躯干速度阈值（m/s），低于此值视为静止</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">feet_alignment_threshold</span></code>: 双脚对齐阈值（m），左右脚 x 方向距离小于此值视为对齐</p></li>
+</ul>
+<p>智能停止需要 torso_state 和 feet_positions 数据，如果使用 <code class="docutils literal notranslate"><span class="pre">computeSimple()</span></code> （无这些数据），则速度小时默认返回站立。</p>
+</dd>
+<dt><strong>velocity_magnitude_threshold</strong></dt><dd><p>速度幅值阈值，用于判断摇杆是否松开。速度低于此值视为”小”，可能触发站立。设置较大值（如 0.05）可避免摇杆漂移导致的误判。</p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="id8">
+<h2>控制器实践<a class="headerlink" href="#id8" title="此标题的永久链接"></a></h2>
+<section id="id9">
+<h3>线程安全<a class="headerlink" href="#id9" title="此标题的永久链接"></a></h3>
+<p>所有 DDS 回调函数在独立线程中执行，访问共享数据时必须使用互斥锁：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyController</span><span class="w"> </span><span class="p">{</span>
+<span class="k">private</span><span class="o">:</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="w"> </span><span class="n">robot_state_mutex_</span><span class="p">;</span>
+<span class="w">  </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotState</span><span class="w"> </span><span class="n">robot_state_</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="nf">setupSubscriptions</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">auto</span><span class="o">&amp;</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">GlobalRobot</span><span class="o">::</span><span class="n">getInstance</span><span class="p">();</span>
+<span class="w">    </span><span class="n">robot</span><span class="p">.</span><span class="n">subscribeRobotState</span><span class="p">(</span>
+<span class="w">      </span><span class="p">[</span><span class="k">this</span><span class="p">](</span><span class="k">const</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotStateConstPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">robot_state_mutex_</span><span class="p">);</span><span class="w">  </span><span class="c1">// 必须加锁</span>
+<span class="w">        </span><span class="n">robot_state_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">*</span><span class="n">state</span><span class="p">;</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="n">leju</span><span class="o">::</span><span class="n">RobotState</span><span class="w"> </span><span class="nf">getRobotState</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">lock_guard</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">mutex</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lock</span><span class="p">(</span><span class="n">robot_state_mutex_</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">robot_state_</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</section>
+<section id="id10">
+<h3>硬件状态检查<a class="headerlink" href="#id10" title="此标题的永久链接"></a></h3>
+<p>发布控制指令前，确保硬件状态为 <code class="docutils literal notranslate"><span class="pre">READY_OK</span></code>：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">leju</span><span class="o">::</span><span class="n">HardwareState</span><span class="w"> </span><span class="n">hw_state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getHardwareState</span><span class="p">();</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">hw_state</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">leju</span><span class="o">::</span><span class="n">HardwareState</span><span class="o">::</span><span class="n">READY_OK</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 硬件未就绪，不发布指令</span>
+<span class="w">  </span><span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">robot</span><span class="p">.</span><span class="n">publishRobotCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="id11">
+<h3>控制频率管理<a class="headerlink" href="#id11" title="此标题的永久链接"></a></h3>
+<p>控制循环通常以 1 kHz 运行，但策略/算法执行频率可降低：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="kt">double</span><span class="w"> </span><span class="n">loop_dt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.001</span><span class="p">;</span><span class="w">      </span><span class="c1">// 1 kHz 控制循环</span>
+<span class="kt">double</span><span class="w"> </span><span class="n">policy_dt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.02</span><span class="p">;</span><span class="w">     </span><span class="c1">// 50 Hz 策略执行</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">decimation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">round</span><span class="p">(</span><span class="n">policy_dt</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">loop_dt</span><span class="p">);</span><span class="w">  </span><span class="c1">// 20</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="n">cnt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">t0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">steady_clock</span><span class="o">::</span><span class="n">now</span><span class="p">();</span>
+<span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">running_</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 策略每 decimation 步执行一次</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cnt</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="n">decimation</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">computePolicy</span><span class="p">();</span><span class="w">  </span><span class="c1">// 50 Hz</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 控制指令每步都更新</span>
+<span class="w">  </span><span class="n">updateControlCommand</span><span class="p">();</span><span class="w">  </span><span class="c1">// 1 kHz</span>
+<span class="w">  </span><span class="n">robot</span><span class="p">.</span><span class="n">publishRobotCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 控制循环频率</span>
+<span class="w">  </span><span class="n">t0</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="w">  </span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_until</span><span class="p">(</span><span class="n">t0</span><span class="p">);</span>
+<span class="w">  </span><span class="n">cnt</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="id12">
+<h3>配置加载示例<a class="headerlink" href="#id12" title="此标题的永久链接"></a></h3>
+<p>使用 YAML-CPP 加载配置文件：</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;yaml-cpp/yaml.h&gt;</span>
+
+<span class="kt">bool</span><span class="w"> </span><span class="nf">MyController::loadConfig</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span><span class="w"> </span><span class="n">config_file</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">YAML</span><span class="o">::</span><span class="n">Node</span><span class="w"> </span><span class="n">cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">YAML</span><span class="o">::</span><span class="n">LoadFile</span><span class="p">(</span><span class="n">config_file</span><span class="p">);</span>
+<span class="w">  </span><span class="n">YAML</span><span class="o">::</span><span class="n">Node</span><span class="w"> </span><span class="n">robot_cfg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cfg</span><span class="p">[</span><span class="s">&quot;HumanoidRobotCfg&quot;</span><span class="p">];</span>
+
+<span class="w">  </span><span class="c1">// 基础配置</span>
+<span class="w">  </span><span class="n">loop_dt_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_cfg</span><span class="p">[</span><span class="s">&quot;loop_dt&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// 机器人参数</span>
+<span class="w">  </span><span class="n">YAML</span><span class="o">::</span><span class="n">Node</span><span class="w"> </span><span class="n">robot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_cfg</span><span class="p">[</span><span class="s">&quot;env&quot;</span><span class="p">][</span><span class="s">&quot;robot&quot;</span><span class="p">];</span>
+<span class="w">  </span><span class="n">joint_names_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">[</span><span class="s">&quot;joint_names&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">kp_vec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">[</span><span class="s">&quot;actuator_kp&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+<span class="w">  </span><span class="n">kp_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Map</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">ArrayXd</span><span class="o">&gt;</span><span class="p">(</span><span class="n">kp_vec</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">kp_vec</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">control_mode_vec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot</span><span class="p">[</span><span class="s">&quot;actuator_control_mode&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+<span class="w">  </span><span class="n">control_mode_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">Map</span><span class="o">&lt;</span><span class="k">const</span><span class="w"> </span><span class="n">Eigen</span><span class="o">::</span><span class="n">ArrayXi</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">      </span><span class="n">control_mode_vec</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">control_mode_vec</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+
+<span class="w">  </span><span class="c1">// 观测配置</span>
+<span class="w">  </span><span class="n">YAML</span><span class="o">::</span><span class="n">Node</span><span class="w"> </span><span class="n">obs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_cfg</span><span class="p">[</span><span class="s">&quot;env&quot;</span><span class="p">][</span><span class="s">&quot;observations&quot;</span><span class="p">];</span>
+<span class="w">  </span><span class="n">history_length_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">obs</span><span class="p">[</span><span class="s">&quot;history_length&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// 命令范围</span>
+<span class="w">  </span><span class="n">YAML</span><span class="o">::</span><span class="n">Node</span><span class="w"> </span><span class="n">cmd_range</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">robot_cfg</span><span class="p">[</span><span class="s">&quot;env&quot;</span><span class="p">][</span><span class="s">&quot;command_range&quot;</span><span class="p">];</span>
+<span class="w">  </span><span class="k">auto</span><span class="w"> </span><span class="n">lin_vel_x_range</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cmd_range</span><span class="p">[</span><span class="s">&quot;lin_vel_x&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+<span class="w">  </span><span class="n">lin_vel_x_min_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lin_vel_x_range</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="w">  </span><span class="n">lin_vel_x_max_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lin_vel_x_range</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="logging-and-debugging/mcap_format.html" class="btn btn-neutral float-left" title="MCAP 数据格式" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
