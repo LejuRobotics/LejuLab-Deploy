@@ -32,7 +32,7 @@ export ROBOT_VERSION=46
 export ROBOT_VERSION=52
 
 source devel/setup.bash
-roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/models/amp_walk_v1/controller_manager.yaml
+roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
 ```
 
 Mimic HPNY 示例：
@@ -47,7 +47,7 @@ export ROBOT_VERSION=14
 export ROBOT_VERSION=17
 
 source devel/setup.bash
-roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/models/mimic_hpny_v1/controller_manager.yaml
+roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/mimic_hpny_v1/controller_manager.yaml
 ```
 
 ### 仿真启动
@@ -68,7 +68,7 @@ export ROBOT_VERSION=46
 export ROBOT_VERSION=52
 
 source devel/setup.bash
-roslaunch leju_launch load_mujoco_sim.launch controller_manager_config:=/home/lab/.lejulab/models/amp_walk_v1/controller_manager.yaml
+roslaunch leju_launch load_mujoco_sim.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
 ```
 
 ### 说明
@@ -96,7 +96,7 @@ pgrep -af "roslaunch leju_launch load_mujoco_sim.launch"
 输出示例：
 
 ```text
-3078626 /usr/bin/python3 /opt/ros/noetic/bin/roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/models/amp_walk_v1/controller_manager.yaml
+3078626 /usr/bin/python3 /opt/ros/noetic/bin/roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
 ```
 
 处理方式：
@@ -130,7 +130,7 @@ pkill -INT -f "roslaunch leju_launch load_mujoco_sim.launch"
 参考命令：
 
 ```bash
-sudo pkill -INT -f "roslaunch leju_launch .*controller_manager_config:=/home/lab/.lejulab/models/amp_walk_v1/controller_manager.yaml"
+sudo pkill -INT -f "roslaunch leju_launch .*controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml"
 ```
 
 适用场景：
@@ -138,7 +138,67 @@ sudo pkill -INT -f "roslaunch leju_launch .*controller_manager_config:=/home/lab
 - 按模型路径精确停止
 - 因实物运行需要 `root` 权限，故停止时需要 `sudo`
 
-## 4. 参数文件夹结构
+## 4.1 手柄自启动配置切换
+
+### 简要介绍
+
+手柄自启动不会直接读取前端上传目录，而是固定读取当前激活配置：
+
+```text
+/root/.config/lejulab/auto_start_config/current/controller_manager.yaml
+```
+
+部署自启动服务时，会额外复制一份固定脚本：
+
+```text
+/root/.config/lejulab/auto_start_config/set_active_profile.sh
+```
+
+前端后续只需要调用这一个脚本，不需要再知道仓库路径。
+
+### 脚本的两种用法
+
+1. 前端导入一个完整模型目录，并替换激活 profile
+
+```bash
+sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
+  --import-from /tmp/project_A \
+  --profile-name project_A \
+  --source frontend
+```
+
+这个模式会做：
+
+- 校验 `/tmp/project_A/controller_manager.yaml` 是否存在
+- 将 `/tmp/project_A` 整目录复制到  
+  `/root/.config/lejulab/auto_start_config/profiles/project_A`
+- 如果 `project_A` 已存在，则整目录替换，而不是叠加覆盖
+- 原子更新 `current`
+- 写审计信息到  
+  `/root/.config/lejulab/auto_start_config/current.meta.json`
+
+2. 直接将 `current` 指到一个已有完整目录，适用于 joy 自启动部署
+
+```bash
+sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
+  --target-dir lejulab/src/leju-controllers/leju-rl-controller/config/${ROBOT_VERSION:-46} \
+  --source deploy
+```
+
+这个模式主要用于：
+
+- 自启动部署脚本将激活配置重置到仓库默认目录
+- 手工排查时切回一个已存在的完整目录
+
+### 前端使用注意事项
+
+- 前端不要对已有 `profiles/project_A` 执行 `cp -r` 叠加覆盖，这会留下历史残留文件
+- 正确做法是先准备一个完整目录，再调用 `--import-from ... --profile-name ...`
+- 自定义 profile 必须是一整套完整配置目录，不能只上传一个 `controller_manager.yaml`
+- `current` 是唯一 source of truth，自启动只看它
+- `current.meta.json` 只用于记录谁改了、什么时候改，不参与启动判定
+
+## 4.2 参数文件夹结构
 
 ### 配置文件
 
@@ -152,20 +212,20 @@ LejuLab 部署目录包含的文件如下：
 LejuLab 部署目录：
 
 ```text
-/home/lab/.lejulab/models/
+/home/lab/.lejulab/auto_start_config/profiles/
 ```
 
 每个模型一个独立目录，例如：
 
-- `/home/lab/.lejulab/models/amp_walk_v1/`
-- `/home/lab/.lejulab/models/mimic_hpny_v1/`
+- `/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/`
+- `/home/lab/.lejulab/auto_start_config/profiles/mimic_hpny_v1/`
 
 ### 推荐目录结构
 
 AMP 以仓库当前 `46` 版本为默认参考：
 
 ```text
-/home/lab/.lejulab/models/amp_walk_v1/
+/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/
 ├── controller_manager.yaml
 ├── config_amp.yaml
 └── amp_walk_v1.onnx
@@ -174,7 +234,7 @@ AMP 以仓库当前 `46` 版本为默认参考：
 Mimic 以仓库当前 `14` 版本 `HPNY` 为默认参考：
 
 ```text
-/home/lab/.lejulab/models/mimic_hpny_v1/
+/home/lab/.lejulab/auto_start_config/profiles/mimic_hpny_v1/
 ├── controller_manager.yaml
 ├── config_mimic_HPNY_dance.yaml
 ├── mimic_hpny_v1.onnx

@@ -286,6 +286,30 @@ class ControllerManager {
    */
   std::optional<WaistControlMode> getCurrentWaistMode() const;
 
+  /**
+   * @brief 获取底层 RobotData （包含传感器数据和状态信息）
+   * @return RobotData 引用
+   */
+  const RobotData& getRobotData() const { return robot_data_; }
+
+  /**
+   * @brief 查询当前控制器是否正在播放 motion
+   * @return true 正在播放，false 未播放或当前控制器不支持 motion
+   */
+  bool isCurrentMotionPlaying() const;
+
+  /**
+   * @brief 获取当前正在播放的 motion 名称
+   * @return motion 名称；当前控制器不支持时返回空字符串
+   */
+  std::string getCurrentMotionName() const;
+
+  /**
+   * @brief 获取当前控制器可用的 motion 名称列表
+   * @return motion 名称列表；当前控制器不支持时返回空列表
+   */
+  std::vector<std::string> getAvailableMotionNames() const;
+
  private:
   /**
    * @brief 从配置文件加载控制器列表

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="coredump" default="false"/>
+  <arg name="with_coredump" value="--with-coredump" if="$(arg coredump)"/>
+  <arg name="with_coredump" value="" unless="$(arg coredump)"/>
+  <arg name="auto_start" default="true"/>
+  <param name="auto_start" value="$(arg auto_start)"/>
+
+  <arg name="enable_iceoryx_shm" default="true"/>
+  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds_shm.xml" if="$(arg enable_iceoryx_shm)"/>
+  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds.xml" unless="$(arg enable_iceoryx_shm)"/>
+  <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)" />
+
+  <node name="leju_joystick" pkg="leju-joystick" type="leju-joystick" output="screen"
+        respawn="true"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"/>
+
+  <node name="leju_joy_autostart_manager" pkg="leju-joystick" type="leju_joy_autostart_manager" output="screen"
+        respawn="true"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"/>
+</launch>

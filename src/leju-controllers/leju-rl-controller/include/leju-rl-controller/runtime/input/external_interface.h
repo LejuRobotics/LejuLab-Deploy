@@ -143,10 +143,44 @@ private:
   bool onSetWaistModeRequest(ControlMode mode, std::string& message);
 
   /**
-   * @brief 处理获取状态请求
-   * @return 控制器状态
+   * @brief 处理 runtime start 请求
+   * @param[out] message 返回消息
+   * @return 是否成功
    */
-  vr::ControllerState onGetStateRequest();
+  bool onStartRuntimeRequest(std::string& message);
+
+  /**
+   * @brief 处理 runtime stop 请求
+   * @param[out] message 返回消息
+   * @return 是否成功
+   */
+  bool onStopRuntimeRequest(std::string& message);
+
+  /**
+   * @brief 处理 motion start 请求
+   * @param name motion 名称，可为空
+   * @param[out] message 返回消息
+   * @return 是否成功
+   */
+  bool onStartMotionRequest(const std::string& name, std::string& message);
+
+  /**
+   * @brief 查询 runtime 原始状态
+   * @return runtime 原始状态快照
+   */
+  vr::RuntimeState onGetRuntimeStateRequest();
+
+  /**
+   * @brief 查询 controller 原始状态
+   * @return controller 原始状态快照
+   */
+  vr::ControllerState onGetControllerStateRequest();
+
+  /**
+   * @brief 查询 motion 原始状态
+   * @return motion 原始状态快照
+   */
+  vr::MotionState onGetMotionStateRequest();
 
 private:
   std::unique_ptr<vr::VRBaseAPI> vr_api_;

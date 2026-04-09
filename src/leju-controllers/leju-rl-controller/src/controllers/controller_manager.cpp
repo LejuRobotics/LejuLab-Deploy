@@ -923,6 +923,33 @@ std::optional<WaistControlMode> ControllerManager::getCurrentWaistMode() const {
   return waist_ctrl->getMode();
 }
 
+bool ControllerManager::isCurrentMotionPlaying() const {
+  auto* controller = getCurrentController();
+  auto* generic_rl = dynamic_cast<GenericRLController*>(controller);
+  if (!generic_rl) {
+    return false;
+  }
+  return generic_rl->isMotionPlaying();
+}
+
+std::string ControllerManager::getCurrentMotionName() const {
+  auto* controller = getCurrentController();
+  auto* generic_rl = dynamic_cast<GenericRLController*>(controller);
+  if (!generic_rl) {
+    return "";
+  }
+  return generic_rl->getCurrentMotionName();
+}
+
+std::vector<std::string> ControllerManager::getAvailableMotionNames() const {
+  auto* controller = getCurrentController();
+  auto* generic_rl = dynamic_cast<GenericRLController*>(controller);
+  if (!generic_rl) {
+    return {};
+  }
+  return generic_rl->getMotionNames();
+}
+
 bool ControllerManager::startMotion(const std::string& name) {
   auto* controller = getCurrentController();
   if (!controller) {

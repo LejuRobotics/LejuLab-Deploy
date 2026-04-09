@@ -23,6 +23,7 @@ namespace vr {
  * - 关节指令发布/订阅（手臂、头部、腰部）
  * - 速度指令发布
  * - 控制器切换与模式设置
+ * - 运行和控制器原始状态查询
  *
  * 子类（KuavoVRAPI、RobanVRAPI）通过指定 RobotVersion 来区分机器人类型。
  */
@@ -199,6 +200,49 @@ class VRBaseAPI {
    */
   bool getControllerState(ControllerState& state, int timeout_ms = 3000);
 
+  /**
+   * @brief 获取 runtime 原始状态
+   * @param[out] state 返回的 runtime 状态
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool getRuntimeState(RuntimeState& state, int timeout_ms = 3000);
+
+  /**
+   * @brief 获取 motion 原始状态
+   * @param[out] state 返回的 motion 状态
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool getMotionState(MotionState& state, int timeout_ms = 3000);
+
+  /**
+   * @brief 发送 runtime start 请求
+   * @param[out] message 服务端返回的消息，可为 nullptr
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool startRuntime(std::string* message = nullptr, int timeout_ms = 3000);
+
+  /**
+   * @brief 发送 runtime stop 请求
+   * @param[out] message 服务端返回的消息，可为 nullptr
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool stopRuntime(std::string* message = nullptr, int timeout_ms = 3000);
+
+  /**
+   * @brief 发送 motion start 请求
+   * @param name motion 名称，可为空
+   * @param[out] message 服务端返回的消息，可为 nullptr
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool startMotion(const std::string& name = "",
+                   std::string* message = nullptr,
+                   int timeout_ms = 3000);
+
   // RPC 服务端（控制器端使用）
 
   /**
@@ -226,10 +270,40 @@ class VRBaseAPI {
   void registerSetWaistModeHandler(SetModeHandler handler);
 
   /**
-   * @brief 注册获取控制器状态的处理函数
-   * @param handler 处理函数，返回控制器状态
+   * @brief 注册获取 runtime 原始状态的处理函数
+   * @param handler 处理函数，返回 runtime 原始状态
    */
-  void registerGetStateHandler(GetStateHandler handler);
+  void registerGetRuntimeStateHandler(GetRuntimeStateHandler handler);
+
+  /**
+   * @brief 注册获取 controller 原始状态的处理函数
+   * @param handler 处理函数，返回 controller 原始状态
+   */
+  void registerGetControllerStateHandler(GetControllerStateHandler handler);
+
+  /**
+   * @brief 注册获取 motion 原始状态的处理函数
+   * @param handler 处理函数，返回 motion 原始状态
+   */
+  void registerGetMotionStateHandler(GetMotionStateHandler handler);
+
+  /**
+   * @brief 注册 runtime start 处理函数
+   * @param handler 处理函数，返回是否成功及消息
+   */
+  void registerStartRuntimeHandler(TriggerHandler handler);
+
+  /**
+   * @brief 注册 runtime stop 处理函数
+   * @param handler 处理函数，返回是否成功及消息
+   */
+  void registerStopRuntimeHandler(TriggerHandler handler);
+
+  /**
+   * @brief 注册 motion start 处理函数
+   * @param handler 处理函数，输入为 motion 名称，返回是否成功及消息
+   */
+  void registerStartMotionHandler(SetStringHandler handler);
 
   /**
    * @brief 获取机器人版本

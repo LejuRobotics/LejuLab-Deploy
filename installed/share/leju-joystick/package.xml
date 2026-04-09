@@ -52,6 +52,8 @@
 
   <depend>lejusdk-lowlevel</depend>
   <depend>lejusdk-utils</depend>
+  <depend>lejusdk-vr</depend>
+  <exec_depend>leju_launch</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

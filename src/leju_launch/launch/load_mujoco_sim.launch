@@ -21,6 +21,8 @@
   <arg name="teleop_arg" value="-t $(arg teleop_config)" if="$(eval teleop_config != '')"/>
   <arg name="teleop_arg" value="" unless="$(eval teleop_config != '')"/>
 
+  <arg name="auto_start" default="false"/>
+
   <!-- Load MuJoCo simulation -->
   <node name="leju_mujoco_sim" pkg="leju-mujoco-sim" type="leju-mujoco-sim" output="screen"
         args="$(arg mujoco_xml_file)"
@@ -30,7 +32,8 @@
   <!-- Load joystick control -->
   <node name="leju_joystick" pkg="leju-joystick" type="leju-joystick" output="screen"
         launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
-        required="true"/>
+        required="true"
+        unless="$(arg auto_start)"/>
 
   <!-- Load RL controller (controller_manager 模式) -->
   <node name="leju_rl_controller" pkg="leju-rl-controller" type="run_rl_controller" output="screen"

@@ -5,6 +5,7 @@
  * 输入适配器实现：
  * - 接收外部命令并转换为统一语义（ActionTrigger 和 ContinuousCommand）
  * - 写入 TriggerBuffer 与 CommandBuffer
+ * - 查询请求 runtime / controller / motion 原始状态
  */
 
 #include "leju-rl-controller/runtime/input/external_interface.h"
@@ -12,12 +13,14 @@
 #include <chrono>
 #include <optional>
 #include <stdexcept>
+#include <string>
 
 #include <magic_enum/magic_enum.hpp>
 
 #include "leju-rl-controller/controllers/controller_manager.h"
 #include "leju-rl-controller/runtime/lifecycle.h"
 #include "leju-rl-controller/runtime/data_types.hpp"
+#include "leju-rl-controller/runtime/input/action_trigger.h"
 #include "leju-rl-controller/runtime/input/trigger_buffer.h"
 #include "leju-rl-controller/rl/multi_mode_arm_controller.h"
 #include "leju-rl-controller/rl/waist_controller.h"
@@ -83,6 +86,36 @@ static std::string WaistControlModeToString(WaistControlMode mode) {
   return std::string(magic_enum::enum_name(mode));
 }
 
+static vr::HardwareState ConvertHardwareStateToVr(leju::HardwareState state) {
+  switch (state) {
+    case leju::HardwareState::UNKNOWN:
+      return vr::HardwareState::kUnknown;
+    case leju::HardwareState::STOPPED:
+      return vr::HardwareState::kStopped;
+    case leju::HardwareState::ERROR:
+      return vr::HardwareState::kError;
+    case leju::HardwareState::INITIALIZING:
+      return vr::HardwareState::kInitializing;
+    case leju::HardwareState::READY_OK:
+      return vr::HardwareState::kReadyOk;
+  }
+  return vr::HardwareState::kUnknown;
+}
+
+static vr::LifecycleState ConvertLifecycleStateToVr(runtime::LifecycleState state) {
+  switch (state) {
+    case runtime::LifecycleState::kWaitingForReady:
+      return vr::LifecycleState::kWaitingForReady;
+    case runtime::LifecycleState::kWaitingForStart:
+      return vr::LifecycleState::kWaitingForStart;
+    case runtime::LifecycleState::kRunning:
+      return vr::LifecycleState::kRunning;
+    case runtime::LifecycleState::kExiting:
+      return vr::LifecycleState::kExiting;
+  }
+  return vr::LifecycleState::kWaitingForReady;
+}
+
 ExternalInterface::ExternalInterface() = default;
 
 ExternalInterface::~ExternalInterface() {
@@ -118,6 +151,7 @@ bool ExternalInterface::initialize(const RobotVersion& version,
     vr_api_.reset();
     trigger_buffer_ = nullptr;
     controller_manager_ = nullptr;
+    lifecycle_ = nullptr;
     return false;
   }
 
@@ -141,20 +175,38 @@ bool ExternalInterface::initialize(const RobotVersion& version,
       [this](const std::string& name, std::string& message) -> bool {
         return onSwitchControllerRequest(name, message);
       });
-
   vr_api_->registerSetArmModeHandler(
       [this](vr::ControlMode mode, std::string& message) -> bool {
         return onSetArmModeRequest(mode, message);
       });
-
   vr_api_->registerSetWaistModeHandler(
       [this](vr::ControlMode mode, std::string& message) -> bool {
         return onSetWaistModeRequest(mode, message);
       });
-
-  vr_api_->registerGetStateHandler([this]() -> vr::ControllerState {
-    return onGetStateRequest();
-  });
+  vr_api_->registerGetRuntimeStateHandler(
+      [this]() -> vr::RuntimeState {
+        return onGetRuntimeStateRequest();
+      });
+  vr_api_->registerGetControllerStateHandler(
+      [this]() -> vr::ControllerState {
+        return onGetControllerStateRequest();
+      });
+  vr_api_->registerGetMotionStateHandler(
+      [this]() -> vr::MotionState {
+        return onGetMotionStateRequest();
+      });
+  vr_api_->registerStartRuntimeHandler(
+      [this](std::string& message) -> bool {
+        return onStartRuntimeRequest(message);
+      });
+  vr_api_->registerStopRuntimeHandler(
+      [this](std::string& message) -> bool {
+        return onStopRuntimeRequest(message);
+      });
+  vr_api_->registerStartMotionHandler(
+      [this](const std::string& name, std::string& message) -> bool {
+        return onStartMotionRequest(name, message);
+      });
 
   ///////////////////////////////////////////////////////////////////////
   // Quest 手柄数据处理：由 QuestTeleopAdapter 独立订阅处理
@@ -337,17 +389,91 @@ bool ExternalInterface::onSetWaistModeRequest(ControlMode mode,
   return true;
 }
 
-vr::ControllerState ExternalInterface::onGetStateRequest() {
+bool ExternalInterface::onStartRuntimeRequest(std::string& message) {
+  if (!trigger_buffer_ || !lifecycle_) {
+    message = "ExternalInterface not initialized";
+    return false;
+  }
+  if (lifecycle_->state() == LifecycleState::kRunning) {
+    message = "Runtime already running";
+    return true;
+  }
+  if (lifecycle_->state() == LifecycleState::kExiting) {
+    message = "Runtime is exiting";
+    return false;
+  }
+
+  // start 语义对齐手柄 START，由 ControlLoop 在下一周期消费。
+  trigger_buffer_->push(ActionTrigger(ActionType::Start));
+  message = "Start request queued";
+  return true;
+}
+
+bool ExternalInterface::onStopRuntimeRequest(std::string& message) {
+  if (!trigger_buffer_ || !lifecycle_) {
+    message = "ExternalInterface not initialized";
+    return false;
+  }
+  if (lifecycle_->state() == LifecycleState::kExiting) {
+    message = "Runtime already exiting";
+    return true;
+  }
+
+  // stop 语义对齐手柄 BACK，由 runtime 自己执行优雅退出流程。
+  trigger_buffer_->push(MakeQuitTrigger());
+  message = "Stop request queued";
+  return true;
+}
+
+bool ExternalInterface::onStartMotionRequest(const std::string& name,
+                                             std::string& message) {
+  if (!trigger_buffer_ || !controller_manager_ || !lifecycle_) {
+    message = "ExternalInterface not initialized";
+    return false;
+  }
+  if (!lifecycle_->isRunning()) {
+    message = "Controller not started yet";
+    return false;
+  }
+
+  // motion 请求只负责入队，是否支持该 motion 由后续控制器自行决定。
+  trigger_buffer_->push(
+      MakeMotionCommandTrigger(MotionCommandArgs::Operation::Start, name));
+  message = name.empty() ? "Motion start request queued"
+                         : "Motion start request queued: " + name;
+  return true;
+}
+
+vr::RuntimeState ExternalInterface::onGetRuntimeStateRequest() {
+  vr::RuntimeState state;
+
+  if (!controller_manager_) {
+    RL_LOGW("ExternalInterface: ControllerManager not available for getRuntimeState request");
+    return state;
+  }
+
+  const RobotData& robot_data = controller_manager_->getRobotData();
+  state.data_ready = robot_data.isDataReady();
+  state.hardware_state = ConvertHardwareStateToVr(robot_data.getHardwareState());
+  if (lifecycle_) {
+    state.lifecycle_state = ConvertLifecycleStateToVr(lifecycle_->state());
+  }
+
+  return state;
+}
+
+vr::ControllerState ExternalInterface::onGetControllerStateRequest() {
   vr::ControllerState state;
 
   if (!controller_manager_) {
-    RL_LOGW("ExternalInterface: ControllerManager not available for getState request");
+    RL_LOGW("ExternalInterface: ControllerManager not available for getControllerState request");
     return state;
   }
 
   // 组装控制器状态
   state.current_controller = controller_manager_->getCurrentControllerName();
   state.available_controllers = controller_manager_->getControllerNames();
+  state.controller_transitioning = controller_manager_->isTransitioning();
 
   // 获取手臂模式并转换
   auto arm_mode_opt = controller_manager_->getCurrentArmMode();
@@ -360,6 +486,22 @@ vr::ControllerState ExternalInterface::onGetStateRequest() {
   if (waist_mode_opt.has_value()) {
     state.waist_mode = ConvertWaistModeToVRControlMode(waist_mode_opt.value());
   }
+
+  return state;
+}
+
+vr::MotionState ExternalInterface::onGetMotionStateRequest() {
+  vr::MotionState state;
+
+  if (!controller_manager_) {
+    RL_LOGW("ExternalInterface: ControllerManager not available for getMotionState request");
+    return state;
+  }
+
+  state.available_motion_names = controller_manager_->getAvailableMotionNames();
+  state.supported = !state.available_motion_names.empty();
+  state.motion_playing = controller_manager_->isCurrentMotionPlaying();
+  state.current_motion_name = controller_manager_->getCurrentMotionName();
 
   return state;
 }

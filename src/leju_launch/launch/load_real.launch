@@ -13,6 +13,8 @@
   <arg name="controller_manager_config"
        default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml"/>
 
+  <arg name="auto_start" default="false"/>
+
   <!-- Hardware node for Leju humanoid robot -->
   <node pkg="leju-hardware" type="leju-hardware" name="leju_hardware" output="screen"
         args="$(find leju-hardware)/"
@@ -22,7 +24,8 @@
   <!-- Load joystick control -->
   <node name="leju_joystick" pkg="leju-joystick" type="leju-joystick" output="screen"
         launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
-        required="true"/>
+        required="true"
+        unless="$(arg auto_start)"/>
 
   <!-- Optional: Custom teleop bindings config -->
   <arg name="teleop_config" default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/teleop_bindings.yaml"/>

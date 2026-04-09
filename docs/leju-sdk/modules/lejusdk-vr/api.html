@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lejusdk-vr API &mdash; LejuSDK 0986747a0 文档</title>
+  <title>lejusdk-vr API &mdash; LejuSDK 2d50f88a0 文档</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                0986747a0
+                2d50f88a0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -268,6 +268,7 @@
 <li><p>关节指令发布/订阅（手臂、头部、腰部）</p></li>
 <li><p>速度指令发布</p></li>
 <li><p>控制器切换与模式设置</p></li>
+<li><p>运行和控制器原始状态查询</p></li>
 </ul>
 </p>
 <p>子类（KuavoVRAPI、RobanVRAPI）通过指定 <a class="reference internal" href="../lejusdk-utils/api.html#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 来区分机器人类型。 </p>
@@ -581,6 +582,92 @@
 </dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI15getRuntimeStateER12RuntimeStatei">
+<span id="_CPPv3N4leju2vr9VRBaseAPI15getRuntimeStateER12RuntimeStatei"></span><span id="_CPPv2N4leju2vr9VRBaseAPI15getRuntimeStateER12RuntimeStatei"></span><span id="leju::vr::VRBaseAPI::getRuntimeState__RuntimeStateR.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ac924da9f42f0d18a3f2402316f4890eb"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getRuntimeState</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">RuntimeState</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">state</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI15getRuntimeStateER12RuntimeStatei" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取 runtime 原始状态 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – <strong>[out]</strong> 返回的 runtime 状态 </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI14getMotionStateER11MotionStatei">
+<span id="_CPPv3N4leju2vr9VRBaseAPI14getMotionStateER11MotionStatei"></span><span id="_CPPv2N4leju2vr9VRBaseAPI14getMotionStateER11MotionStatei"></span><span id="leju::vr::VRBaseAPI::getMotionState__MotionStateR.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a1a4159633e7f20c31a236a06f38f2354"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getMotionState</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MotionState</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">state</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI14getMotionStateER11MotionStatei" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取 motion 原始状态 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – <strong>[out]</strong> 返回的 motion 状态 </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI12startRuntimeEPNSt6stringEi">
+<span id="_CPPv3N4leju2vr9VRBaseAPI12startRuntimeEPNSt6stringEi"></span><span id="_CPPv2N4leju2vr9VRBaseAPI12startRuntimeEPNSt6stringEi"></span><span id="leju::vr::VRBaseAPI::startRuntime__ssP.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1aa2aca4b075e635afe2ee35f33017a812"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">startRuntime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">message</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI12startRuntimeEPNSt6stringEi" title="永久链接至目标"></a><br /></dt>
+<dd><p>发送 runtime start 请求 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> – <strong>[out]</strong> 服务端返回的消息，可为 nullptr </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI11stopRuntimeEPNSt6stringEi">
+<span id="_CPPv3N4leju2vr9VRBaseAPI11stopRuntimeEPNSt6stringEi"></span><span id="_CPPv2N4leju2vr9VRBaseAPI11stopRuntimeEPNSt6stringEi"></span><span id="leju::vr::VRBaseAPI::stopRuntime__ssP.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a2d28a67992327953aea6f6f41f5017f6"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">stopRuntime</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">message</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI11stopRuntimeEPNSt6stringEi" title="永久链接至目标"></a><br /></dt>
+<dd><p>发送 runtime stop 请求 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>message</strong> – <strong>[out]</strong> 服务端返回的消息，可为 nullptr </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI11startMotionERKNSt6stringEPNSt6stringEi">
+<span id="_CPPv3N4leju2vr9VRBaseAPI11startMotionERKNSt6stringEPNSt6stringEi"></span><span id="_CPPv2N4leju2vr9VRBaseAPI11startMotionERKNSt6stringEPNSt6stringEi"></span><span id="leju::vr::VRBaseAPI::startMotion__ssCR.ssP.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a48bb4c5517a89692f5a86424d3ab89de"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">startMotion</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;&quot;</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">message</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI11startMotionERKNSt6stringEPNSt6stringEi" title="永久链接至目标"></a><br /></dt>
+<dd><p>发送 motion start 请求 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – motion 名称，可为空 </p></li>
+<li><p><strong>message</strong> – <strong>[out]</strong> 服务端返回的消息，可为 nullptr </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler">
 <span id="_CPPv3N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler"></span><span id="leju::vr::VRBaseAPI::registerSwitchControllerHandler__SwitchControllerHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1aabc7475ee04219f127ff0350de5e18d5"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerSwitchControllerHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SwitchControllerHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler" title="永久链接至目标"></a><br /></dt>
 <dd><p>注册切换控制器的处理函数 </p>
@@ -625,12 +712,67 @@
 </dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler">
-<span id="_CPPv3N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler"></span><span id="leju::vr::VRBaseAPI::registerGetStateHandler__GetStateHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1adc99200b990b7fd2782023edb500c722"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerGetStateHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">GetStateHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler" title="永久链接至目标"></a><br /></dt>
-<dd><p>注册获取控制器状态的处理函数 </p>
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI30registerGetRuntimeStateHandlerE22GetRuntimeStateHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI30registerGetRuntimeStateHandlerE22GetRuntimeStateHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI30registerGetRuntimeStateHandlerE22GetRuntimeStateHandler"></span><span id="leju::vr::VRBaseAPI::registerGetRuntimeStateHandler__GetRuntimeStateHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a5c3eef080092c6d1851956bdc8dfd05f"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerGetRuntimeStateHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">GetRuntimeStateHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI30registerGetRuntimeStateHandlerE22GetRuntimeStateHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册获取 runtime 原始状态的处理函数 </p>
 <dl class="field-list simple">
 <dt class="field-odd">参数<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回控制器状态 </p>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回 runtime 原始状态 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI33registerGetControllerStateHandlerE25GetControllerStateHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI33registerGetControllerStateHandlerE25GetControllerStateHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI33registerGetControllerStateHandlerE25GetControllerStateHandler"></span><span id="leju::vr::VRBaseAPI::registerGetControllerStateHandler__GetControllerStateHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1afaa23f0a46e601cbba171ba4178434c6"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerGetControllerStateHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">GetControllerStateHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI33registerGetControllerStateHandlerE25GetControllerStateHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册获取 controller 原始状态的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回 controller 原始状态 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI29registerGetMotionStateHandlerE21GetMotionStateHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI29registerGetMotionStateHandlerE21GetMotionStateHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI29registerGetMotionStateHandlerE21GetMotionStateHandler"></span><span id="leju::vr::VRBaseAPI::registerGetMotionStateHandler__GetMotionStateHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a418f77468ba34b8dc865e510145aa823"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerGetMotionStateHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">GetMotionStateHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI29registerGetMotionStateHandlerE21GetMotionStateHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册获取 motion 原始状态的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回 motion 原始状态 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI27registerStartRuntimeHandlerE14TriggerHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI27registerStartRuntimeHandlerE14TriggerHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI27registerStartRuntimeHandlerE14TriggerHandler"></span><span id="leju::vr::VRBaseAPI::registerStartRuntimeHandler__TriggerHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ae89c84cbb57339d7008b43bc5363b0a8"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerStartRuntimeHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">TriggerHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI27registerStartRuntimeHandlerE14TriggerHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册 runtime start 处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回是否成功及消息 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI26registerStopRuntimeHandlerE14TriggerHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI26registerStopRuntimeHandlerE14TriggerHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI26registerStopRuntimeHandlerE14TriggerHandler"></span><span id="leju::vr::VRBaseAPI::registerStopRuntimeHandler__TriggerHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a89a3b8d03642c3f2cb0fe3a3abbb0fa2"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerStopRuntimeHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">TriggerHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI26registerStopRuntimeHandlerE14TriggerHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册 runtime stop 处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回是否成功及消息 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI26registerStartMotionHandlerE16SetStringHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI26registerStartMotionHandlerE16SetStringHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI26registerStartMotionHandlerE16SetStringHandler"></span><span id="leju::vr::VRBaseAPI::registerStartMotionHandler__SetStringHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a05fb8e58c75611e775237c1c778d872d"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerStartMotionHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SetStringHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI26registerStartMotionHandlerE16SetStringHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册 motion start 处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，输入为 motion 名称，返回是否成功及消息 </p>
 </dd>
 </dl>
 </dd></dl>

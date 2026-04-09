@@ -1,0 +1,15 @@
+[Unit]
+Description=LejuLab joy autostart monitor
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Environment="LEJULAB_WS_ROOT=@LEJULAB_WS@"
+WorkingDirectory=@LEJULAB_WS@
+ExecStart=@MONITOR_SCRIPT@
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
