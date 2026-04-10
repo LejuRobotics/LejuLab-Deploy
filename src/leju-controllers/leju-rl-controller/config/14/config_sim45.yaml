@@ -1,9 +1,9 @@
 HumanoidRobotCfg:
   # 推理引擎选择 (可选: openvino, onnxruntime)
-  inference_engine: "onnxruntime"
+  inference_engine: "openvino"
 
   loop_dt: 0.001
-  policy_path: "policy/sim45_debug12_12091132_14900.onnx"
+  policy_path: "policy/roban_s14_walk0.onnx"
 
   env:
     policy_dt: 0.02
@@ -16,49 +16,65 @@ HumanoidRobotCfg:
 
       # 20个关节：双腿12个+双臂8个（waist_yaw不在策略输出中）
       joint_names:
-        ["leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint",
+        [
+         "waist_yaw_joint",
+         "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint",
          "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint",
          "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
          "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
 
       joint_direction:
-        [1.,1.,1.,1.,1.,1.,
+        [
+         1.,
+         1.,1.,1.,1.,1.,1.,
          1.,1.,1.,1.,1.,1.,
          1.,1.,1.,1.,
          1.,1.,1.,1.]
 
       joint_default_pos:
-        [-0.412, -0.0437, -0.287, 0.5, -0.2, 0.,
+        [
+          0.,
+          -0.412, -0.0437, -0.287, 0.5, -0.2, 0.,
           0.412, 0.0437, 0.287, 0.5, -0.2, 0.,
           0.2, 0.16, -0.4, -0.5,
           0.2, -0.16, 0.4, -0.5]
 
       joint_torque_limit:
-        [48., 63., 48., 47., 20., 20.,
+        [
+         80.,
+         48., 63., 48., 47., 20., 20.,
          48., 63., 48., 47., 20., 20.,
          20., 20., 20., 20.,
          20., 20., 20., 20.]
 
       actuator_kp:
-        [100., 100., 100., 150., 40., 40.,
-         100., 100., 100., 150., 40., 40.,
-         15., 15., 15., 15.,
-         15., 15., 15., 15.]
+        [
+         100.,
+         100., 100., 100., 150., 20., 20.,
+         100., 100., 100., 150., 20., 20.,
+         20., 20., 20., 20.,
+         20., 20., 20., 20.]
 
       actuator_kd:
-        [2., 2., 2., 4., 4., 2.,
-         2., 2., 2., 4., 4., 2.,
-         3., 3., 3., 3.,
-         3., 3., 3., 3.]
+        [
+         20.,
+         2., 2., 2., 2., 1., 1.,
+         2., 2., 2., 2., 1., 1.,
+         1., 1., 1., 1.,
+         1., 1., 1., 1.]
 
       actuator_control_mode:
-        [0, 0, 0, 0, 0, 0,
+        [
+         0,
+         0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0,
          2, 2, 2, 2,
          2, 2, 2, 2]
 
       action_scale:
-        [0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+        [
+         0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
          0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
          0.25, 0.25, 0.25, 0.25,
          0.25, 0.25, 0.25, 0.25]
@@ -93,7 +109,7 @@ HumanoidRobotCfg:
           clip: [-1000., 1000.]
 
     command_range:
-      lin_vel_x: [-0.45, 0.45]
+      lin_vel_x: [-0.4, 0.4]
       lin_vel_y: [-0.35, 0.35]
       lin_vel_z: [0.0, 0.0]
       ang_vel_z: [-1.0, 1.0]

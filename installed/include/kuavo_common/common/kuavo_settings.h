@@ -29,14 +29,15 @@ namespace HighlyDynamic
 #define PA81_MC (60)
 #define PA100_MC (70)
 #define PA76_25_MC (18)
-#define PA81_25_MC (40)
+#define PA81_18_25_MC (18)
 #define CK_MC (18)
 #define PA4310_25_MC (8)
-#define PA4315_36_MC (22.5)
 #define PA72_36_MC (15)
 #define PA76_18_MC (31.5)
 #define PA105_18_MC (70)
 #define PA115_MC (40)
+#define PA81_25_MC (40)
+#define PA4315_36_MC (22.5)
 
 
 #define AK10_9_C2T (1.26)
@@ -51,17 +52,17 @@ namespace HighlyDynamic
 #define CK_C2T (2.1) // 1.4
 #define PA72_C2T (3.6)
 #define PA60_C2T (2.0)
-#define PA43_C2T (1.45)
-#define PA60_16_C2T (2.0)
+#define PA43_C2T (4.7)
 
 #define PA76_25_C2T (4.2)
 #define PA76_18_C2T (2.0)
 #define PA105_18_C2T (4.1)
-#define PA4310_25_C2T (2.6)
-#define PA4315_36_C2T (4.7)
 #define PA72_36_C2T (4.8)
+#define PA81_18_25_C2T (2.9)
 #define PA115_C2T (11.5)
-
+#define PA60_16_C2T (2.0)
+#define PA4310_25_C2T (4.7)
+#define PA4315_36_C2T (4.7)
 
 #define LEG_DOF 6
 #define LEGS_TOTEL_JOINT 12

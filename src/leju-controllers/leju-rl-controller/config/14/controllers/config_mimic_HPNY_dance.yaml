@@ -14,10 +14,12 @@ HumanoidRobotCfg:
   # ---------------------------------------------------------------------------
   loop_dt: 0.001                              # 控制循环周期 [s]，1000Hz
   ########### 模型 ########################
-  # policy_path: "../policy/hpny_dance/xtf_roban_new0_1_100000.onnx"
-  policy_path: "../policy/hpny_dance/base_tf_73999_modify_com_91000.onnx"
-  # policy_path: "../policy/hpny_dance/xtf_roban_new0_1_122999.onnx"
+  # policy_path: "policy/xtf_roban_new0_1_100000.onnx" 
+  policy_path: "policy/robanS14_dance.onnx" 
+  # policy_path: "policy/xtf_roban_new0_1_122999.onnx" 
 
+  # 贺年舞蹈动作数据文件: motion_data_path 兼容 rl_mimic_controller.cpp
+  motion_data_path: "motion_data/HPNY_dance.csv"
   # ---------------------------------------------------------------------------
   # Motion 数据配置
   # ---------------------------------------------------------------------------

@@ -163,7 +163,7 @@ source installed/setup.bash  # !!! IMPORTANT !!! 非常重要,不可省略
 catkin build
 ```
 
-## 部署 iceoryx 共享内存（首次使用需执行）
+## 部署 iceoryx 共享内存（首次使用需执行，Docker中则跳过此步骤）
 
 项目支持通过 iceoryx 共享内存加速进程间通信，建议部署以获得更优的实时性能：
 
@@ -182,6 +182,46 @@ catkin build
 
 ```bash
 ./src/leju_launch/scripts/setup_cyclonedds_config.sh --remove
+```
+
+## Docker 运行
+
+如果希望直接在容器中运行仿真，可以使用仓库自带的 Docker 脚本。普通模式和 GPU 模式二选一使用：
+
+```bash
+# 普通模式
+./docker/run.sh
+
+# GPU 模式
+./docker/run_with_gpu.sh
+```
+
+- 首次运行时，脚本会自动下载基础镜像并构建本地 `lejulab` 镜像
+- 在普通模式和 GPU 模式之间切换时，按提示删除旧容器后再启动另一种模式
+- 如果主机还没有配置好 NVIDIA Docker 环境，`./docker/run_with_gpu.sh` 会给出提示并协助完成配置
+
+使用两个终端启动仿真：
+
+终端 1：
+
+```bash
+./docker/run.sh
+# 或 ./docker/run_with_gpu.sh
+
+# 使用共享内存版 CycloneDDS 配置
+./src/leju_launch/scripts/start_roudi.sh
+```
+
+终端 2：
+
+```bash
+./docker/run.sh
+# 或 ./docker/run_with_gpu.sh
+
+catkin build
+# Docker 中默认配置 zsh
+source devel/setup.zsh
+roslaunch leju_launch load_mujoco_sim.launch
 ```
 
 ## 运行

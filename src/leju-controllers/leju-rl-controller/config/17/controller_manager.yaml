@@ -1,5 +1,5 @@
 loop_dt: 0.001
-default_controller: "mimic_dance"
+default_controller: "amp"
 
 # 控制器切换期间插值用的 kp/kd（确保能跟踪到位）
 switch_interpolation:
@@ -10,7 +10,12 @@ switch_interpolation:
   waist_kd: [2.557]
 
 controllers:
+  - name: "amp"
+    type: "GenericRLController"
+    config: "controllers/config_amp.yaml"
+    enabled: true
+
   - name: "mimic_dance"
     type: "GenericRLController"
-    config: "config_mimic_dance.yaml"
+    config: "controllers/config_mimic_dance.yaml"
     enabled: true

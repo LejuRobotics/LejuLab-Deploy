@@ -22,6 +22,12 @@ controllers:
     config: "controllers/config_mimic_HPNY_dance.yaml"
     enabled: true
 
+
+  - name: "sim45"
+    type: "GenericRLController"
+    config: "config_sim45.yaml"
+    enabled: true
+
   # 查尔斯舞蹈
   # - name: "mimic_charleston"
   #   type: "GenericRLController"

@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="biped_s17_with_realsense">
 
   <!-- 引入机器人主体 -->
-  <xacro:include filename="$(find leju_assets)/models/biped_s17/urdf/biped_s17_gazebo.urdf"/>
+  <xacro:include filename="$(find kuavo_assets)/models/biped_s17/urdf/biped_s17_gazebo.urdf"/>
 
   <!-- depth cam 设置 -->
   <xacro:include filename="$(find realsense_ros_gazebo)/xacro/depthcam.xacro"/>
