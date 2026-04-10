@@ -23,6 +23,10 @@
 
   <arg name="auto_start" default="false"/>
 
+  <!-- Cleanup old logs, MCAP recordings and coredumps -->
+  <node pkg="leju_launch" type="cleanup.sh" name="cleanup" output="screen"
+        args="$(find leju_launch)/config/cleanup.yaml" />
+
   <!-- Load MuJoCo simulation -->
   <node name="leju_mujoco_sim" pkg="leju-mujoco-sim" type="leju-mujoco-sim" output="screen"
         args="$(arg mujoco_xml_file)"

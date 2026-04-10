@@ -15,6 +15,10 @@
 
   <arg name="auto_start" default="false"/>
 
+  <!-- Cleanup old logs, MCAP recordings and coredumps -->
+  <node pkg="leju_launch" type="cleanup.sh" name="cleanup" output="screen"
+        args="$(find leju_launch)/config/cleanup.yaml" />
+
   <!-- Hardware node for Leju humanoid robot -->
   <node pkg="leju-hardware" type="leju-hardware" name="leju_hardware" output="screen"
         args="$(find leju-hardware)/"

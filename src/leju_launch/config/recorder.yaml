@@ -37,6 +37,7 @@ dds:
 
 # Output Configuration
 output:
+  directory: "~/.ros/lejulab/mcap" # Output directory (empty = cwd)
   prefix: "recording"          # File name prefix
   append_date: true       # Append date-time to filename
   max_file_size: 500      # MB, 0 = unlimited (kuavo default: 500)

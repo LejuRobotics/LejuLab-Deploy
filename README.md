@@ -389,6 +389,25 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
 4. 按住单侧或双侧 `grip`，移动 Quest3 手柄开始控制手臂
 5. 若机器人为 `Kuavo5(52)`，可在需要时左手触摸 `Y`，再用右摇杆 x 轴调节腰部
 
+## 日志与录制数据
+
+运行时产生的日志和录制数据统一存放在 `~/.ros/lejulab/` 目录下：
+
+```
+~/.ros/lejulab/
+├── stdout/                          # stdout 日志
+│   ├── 2026-04-01_18-29-20/
+│   │   └── stdout.log
+│   └── ...
+├── mcap/                            # MCAP 录制数据
+│   ├── recording_2026-04-01-18-30-00_0.mcap
+│   └── ...
+└── coredumps/                       # coredump 文件（启用时）
+    └── <PPID>/
+        ├── README.txt
+        └── core.*
+```
+
 ## 数据可视化
 
 ### Foxglove Studio
