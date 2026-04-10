@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 xhost +
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,191 +7,85 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 CCACHE_DIR="${HOME}/.ccache"
 mkdir -p "$CCACHE_DIR"
 
-BASE_IMAGE_URL="https://kuavo.lejurobot.com/docker_images/kuavo_opensource_mpc_wbc_img_latest.tar.gz"
-BASE_IMAGE_TARBALL_NAME="kuavo_opensource_mpc_wbc_img_latest.tar.gz"
-BASE_IMAGE_REPO="kuavo_opensource_mpc_wbc_img"
-DEFAULT_IMAGE_NAME="lejulab_platform:dev"
-
 DIR_HASH=$(echo "$PARENT_DIR" | md5sum | cut -c1-8)
 echo "Directory $PARENT_DIR hash: $DIR_HASH"
-CONTAINER_NAME="lejulab_container_GPU_${DIR_HASH}"
-CONFLICT_CONTAINER_NAME="lejulab_container_${DIR_HASH}"
+CONTAINER_NAME="lejulab_deploy_container_GPU_${DIR_HASH}"
 
-get_base_image_name() {
-    docker images "${BASE_IMAGE_REPO}" --format "{{.Repository}}:{{.Tag}}" | sort -V | tail -n1
-}
+if [ -n "$1" ]; then
+    # User provided an image name
+    USER_IMAGE_NAME="$1"
+    echo "User provided image name: $USER_IMAGE_NAME"
 
-find_latest_image() {
-    docker images "$1" --format "{{.Repository}}:{{.Tag}}" | sort -V | tail -n1
-}
+    # Check if the user-provided name includes a tag
+    if [[ "$USER_IMAGE_NAME" == *":"* ]]; then
+        # User provided image name with a tag
+        CANDIDATE_IMAGE_NAME="$USER_IMAGE_NAME"
+    else
+        # User provided image name without a tag, try to find the latest version
+        echo "No tag provided for '$USER_IMAGE_NAME'. Attempting to find the latest version locally..."
+        CANDIDATE_IMAGE_NAME=$(docker images "$USER_IMAGE_NAME" --format "{{.Repository}}:{{.Tag}}" | sort -V | tail -n1)
+        if [ -z "$CANDIDATE_IMAGE_NAME" ]; then
+            # If no tagged version is found, use the original name for the inspect check (which will likely fail)
+            CANDIDATE_IMAGE_NAME="$USER_IMAGE_NAME"
+        fi
+    fi
 
-print_gpu_setup_instructions() {
-    cat <<'EOF'
-
-Host GPU support for Docker is not configured yet.
-Please finish the following setup first, then rerun ./docker/run_with_gpu.sh:
-
-  sudo apt-get update
-  sudo apt-get install -y ca-certificates curl gnupg
-
-  distribution=$(. /etc/os-release; echo ${ID}${VERSION_ID})
-
-  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
-    | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-  curl -s -L https://nvidia.github.io/libnvidia-container/${distribution}/libnvidia-container.list \
-    | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
-    | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-  sudo apt-get update
-  sudo apt-get install -y nvidia-container-toolkit
-
-  sudo nvidia-ctk runtime configure --runtime=docker
-  sudo systemctl restart docker
-
-  sudo docker info | sed -n '/Runtimes/,+6p'
-  sudo docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
-EOF
-}
-
-install_gpu_runtime() {
-    echo "Installing NVIDIA Container Toolkit on the host..."
-    sudo apt-get update
-    sudo apt-get install -y ca-certificates curl gnupg
-
-    local distribution
-    distribution=$(. /etc/os-release; echo "${ID}${VERSION_ID}")
-
-    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
-        | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-
-    curl -s -L "https://nvidia.github.io/libnvidia-container/${distribution}/libnvidia-container.list" \
-        | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
-        | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list >/dev/null
-
-    sudo apt-get update
-    sudo apt-get install -y nvidia-container-toolkit
-    sudo nvidia-ctk runtime configure --runtime=docker
-    sudo systemctl restart docker
-}
-
-ensure_gpu_runtime() {
-    if ! command -v nvidia-smi >/dev/null 2>&1; then
-        echo "Error: nvidia-smi is not available on the host. Please install a working NVIDIA driver first."
+    if docker image inspect "$CANDIDATE_IMAGE_NAME" &> /dev/null; then
+        IMAGE_NAME="$CANDIDATE_IMAGE_NAME"
+        echo "Found user-provided image: $IMAGE_NAME"
+    else
+        echo -e "\033[31mError: User-provided image '$CANDIDATE_IMAGE_NAME' (derived from '$USER_IMAGE_NAME') not found locally. Please ensure the image exists.\033[0m"
         exit 1
     fi
+else
+    # No image name provided by user, use default logic
+    echo "No image name provided, attempting to find latest 'kuavo_opensource_mpc_wbc_img'."
+    # Try to find the latest version of the default image
+    IMAGE_NAME=$(docker images kuavo_opensource_mpc_wbc_img --format "{{.Repository}}:{{.Tag}}" | sort -V | tail -n1)
 
-    if ! nvidia-smi -L >/dev/null 2>&1; then
-        echo "Error: nvidia-smi cannot access the host GPU right now."
-        exit 1
-    fi
-
-    local missing_setup=0
-    if ! command -v nvidia-ctk >/dev/null 2>&1; then
-        echo "Error: nvidia-ctk was not found."
-        missing_setup=1
-    fi
-
-    if ! docker info --format '{{range $k, $v := .Runtimes}}{{println $k}}{{end}}' 2>/dev/null | grep -qx 'nvidia'; then
-        echo "Error: Docker runtime 'nvidia' is not registered."
-        missing_setup=1
-    fi
-
-    if [ "${missing_setup}" -ne 0 ]; then
-        print_gpu_setup_instructions
-        read -r -p "Would you like this script to install/configure NVIDIA Container Toolkit now? (yes/no): " response
+    if [[ -z "$IMAGE_NAME" ]]; then
+        # Default image not found, prompt for download
+        echo -e "\033[33mWarning: No 'kuavo_opensource_mpc_wbc_img' Docker image found.\033[0m"
+        read -r -p "The script can attempt to automatically download and import the image. Would you like to proceed? (yes/no): " response
         if [[ "$response" =~ ^([yY][eE][sS])$ ]]; then
-            install_gpu_runtime
-        else
-            exit 1
-        fi
-    fi
+            echo "Attempting to download/import 'kuavo_opensource_mpc_wbc_img'..."
+            IMAGE_TARBALL_URL="https://kuavo.lejurobot.com/kuavo_research_editiion/docker_images/kuavo_opensource_mpc_wbc_img_v1.3.0.tar.gz"
+            IMAGE_TARBALL_NAME="kuavo_opensource_mpc_wbc_img_v1.3.0.tar.gz"
+            DOWNLOAD_PATH="${SCRIPT_DIR}/${IMAGE_TARBALL_NAME}"
 
-    if ! command -v nvidia-ctk >/dev/null 2>&1; then
-        echo "Error: nvidia-ctk is still unavailable after setup."
-        exit 1
-    fi
-
-    if ! docker info --format '{{range $k, $v := .Runtimes}}{{println $k}}{{end}}' 2>/dev/null | grep -qx 'nvidia'; then
-        echo "Error: Docker runtime 'nvidia' is still not registered after setup."
-        print_gpu_setup_instructions
-        exit 1
-    fi
-}
-
-ensure_default_image() {
-    if docker image inspect "${DEFAULT_IMAGE_NAME}" >/dev/null 2>&1; then
-        return 0
-    fi
-
-    local base_image_name
-    base_image_name="$(get_base_image_name)"
-
-    if [[ -z "${base_image_name}" ]]; then
-        echo -e "\033[33mWarning: No '${BASE_IMAGE_REPO}' Docker image found.\033[0m"
-        read -r -p "The script can attempt to automatically download and import the base image. Would you like to proceed? (yes/no): " response
-        if [[ ! "$response" =~ ^([yY][eE][sS])$ ]]; then
-            echo "Okay. Please download/import '${BASE_IMAGE_REPO}' manually, or run './docker/build.sh' after loading it."
-            exit 1
-        fi
-
-        local download_path="${SCRIPT_DIR}/${BASE_IMAGE_TARBALL_NAME}"
-        echo "Downloading Docker image from ${BASE_IMAGE_URL}..."
-        if ! wget -O "${download_path}" "${BASE_IMAGE_URL}"; then
-            echo -e "\033[31mError: Failed to download Docker image from ${BASE_IMAGE_URL}.\033[0m"
-            exit 1
-        fi
-
-        echo "Download successful. Loading image into Docker..."
-        if ! sudo docker load -i "${download_path}"; then
-            echo -e "\033[31mError: Failed to load Docker image from ${download_path}.\033[0m"
-            rm -f "${download_path}"
-            exit 1
-        fi
-        rm -f "${download_path}"
-
-        base_image_name="$(get_base_image_name)"
-        if [[ -z "${base_image_name}" ]]; then
-            echo -e "\033[31mError: Failed to find '${BASE_IMAGE_REPO}' after loading.\033[0m"
-            exit 1
-        fi
-        echo -e "\033[32mSuccessfully loaded base image: ${base_image_name}\033[0m"
-    fi
-
-    echo "Building '${DEFAULT_IMAGE_NAME}' from base image '${base_image_name}' ..."
-    if ! "${SCRIPT_DIR}/build.sh" --base-image "${base_image_name}" --tag dev; then
-        echo -e "\033[31mError: Failed to build '${DEFAULT_IMAGE_NAME}'.\033[0m"
-        exit 1
-    fi
-}
-
-resolve_image_name() {
-    if [[ -n "${1:-}" ]]; then
-        local user_image_name="$1"
-        local candidate_image_name="$user_image_name"
-
-        echo "User provided image name: ${user_image_name}"
-        if [[ "${user_image_name}" != *":"* ]]; then
-            echo "No tag provided for '${user_image_name}'. Attempting to find the latest version locally..."
-            candidate_image_name="$(find_latest_image "${user_image_name}")"
-            if [[ -z "${candidate_image_name}" ]]; then
-                candidate_image_name="${user_image_name}"
+            echo "Downloading Docker image from ${IMAGE_TARBALL_URL}..."
+            if wget -O "${DOWNLOAD_PATH}" "${IMAGE_TARBALL_URL}"; then
+                echo "Download successful. Loading image into Docker..."
+                if sudo docker load -i "${DOWNLOAD_PATH}"; then
+                    echo "Docker image loaded successfully."
+                    # Clean up the downloaded tarball
+                    rm -f "${DOWNLOAD_PATH}"
+                    # Re-evaluate IMAGE_NAME
+                    IMAGE_NAME=$(docker images kuavo_opensource_mpc_wbc_img --format "{{.Repository}}:{{.Tag}}" | sort -V | tail -n1)
+                    if [[ -z "$IMAGE_NAME" ]]; then
+                        echo -e "\033[31mError: Failed to find the image name even after loading. Please check the image details.\033[0m"
+                        exit 1
+                    else
+                        echo -e "\033[32mSuccessfully loaded image: ${IMAGE_NAME}\033[0m"
+                    fi
+                else
+                    echo -e "\033[31mError: Failed to load Docker image from ${DOWNLOAD_PATH}.\033[0m"
+                    rm -f "${DOWNLOAD_PATH}" # Clean up even on failure
+                    exit 1
+                fi
+            else
+                echo -e "\033[31mError: Failed to download Docker image from ${IMAGE_TARBALL_URL}.\033[0m"
+                exit 1
             fi
-        fi
-
-        if ! docker image inspect "${candidate_image_name}" >/dev/null 2>&1; then
-            echo -e "\033[31mError: User-provided image '${candidate_image_name}' not found locally.\033[0m"
+        else
+            echo "Okay. Please build or pull the 'kuavo_opensource_mpc_wbc_img' image manually."
+            echo "You can typically do this by navigating to the docker directory and running a build script (e.g., './build.sh'), or by pulling it from a registry."
             exit 1
         fi
-
-        IMAGE_NAME="${candidate_image_name}"
-        echo "Found user-provided image: ${IMAGE_NAME}"
-        return 0
+    else
+        echo "Found default image: $IMAGE_NAME"
     fi
-
-    ensure_default_image
-    IMAGE_NAME="${DEFAULT_IMAGE_NAME}"
-}
+fi
 
 show_container_info() {
     local div_line="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -202,59 +94,48 @@ show_container_info() {
     echo -e "📂 \033[32mWorking Directory\033[0m:"
     echo -e "   $PARENT_DIR"
     echo -e "🔗 \033[33mMounted Volumes\033[0m:"
-    docker inspect -f '{{range .Mounts}}   {{.Source}} → {{.Destination}}{{println}}{{end}}' "$CONTAINER_NAME"
+    # docker inspect -f '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}' $CONTAINER_NAME
+
+    docker inspect -f '{{range .Mounts}}   {{.Source}} → {{.Destination}}{{println}}{{end}}' $CONTAINER_NAME
     echo -e "$div_line\n"
 }
 
-ensure_no_conflicting_container() {
-    if [[ -z "$(docker ps -aq -f name="^${CONFLICT_CONTAINER_NAME}$")" ]]; then
-        return 0
-    fi
 
-    echo -e "\033[33mWarning: normal container '${CONFLICT_CONTAINER_NAME}' already exists.\033[0m"
-    read -r -p "run.sh and run_with_gpu.sh cannot keep containers at the same time. Remove '${CONFLICT_CONTAINER_NAME}' and continue? (yes/no): " response
-    if [[ "$response" =~ ^([yY][eE][sS])$ ]]; then
-        docker rm -f "${CONFLICT_CONTAINER_NAME}"
-    else
-        echo "Please remove '${CONFLICT_CONTAINER_NAME}' first, then rerun ./docker/run_with_gpu.sh."
-        exit 1
-    fi
-}
+# 修改此值即可控制容器内的 ROBOT_VERSION
+ROBOT_VERSION=46
 
-ensure_no_conflicting_container
-ensure_gpu_runtime
-resolve_image_name "${1:-}"
+ENTRY_CMD="sed -i '/# __DOCKER_RV__$/d' ~/.zshrc ~/.bashrc 2>/dev/null; echo 'export ROBOT_VERSION=$ROBOT_VERSION # __DOCKER_RV__' >> ~/.zshrc; echo 'export ROBOT_VERSION=$ROBOT_VERSION # __DOCKER_RV__' >> ~/.bashrc; exec zsh"
 
-if [[ $(docker ps -aq -f ancestor="${IMAGE_NAME}" -f name="${CONTAINER_NAME}") ]]; then
-    echo "Container '${CONTAINER_NAME}' based on image '${IMAGE_NAME}' already exists."
-    if [[ $(docker ps -aq -f status=exited -f name="${CONTAINER_NAME}") ]]; then
+if [[ $(docker ps -aq -f ancestor=${IMAGE_NAME} -f name=${CONTAINER_NAME}) ]]; then
+    echo "Container '${CONTAINER_NAME}' based on image '${IMAGE_NAME}' is already exists."
+    if [[ $(docker ps -aq -f status=exited -f name=${CONTAINER_NAME}) ]]; then
         echo "Restarting exited container '$CONTAINER_NAME' ..."
-        docker start "$CONTAINER_NAME"
+        docker start $CONTAINER_NAME
     fi
     show_container_info
     echo "Exec into container '$CONTAINER_NAME' ..."
-    docker exec -it "$CONTAINER_NAME" zsh
+    docker exec -it $CONTAINER_NAME sh -c "$ENTRY_CMD"
 else
     echo "Creating a new container '${CONTAINER_NAME}' based on image '${IMAGE_NAME}' ..."
-    docker run -it --net host --gpus all \
-        --runtime nvidia \
-        --name "$CONTAINER_NAME" \
-        --privileged \
-        -v /dev:/dev \
-        -v "${HOME}/.ros:/root/.ros" \
-        -v "$CCACHE_DIR:/root/.ccache" \
-        -v "$PARENT_DIR:/root/lejulab" \
-        -v "${HOME}/.config/lejuconfig:/root/.config/lejuconfig" \
+	docker run -it --net host --gpus all \
+		--runtime nvidia \
+        --name $CONTAINER_NAME \
+		--privileged \
+		-v /dev:/dev \
+		-v "${HOME}/.ros:/root/.ros" \
+		-v "$CCACHE_DIR:/root/.ccache" \
+		-v "$PARENT_DIR:/root/lejulab_ws" \
+        -w /root/lejulab_ws \
+		-v "${HOME}/.config/lejuconfig:/root/.config/lejuconfig" \
         -e NVIDIA_VISIBLE_DEVICES=all \
         -e NVIDIA_DRIVER_CAPABILITIES=all,display \
         -e CARB_GRAPHICS_API=vulkan \
         -e GDK_SYNCHRONIZE=1 \
-        --group-add=dialout \
-        --ulimit rtprio=99 \
-        --cap-add=sys_nice \
-        -e DISPLAY="$DISPLAY" \
-        -e ROBOT_VERSION=46 \
-        --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-        "${IMAGE_NAME}" \
-        zsh
+		--group-add=dialout \
+		--ulimit rtprio=99 \
+		--cap-add=sys_nice \
+		-e DISPLAY=$DISPLAY \
+		--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+		${IMAGE_NAME} \
+		sh -c "$ENTRY_CMD"
 fi

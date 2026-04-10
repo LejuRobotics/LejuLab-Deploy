@@ -1,4 +1,4 @@
-prefix=/root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab
+prefix=/media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab
 
 Name: lejusdk-lowlevel
 Description: Description of lejusdk-lowlevel

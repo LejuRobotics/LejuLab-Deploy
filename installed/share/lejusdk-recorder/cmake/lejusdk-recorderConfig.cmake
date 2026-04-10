@@ -67,14 +67,14 @@ set(lejusdk-recorder_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(lejusdk-recorder_SOURCE_PREFIX /root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/src/lejusdk/lejusdk-recorder)
-  set(lejusdk-recorder_DEVEL_PREFIX /root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/devel)
+  set(lejusdk-recorder_SOURCE_PREFIX /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/src/lejusdk/lejusdk-recorder)
+  set(lejusdk-recorder_DEVEL_PREFIX /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/devel)
   set(lejusdk-recorder_INSTALL_PREFIX "")
   set(lejusdk-recorder_PREFIX ${lejusdk-recorder_DEVEL_PREFIX})
 else()
   set(lejusdk-recorder_SOURCE_PREFIX "")
   set(lejusdk-recorder_DEVEL_PREFIX "")
-  set(lejusdk-recorder_INSTALL_PREFIX /root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab)
+  set(lejusdk-recorder_INSTALL_PREFIX /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab)
   set(lejusdk-recorder_PREFIX ${lejusdk-recorder_INSTALL_PREFIX})
 endif()
 
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /root/kuavo_ws/builds/tX_ftt_G1/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/opt/ros/noetic/lib)
+    foreach(path /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/opt/ros/noetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
