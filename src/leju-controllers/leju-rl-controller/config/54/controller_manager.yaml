@@ -1,11 +1,11 @@
 loop_dt: 0.001
-default_controller: "walk_demo"
+default_controller: "amp"
 
 controllers:
-  # - name: "amp"
-  #   type: "GenericRLController"
-  #   config: "config_amp.yaml"
-  #   enabled: true
+  - name: "amp"
+    type: "GenericRLController"
+    config: "config_amp.yaml"
+    enabled: true
 
   - name: "walk_demo"
     type: "GenericRLController"
