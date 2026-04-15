@@ -86,10 +86,11 @@ HumanoidRobotCfg:
           scale: 1.
           clip: [-18., 18.]
     
-    command_range:
-      lin_vel_x: [-1.0, 1.0]
-      lin_vel_y: [-0.6, 0.6]
-      ang_vel_z: [-0.3, 0.3]
+    velocity_scale:
+      linear_x: 1.6
+      linear_x_negative_scale: 0.5
+      linear_y: 1.06
+      angular_z: 2.0
 
   # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态 (用于 RLDemoController)
   arm_controller:

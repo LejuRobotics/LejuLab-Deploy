@@ -93,6 +93,11 @@ QuestJoystickData MakeQuestData(float left_x, float left_y, float right_x,
 
 TEST(TeleopIntegrationTest, YamlToConfigParsing) {
   std::string yaml = R"(
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 0.55
+  linear_y: 0.30
+  angular_z: 0.30
 joy_bindings:
   - buttons: ["RB", "X"]
     action:
@@ -120,9 +125,13 @@ quest_bindings:
 
   const auto& joy_config = config.getJoyConfig();
   const auto& quest_config = config.getQuestConfig();
+  const auto& teleop_config = config.getTeleopConfig();
 
   EXPECT_EQ(joy_config.size(), 2);
   EXPECT_EQ(quest_config.size(), 1);
+  EXPECT_DOUBLE_EQ(teleop_config.max_linear_x, 0.55);
+  EXPECT_DOUBLE_EQ(teleop_config.max_linear_y, 0.30);
+  EXPECT_DOUBLE_EQ(teleop_config.max_angular_z, 0.30);
 
   // 验证 Joy 绑定可以通过查找找到
   ComboKey joy_key1;
@@ -154,6 +163,11 @@ quest_bindings:
 TEST(TeleopIntegrationTest, ComplexConfiguration) {
   // 完整的配置，包含所有动作类型
   std::string yaml = R"(
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 0.60
+  linear_y: 0.60
+  angular_z: 1.00
 joy_bindings:
   - buttons: ["START"]
     action:

@@ -103,7 +103,7 @@ class GenericRLController : public ControllerBase {
   array_t getPolicyJointPos() const;
   /// @brief 获取策略关节速度
   array_t getPolicyJointVel() const;
-  /// @brief 计算限幅后的速度指令
+  /// @brief 计算缩放后的速度指令
   array_t getVelocityCommands() const;
   /// @brief 计算 motion 目标姿态的相对旋转矩阵
   array_t getMotionAnchorOriB() const;
@@ -154,10 +154,11 @@ class GenericRLController : public ControllerBase {
   std::map<std::string, std::unique_ptr<MotionTrajectory>> motions_;  ///< motion 实例
   std::string current_motion_name_;         ///< 当前选中的 motion
 
-  // ==================== 指令限幅 ====================
-  Bounds cmd_lin_vel_x_ = {-1.0, 1.0};     ///< 前进速度范围 [m/s]
-  Bounds cmd_lin_vel_y_ = {-0.6, 0.6};     ///< 侧向速度范围 [m/s]
-  Bounds cmd_ang_vel_z_ = {-0.3, 0.3};     ///< 偏航角速度范围 [rad/s]
+  // ==================== 速度缩放 ====================
+  double velocity_scale_linear_x_ = 1.0;               ///< 前进速度缩放
+  double velocity_scale_linear_x_negative_ = 1.0;      ///< 后退速度额外缩放
+  double velocity_scale_linear_y_ = 1.0;               ///< 侧向速度缩放
+  double velocity_scale_angular_z_ = 1.0;              ///< 偏航角速度缩放
 
   // ==================== 运行时状态 ====================
   double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw

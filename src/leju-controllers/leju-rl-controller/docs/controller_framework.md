@@ -225,7 +225,7 @@ auto controller = ControllerRegistry::create("GenericRLController", version, nam
 - 可配置长度和堆叠顺序的观测历史（isaaclab / classic）
 - 动作轨迹回放与残差动作
 - 手臂和腰部部件控制器集成
-- 速度指令限幅
+- 速度指令缩放（`velocity_scale`）
 - DDS 主题日志
 
 **配置示例**（`config_amp.yaml`）：
@@ -257,10 +257,11 @@ HumanoidRobotCfg:
         joint_vel:       { scale: 1.0, clip: [-9999, 9999] }
         actions:         { scale: 1.0, clip: [-18, 18] }
 
-    command_range:
-      lin_vel_x: [-1.0, 1.0]
-      lin_vel_y: [-0.6, 0.6]
-      ang_vel_z: [-0.3, 0.3]
+    velocity_scale:
+      linear_x: 1.6
+      linear_x_negative_scale: 0.7
+      linear_y: 1.06
+      angular_z: 2.0
 ```
 
 ## 输入系统

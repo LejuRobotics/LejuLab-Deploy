@@ -11,10 +11,17 @@ config/<ROBOT_VERSION>/teleop_bindings.yaml
 系统支持两类输入设备：
 - **Joy 手柄**（`joy_bindings`）
 - **Quest VR 手柄**（`quest_bindings`）
+- **速度上限**（`velocity_limits`）
 
 ## 配置格式
 
 ```yaml
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 0.55
+  linear_y: 0.30
+  angular_z: 0.30
+
 joy_bindings:
   - buttons: ["按键1", "按键2"]    # 按键组合（顺序无关）
     action:
@@ -191,7 +198,7 @@ quest_bindings:
 
 ### 摇杆控制
 
-摇杆不通过按键绑定配置，而是直接映射为连续指令：
+摇杆通过 `velocity_limits` 直接映射为连续 `cmd_vel`：
 
 | 摇杆 | 功能 |
 |------|------|

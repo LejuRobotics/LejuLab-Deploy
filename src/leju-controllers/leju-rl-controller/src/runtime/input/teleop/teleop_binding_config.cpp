@@ -13,6 +13,23 @@
 namespace leju {
 namespace runtime {
 
+static bool ParseTeleopConfig(const YAML::Node& node, TeleopConfig& config) {
+  if (!node) {
+    RL_LOG_FAILURE("TeleopBindingConfig: 缺少必需的 velocity_limits 配置段");
+    return false;
+  }
+  if (!node["stick_deadzone"] || !node["linear_x"] || !node["linear_y"] || !node["angular_z"]) {
+    RL_LOG_FAILURE("TeleopBindingConfig: velocity_limits 必须包含 stick_deadzone, linear_x, linear_y, angular_z");
+    return false;
+  }
+
+  config.stick_deadzone = node["stick_deadzone"].as<float>();
+  config.max_linear_x = node["linear_x"].as<double>();
+  config.max_linear_y = node["linear_y"].as<double>();
+  config.max_angular_z = node["angular_z"].as<double>();
+  return true;
+}
+
 // ============================================================================
 // 辅助函数：解析 ActionTrigger
 // ============================================================================
@@ -128,11 +145,16 @@ static DeviceBindingConfig ParseDeviceConfig(const YAML::Node& node,
 
 bool TeleopBindingConfig::loadFromFile(const std::string& config_path) {
   // 初始化设备类型
+  loaded_ = false;
   joy_config_.device_type = TeleopDeviceType::kJoy;
   quest_config_.device_type = TeleopDeviceType::kQuest;
   try {
     RL_LOGI("TeleopBindingConfig: Loading config from %s", config_path.c_str());
     YAML::Node config = YAML::LoadFile(config_path);
+
+    if (!ParseTeleopConfig(config["velocity_limits"], teleop_config_)) {
+      return false;
+    }
 
     // 解析 joy_bindings
     if (config["joy_bindings"]) {

@@ -17,16 +17,6 @@ namespace runtime {
 // 前向声明
 class TriggerBuffer;
 
-/**
- * @brief 手柄遥控配置参数
- */
-struct TeleopConfig {
-  float stick_deadzone = 0.05f;     ///< 摇杆死区阈值
-  double max_linear_x = 1.0;        ///< 最大前进速度 [m/s]
-  double max_linear_y = 0.6;        ///< 最大侧向速度 [m/s]
-  double max_angular_z = 0.3;       ///< 最大旋转速度 [rad/s]
-};
-
 template<typename Derived, typename InputData>
 class TeleopAdapterBase : public InputSource {
 public:
@@ -62,7 +52,11 @@ public:
    * @return 是否加载成功
    */
   bool loadBindingConfig(const std::string& config_path) {
-    return binding_config_.loadFromFile(config_path);
+    if (!binding_config_.loadFromFile(config_path)) {
+      return false;
+    }
+    config_ = binding_config_.getTeleopConfig();
+    return true;
   }
 
   /**
@@ -71,6 +65,7 @@ public:
    */
   void setBindingConfig(const TeleopBindingConfig& config) {
     binding_config_ = config;
+    config_ = binding_config_.getTeleopConfig();
   }
 
   /**

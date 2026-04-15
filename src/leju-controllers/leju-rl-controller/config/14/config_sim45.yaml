@@ -108,8 +108,8 @@ HumanoidRobotCfg:
           scale: 1.0
           clip: [-1000., 1000.]
 
-    command_range:
-      lin_vel_x: [-0.4, 0.4]
-      lin_vel_y: [-0.35, 0.35]
-      lin_vel_z: [0.0, 0.0]
-      ang_vel_z: [-1.0, 1.0]
+    velocity_scale:
+      linear_x: 0.83
+      linear_x_negative_scale: 1.0
+      linear_y: 0.166
+      angular_z: 0.498

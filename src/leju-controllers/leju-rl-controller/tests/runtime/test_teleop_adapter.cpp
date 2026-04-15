@@ -61,6 +61,11 @@ TEST(JoyTeleopAdapterConfigTest, LoadBindingConfigFromString) {
   JoyTeleopAdapter adapter(&trigger_buffer);
 
   std::string yaml = R"(
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 0.55
+  linear_y: 0.30
+  angular_z: 0.30
 joy_bindings:
   - buttons: ["RB", "X"]
     action:
@@ -114,6 +119,11 @@ TEST(JoyTeleopAdapterTest, IsInitializedReturnsFalseByDefault) {
 
 TEST(TeleopBindingConfigTest, ParseJoyBindings) {
   std::string yaml = R"(
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 0.55
+  linear_y: 0.30
+  angular_z: 0.30
 joy_bindings:
   - buttons: ["RB", "X"]
     action:
@@ -139,7 +149,12 @@ joy_bindings:
   ASSERT_TRUE(config.loadFromFile(temp_file));
 
   const auto& joy_config = config.getJoyConfig();
+  const auto& teleop_config = config.getTeleopConfig();
   EXPECT_EQ(joy_config.size(), 2);
+  EXPECT_FLOAT_EQ(teleop_config.stick_deadzone, 0.05f);
+  EXPECT_DOUBLE_EQ(teleop_config.max_linear_x, 0.55);
+  EXPECT_DOUBLE_EQ(teleop_config.max_linear_y, 0.30);
+  EXPECT_DOUBLE_EQ(teleop_config.max_angular_z, 0.30);
 
   // 验证绑定
   ComboKey key1;
@@ -159,6 +174,11 @@ joy_bindings:
 
 TEST(TeleopBindingConfigTest, ParseQuestBindings) {
   std::string yaml = R"(
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 0.45
+  linear_y: 0.30
+  angular_z: 1.00
 quest_bindings:
   - buttons: ["RIGHT_TRIGGER", "RIGHT_FIRST"]
     action:
@@ -187,6 +207,29 @@ quest_bindings:
   auto* binding = quest_config.findBinding(key);
   ASSERT_NE(binding, nullptr);
   EXPECT_EQ(binding->action.type, ActionType::SetArmMode);
+
+  remove(temp_file);
+}
+
+TEST(TeleopBindingConfigTest, MissingVelocityLimitsFails) {
+  std::string yaml = R"(
+joy_bindings:
+  - buttons: ["RB", "X"]
+    action:
+      type: SetArmMode
+      args:
+        name: keep_pose
+)";
+
+  const char* temp_file = "/tmp/test_missing_velocity_limits.yaml";
+  {
+    FILE* f = fopen(temp_file, "w");
+    fprintf(f, "%s", yaml.c_str());
+    fclose(f);
+  }
+
+  TeleopBindingConfig config;
+  EXPECT_FALSE(config.loadFromFile(temp_file));
 
   remove(temp_file);
 }

@@ -454,21 +454,21 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
       motion_residual_action_ = robot["residual_action"].as<bool>();
     }
 
-    // --- 速度命令限幅（可选） ---
-    if (cfg["env"]["command_range"]) {
-      YAML::Node cmd = cfg["env"]["command_range"];
-      if (cmd["lin_vel_x"]) {
-        auto range = cmd["lin_vel_x"].as<std::vector<double>>();
-        cmd_lin_vel_x_ = {range[0], range[1]};
+    // --- AMP 速度缩放（可选） ---
+    YAML::Node velocity_scale = cfg["env"]["velocity_scale"];
+    if (velocity_scale) {
+      if (!velocity_scale["linear_x"] || !velocity_scale["linear_x_negative_scale"] ||
+          !velocity_scale["linear_y"] || !velocity_scale["angular_z"]) {
+        RL_LOG_FAILURE("Incomplete 'HumanoidRobotCfg.env.velocity_scale' in: %s",
+                       config_path.c_str());
+        return false;
       }
-      if (cmd["lin_vel_y"]) {
-        auto range = cmd["lin_vel_y"].as<std::vector<double>>();
-        cmd_lin_vel_y_ = {range[0], range[1]};
-      }
-      if (cmd["ang_vel_z"]) {
-        auto range = cmd["ang_vel_z"].as<std::vector<double>>();
-        cmd_ang_vel_z_ = {range[0], range[1]};
-      }
+
+      velocity_scale_linear_x_ = velocity_scale["linear_x"].as<double>();
+      velocity_scale_linear_x_negative_ =
+          velocity_scale["linear_x_negative_scale"].as<double>();
+      velocity_scale_linear_y_ = velocity_scale["linear_y"].as<double>();
+      velocity_scale_angular_z_ = velocity_scale["angular_z"].as<double>();
     }
 
     return true;
@@ -793,12 +793,15 @@ array_t GenericRLController::getPolicyJointVel() const {
   return joint_direction_ * policy_v;
 }
 
-/// 获取限幅后的速度命令 [lin_vel_x, lin_vel_y, ang_vel_z]
+/// 获取缩放后的速度命令 [lin_vel_x, lin_vel_y, ang_vel_z]
 array_t GenericRLController::getVelocityCommands() const {
   array_t cmd(3);
-  cmd[0] = cmd_lin_vel_x_.clamp(velocity_cmd_.linear_x);
-  cmd[1] = cmd_lin_vel_y_.clamp(velocity_cmd_.linear_y);
-  cmd[2] = cmd_ang_vel_z_.clamp(velocity_cmd_.angular_z);
+  cmd[0] = velocity_cmd_.linear_x * velocity_scale_linear_x_;
+  if (velocity_cmd_.linear_x < 0.0) {
+    cmd[0] *= velocity_scale_linear_x_negative_;
+  }
+  cmd[1] = velocity_cmd_.linear_y * velocity_scale_linear_y_;
+  cmd[2] = velocity_cmd_.angular_z * velocity_scale_angular_z_;
   return cmd;
 }
 

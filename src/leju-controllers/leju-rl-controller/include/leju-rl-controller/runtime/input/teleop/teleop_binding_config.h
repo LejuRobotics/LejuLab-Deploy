@@ -8,12 +8,30 @@ namespace leju {
 namespace runtime {
 
 /**
+ * @brief 手柄速度配置
+ *
+ * 语义为摇杆轴值 [-1, 1] 到物理 cmd_vel 的缩放上限。
+ */
+struct TeleopConfig {
+  float stick_deadzone = 0.05f;     ///< 摇杆死区阈值
+  double max_linear_x = 1.0;        ///< 最大前进速度 [m/s]
+  double max_linear_y = 0.6;        ///< 最大侧向速度 [m/s]
+  double max_angular_z = 0.3;       ///< 最大旋转速度 [rad/s]
+};
+
+/**
  * @brief Teleop 组合键配置管理器
  *
- * 管理所有设备的组合键绑定配置，支持从 YAML 文件加载。
+ * 管理所有设备的组合键绑定配置和速度配置，支持从 YAML 文件加载。
  *
  * 配置示例：
  * @code{.yaml}
+ * velocity_limits:
+ *   stick_deadzone: 0.05
+ *   linear_x: 0.55
+ *   linear_y: 0.30
+ *   angular_z: 0.30
+ *
  * joy_bindings:
  *   - combo: [LB, X]
  *     type: controller_action
@@ -55,6 +73,12 @@ class TeleopBindingConfig {
   const DeviceBindingConfig& getJoyConfig() const { return joy_config_; }
 
   /**
+   * @brief 获取速度配置
+   * @return 速度配置
+   */
+  const TeleopConfig& getTeleopConfig() const { return teleop_config_; }
+
+  /**
    * @brief 获取 Quest 设备绑定配置
    * @return Quest 设备绑定配置
    */
@@ -67,6 +91,7 @@ class TeleopBindingConfig {
   bool isLoaded() const { return loaded_; }
 
  private:
+  TeleopConfig teleop_config_;       ///< 速度配置
   DeviceBindingConfig joy_config_;   ///< Joy 设备绑定配置
   DeviceBindingConfig quest_config_; ///< Quest 设备绑定配置
   bool loaded_ = false;

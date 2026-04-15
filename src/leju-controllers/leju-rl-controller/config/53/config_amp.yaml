@@ -101,14 +101,11 @@ HumanoidRobotCfg:
           scale: 1.
           clip: [-18., 18.]
 
-    # velocityLimits × scale from skw_rl_param.info:
-    #   lin_vel_x: positive = 0.55×1.6=0.88, negative = 0.55×1.6×0.4=0.352
-    #   lin_vel_y: ±0.3×1.06≈0.318
-    #   ang_vel_z: ±0.3×2=0.6
-    command_range:
-      lin_vel_x: [-0.352, 0.88]
-      lin_vel_y: [-0.318, 0.318]
-      ang_vel_z: [-0.6, 0.6]
+    velocity_scale:
+      linear_x: 1.6
+      linear_x_negative_scale: 0.7
+      linear_y: 1.06
+      angular_z: 2.0
 
   # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态
   arm_controller:
