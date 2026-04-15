@@ -3,7 +3,22 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WS_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+# 该脚本在两种仓库布局下都会被调用:
+#   闭源 lejulab_platform: <ws>/src/leju-joystick/services/
+#   开源 lejulab:          <ws>/installed/share/leju-joystick/services/
+case "${SCRIPT_DIR}" in
+    */installed/share/leju-joystick/services)
+        WS_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+        ;;
+    */src/leju-joystick/services)
+        WS_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+        ;;
+    *)
+        echo "错误: 无法从 ${SCRIPT_DIR} 推导工作区根目录" >&2
+        exit 1
+        ;;
+esac
 
 SERVICE_NAME="lejulab_joy_monitor.service"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}"

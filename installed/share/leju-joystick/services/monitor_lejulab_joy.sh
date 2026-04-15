@@ -3,7 +3,21 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LEJULAB_WS_ROOT="${LEJULAB_WS_ROOT:-$(cd "${SCRIPT_DIR}/../../.." && pwd)}"
+
+if [ -z "${LEJULAB_WS_ROOT:-}" ]; then
+    case "${SCRIPT_DIR}" in
+        */installed/share/leju-joystick/services)
+            LEJULAB_WS_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
+            ;;
+        */src/leju-joystick/services)
+            LEJULAB_WS_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+            ;;
+        *)
+            echo "错误: 无法从 ${SCRIPT_DIR} 推导 LEJULAB_WS_ROOT" >&2
+            exit 1
+            ;;
+    esac
+fi
 SETUP_BASH="${LEJULAB_WS_ROOT}/devel/setup.bash"
 BASHRC_PATH="/root/.bashrc"
 
