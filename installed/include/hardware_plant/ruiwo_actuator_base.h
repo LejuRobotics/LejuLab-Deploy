@@ -175,7 +175,10 @@ public:
                              const std::vector<double> &velocity) = 0;
 
     /**
-     * @brief 设置多个关节力矩
+     * @brief 设置多个关节力矩（CST 模式）
+     *
+     * 基于 MIT/PTM 模式实现：内部将 kp 和 kd 设置为 0，仅下发前馈力矩，
+     * 即电机控制律退化为 tau_out = torque_ff（无位置/速度反馈）。
      *
      * @param index 关节索引 [0,1,2,3,...]
      * @param torque 力矩值

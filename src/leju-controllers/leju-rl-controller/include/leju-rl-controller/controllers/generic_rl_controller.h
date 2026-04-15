@@ -44,6 +44,9 @@ class GenericRLController : public ControllerBase {
   /// @brief 设置配置文件路径，必须在 initialize() 前调用
   void setConfigPath(const std::string& config_path) { config_path_ = config_path; }
 
+  /// @brief 设置 URDF 路径（用于手臂重力补偿），必须在 initialize() 前调用
+  void setUrdfPath(const std::string& urdf_path) { urdf_path_ = urdf_path; }
+
   // ==================== Motion 播放 ====================
 
   /// @brief 开始或重新播放当前 motion
@@ -120,6 +123,7 @@ class GenericRLController : public ControllerBase {
   int motor_count_ = 0;                     ///< SDK 电机总数
   std::vector<std::string> motor_names_;    ///< SDK 电机名称列表
   std::string config_path_;                 ///< 配置文件路径
+  std::string urdf_path_;                   ///< URDF 路径（手臂重力补偿用）
 
   // ==================== 控制时序 ====================
   double policy_dt_ = 0.02;                 ///< 策略推理周期 [s]

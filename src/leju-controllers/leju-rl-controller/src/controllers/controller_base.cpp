@@ -97,9 +97,9 @@ void ControllerBase::updateArmCommand(RobotCmd& cmd) {
     current_arm_vel[i] = joint_direction_[policy_idx] * current_state_.v[motor_id];
   }
 
-  Eigen::VectorXd desire_arm_q, desire_arm_v;
+  Eigen::VectorXd desire_arm_q, desire_arm_v, desire_arm_tau;
   bool override_arm = arm_controller_->update(cmd_stance, current_arm_pos, current_arm_vel,
-                                               &desire_arm_q, &desire_arm_v);
+                                               &desire_arm_q, &desire_arm_v, &desire_arm_tau);
   if (override_arm) {
     // 用部位控制器输出完全覆盖 cmd 中的手臂关节
     // 必须同时覆盖 q, v, tau，否则 RL 输出的速度/力矩会导致手臂偏离
@@ -109,9 +109,11 @@ void ControllerBase::updateArmCommand(RobotCmd& cmd) {
       // 转换回电机空间
       cmd.q[motor_id] = joint_direction_[policy_idx] * desire_arm_q[i];
       cmd.v[motor_id] = joint_direction_[policy_idx] * desire_arm_v[i];
-      cmd.tau[motor_id] = 0.0;  // 清除前馈力矩
+      // 重力补偿前馈力矩（policy→motor 空间转换）
+      cmd.tau[motor_id] = (desire_arm_tau.size() > i)
+                              ? joint_direction_[policy_idx] * desire_arm_tau[i]
+                              : 0.0;
     }
-
   }
 }
 

@@ -1,5 +1,5 @@
 loop_dt: 0.001
-default_controller: "amp"
+default_controller: "mimic_dance"
 
 controllers:
   - name: "amp"
@@ -11,3 +11,9 @@ controllers:
     type: "GenericRLController"
     config: "controllers/config_mimic_dance.yaml"
     enabled: true
+
+  # 实物未测试: 勿运行
+  # - name: "mimic_yongchun"
+  #   type: "GenericRLController"
+  #   config: "controllers/config_mimic_yongchun.yaml"
+  #   enabled: true

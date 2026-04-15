@@ -3,7 +3,7 @@ HumanoidRobotCfg:
   inference_engine: "onnxruntime"
 
   loop_dt: 0.001
-  policy_path: "../policy/amp/policy_roban13_2026-03-26_15-19-17_36000.onnx"
+  policy_path: "../policy/amp/2026-03-31_23-48-45-lyy10-168000.onnx"
 
   env:
     policy_dt: 0.02
@@ -14,8 +14,8 @@ HumanoidRobotCfg:
         ["zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
          "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
 
-      enable_waist_controller: true
-      waist_joint_names: ["waist_yaw_joint"]
+      # Roban2.2 AMP 模型不支持腰关节外部指令控制
+      enable_waist_controller: false
 
       joint_names:
         ["waist_yaw_joint",

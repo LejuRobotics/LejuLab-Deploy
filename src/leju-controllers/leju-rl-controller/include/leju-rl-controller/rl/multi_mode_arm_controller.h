@@ -13,11 +13,17 @@
 #ifndef LEJU_RL_MULTI_MODE_ARM_CONTROLLER_H_
 #define LEJU_RL_MULTI_MODE_ARM_CONTROLLER_H_
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include <Eigen/Dense>
 
 #include "leju-rl-controller/utils/low_pass_filter.h"
 #include "leju-rl-controller/trajectory/interpolator/minimum_jerk_interpolator.h"
 #include "leju-rl-controller/trajectory/generator/velocity_limited_generator.h"
+
+namespace leju { class ArmTorqueController; }
 
 namespace leju {
 
@@ -61,6 +67,7 @@ struct MultiModeArmControllerConfig {
 class MultiModeArmController {
 public:
     MultiModeArmController() = default;
+    ~MultiModeArmController();
     explicit MultiModeArmController(const MultiModeArmControllerConfig& config);
 
     void setConfig(const MultiModeArmControllerConfig& config);
@@ -75,6 +82,21 @@ public:
     void init(int arm_joint_count,
               const Eigen::VectorXd& default_arm_pos,
               double dt);
+
+    /**
+     * @brief 初始化力矩补偿（重力补偿 + PD 反馈）
+     * @param urdf_path URDF 文件绝对路径
+     * @param arm_joint_names 手臂关节名称（URDF 中的名称）
+     * @param arm_joint_direction 手臂关节方向系数（policy→physical 转换）
+     * @param kp 位置增益（手臂关节数维，policy 空间）
+     * @param kd 速度增益（手臂关节数维，policy 空间）
+     * @return 成功返回 true
+     */
+    bool initGravityCompensation(const std::string& urdf_path,
+                                 const std::vector<std::string>& arm_joint_names,
+                                 const Eigen::VectorXd& arm_joint_direction,
+                                 const Eigen::VectorXd& kp,
+                                 const Eigen::VectorXd& kd);
 
     /**
      * @brief 设置控制模式
@@ -112,6 +134,7 @@ public:
      * @param current_arm_vel 当前手臂速度 (rad/s)
      * @param desire_q [out] 期望手臂位置
      * @param desire_v [out] 期望手臂速度
+     * @param desire_tau [out] 期望手臂力矩（重力补偿），可为 nullptr
      * @return 是否应覆盖 cmd 的手臂部分
      *         - MODE_KEEP_POSE: 始终返回 true
      *         - MODE_AUTO: 站立时返回 true，行走时返回 false
@@ -121,7 +144,8 @@ public:
                 const Eigen::VectorXd& current_arm_pos,
                 const Eigen::VectorXd& current_arm_vel,
                 Eigen::VectorXd* desire_q,
-                Eigen::VectorXd* desire_v);
+                Eigen::VectorXd* desire_v,
+                Eigen::VectorXd* desire_tau = nullptr);
 
     /**
      * @brief 检查是否正在模式切换过渡中
@@ -142,6 +166,11 @@ public:
      * @brief 获取期望手臂速度
      */
     const Eigen::VectorXd& getDesiredVelocity() const { return desire_arm_v_; }
+
+    /**
+     * @brief 获取期望手臂力矩（重力补偿）
+     */
+    const Eigen::VectorXd& getDesiredTorque() const { return desire_arm_tau_; }
 
 private:
     /**
@@ -194,6 +223,7 @@ private:
     Eigen::VectorXd current_arm_pos_;            ///< 当前手臂位置（从 update 保存）
     Eigen::VectorXd desire_arm_q_;               ///< 期望手臂位置
     Eigen::VectorXd desire_arm_v_;               ///< 期望手臂速度
+    Eigen::VectorXd desire_arm_tau_;             ///< 期望手臂力矩（重力补偿）
     Eigen::VectorXd keep_pose_q_;                ///< MODE_KEEP_POSE 保持的位置
 
     // MODE_AUTO 状态
@@ -216,6 +246,10 @@ private:
     ArmControlMode pending_mode_{ArmControlMode::kAuto}; ///< 切换目标模式
 
     bool initialized_{false};
+
+    // 重力补偿
+    std::unique_ptr<ArmTorqueController> gravity_compensator_;
+    Eigen::VectorXd arm_joint_direction_;        ///< 手臂关节方向系数
 };
 
 }  // namespace leju

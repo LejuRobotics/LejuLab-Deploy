@@ -142,8 +142,8 @@ namespace HighlyDynamic
         bool only_half_up_body = false;
         std::vector<int32_t> joint_kp;
         std::vector<int32_t> joint_kd;
-        std::vector<int32_t> ruiwo_kp;
-        std::vector<int32_t> ruiwo_kd;
+        std::vector<double> ruiwo_kp;
+        std::vector<double> ruiwo_kd;
     };
 
     struct HardwareSettings
