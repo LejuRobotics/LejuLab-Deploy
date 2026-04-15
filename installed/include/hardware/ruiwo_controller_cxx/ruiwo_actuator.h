@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include <iterator>
 #include "ruiwo_actuator_base.h"
 #include <iostream>
@@ -168,10 +169,13 @@ public:
         const std::vector<double> &velocity) override;
 
     /**
-     * @brief Set the torque object
-     * 
-     * @param index [0,1,2,3,...]
-     * @param torque 
+     * @brief 设置多个关节力矩（CST 模式）
+     *
+     * 基于 MIT/PTM 模式实现：内部将 kp 和 kd 设置为 0，仅下发前馈力矩，
+     * 即电机控制律退化为 tau_out = torque_ff（无位置/速度反馈）。
+     *
+     * @param index 关节索引 [0,1,2,3,...]
+     * @param torque 力矩值
      */
     void set_torque(const std::vector<uint8_t> &index, const std::vector<double> &torque) override;
 
@@ -300,6 +304,7 @@ private:
     std::mutex update_lock;
 
     bool target_update;
+    std::atomic<bool> torque_only_mode_{false};  // CST 模式标志：kp=0, kd=0
     std::vector<float> target_positions;
     std::vector<float> target_velocity;
     std::vector<float> target_torque;

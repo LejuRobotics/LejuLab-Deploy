@@ -80,9 +80,10 @@ class ControllerManager {
   /**
    * @brief 初始化控制器管理器
    * @param config_file 控制器列表配置文件路径
+   * @param urdf_path URDF 文件路径（用于手臂重力补偿，空则跳过）
    * @return 是否初始化成功
    */
-  bool initialize(const std::string& config_file);
+  bool initialize(const std::string& config_file, const std::string& urdf_path = "");
 
   /**
    * @brief 启动控制器管理器（非阻塞）
@@ -314,9 +315,10 @@ class ControllerManager {
   /**
    * @brief 从配置文件加载控制器列表
    * @param config_file 控制器列表配置文件路径
+   * @param urdf_path URDF 文件路径（用于手臂重力补偿，空则跳过）
    * @return 是否加载成功
    */
-  bool loadControllersFromConfig(const std::string& config_file);
+  bool loadControllersFromConfig(const std::string& config_file, const std::string& urdf_path);
 
   /**
    * @brief 加载切换插值配置（kp/kd）

@@ -56,12 +56,14 @@ void printUsage(const char* program_name) {
   std::cerr << std::endl;
   std::cerr << "Options:" << std::endl;
   std::cerr << "  -c, --config          Path to controller_manager.yaml (required)" << std::endl;
+  std::cerr << "  -u, --urdf-path       Path to robot URDF (for arm gravity compensation)" << std::endl;
   std::cerr << "  -t, --teleop-config   Path to teleop_bindings.yaml" << std::endl;
   std::cerr << "                        (default: <config_dir>/teleop_bindings.yaml)" << std::endl;
   std::cerr << "  -h, --help            Show this help message" << std::endl;
   std::cerr << std::endl;
   std::cerr << "Examples:" << std::endl;
   std::cerr << "  " << program_name << " -c config/46/controller_manager.yaml" << std::endl;
+  std::cerr << "  " << program_name << " -c config/46/controller_manager.yaml -u /path/to/biped_s17.urdf" << std::endl;
   std::cerr << "  " << program_name << " -c config/46/controller_manager.yaml -t /custom/path/teleop_bindings.yaml" << std::endl;
 }
 
@@ -71,6 +73,7 @@ void printUsage(const char* program_name) {
 int main(int argc, char** argv) {
   std::string config_file;
   std::string teleop_config_path;
+  std::string urdf_path;
 
   // 解析命令行参数
   for (int i = 1; i < argc; ++i) {
@@ -79,6 +82,8 @@ int main(int argc, char** argv) {
       return 0;
     } else if ((strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--config") == 0) && i + 1 < argc) {
       config_file = argv[++i];
+    } else if ((strcmp(argv[i], "-u") == 0 || strcmp(argv[i], "--urdf-path") == 0) && i + 1 < argc) {
+      urdf_path = argv[++i];
     } else if ((strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--teleop-config") == 0) && i + 1 < argc) {
       teleop_config_path = argv[++i];
     } else if (strncmp(argv[i], "__", 2) == 0) {
@@ -136,7 +141,7 @@ int main(int argc, char** argv) {
     }
 
     // 3.2 初始化 ControllerManager（加载控制器）
-    if (!controller_manager.initialize(config_file)) {
+    if (!controller_manager.initialize(config_file, urdf_path)) {
       RL_LOGE("Failed to initialize ControllerManager");
       return 1;
     }

@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS lejusdk-lowlevel lejusdk-utils lejusdk-v
 find_package(OpenVINO REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(pinocchio REQUIRED)
 
 # ONNX Runtime (自动检测 3rd_party 库是否存在)
 set(ONNXRUNTIME_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/onnxruntime_toolkit/onnxruntime-linux-x64-1.18.0/lib/libonnxruntime.so")
@@ -91,6 +92,7 @@ add_library(rl_controller_framework
   src/inference/onnxruntime_model.cpp
   src/trajectory/minimum_jerk_interpolator.cpp
   src/trajectory/velocity_limited_generator.cpp
+  src/rl/arm_torque_controller.cpp
   src/rl/multi_mode_arm_controller.cpp
   src/rl/waist_controller.cpp
   src/utils/uri_path_resolver.cpp
@@ -111,6 +113,7 @@ target_link_libraries(rl_controller_framework
   openvino::runtime
   yaml-cpp
   Eigen3::Eigen
+  pinocchio::pinocchio
 )
 
 # ONNX Runtime support

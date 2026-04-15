@@ -3,13 +3,19 @@
  * @brief 多模式手臂控制器实现：三种控制模式与平滑过渡
  */
 
+// pinocchio forward declarations must come before Eigen
+#include <pinocchio/fwd.hpp>
+
 #include "leju-rl-controller/rl/multi_mode_arm_controller.h"
+#include "leju-rl-controller/rl/arm_torque_controller.h"
 #include "leju-rl-controller/rl_log.h"
 
 #include <algorithm>
 #include <cmath>
 
 namespace leju {
+
+MultiModeArmController::~MultiModeArmController() = default;
 
 MultiModeArmController::MultiModeArmController(const MultiModeArmControllerConfig& config)
     : config_(config) {}
@@ -61,6 +67,23 @@ void MultiModeArmController::init(int arm_joint_count,
     transition_time_ = 0.0;
 
     initialized_ = true;
+}
+
+bool MultiModeArmController::initGravityCompensation(
+    const std::string& urdf_path,
+    const std::vector<std::string>& arm_joint_names,
+    const Eigen::VectorXd& arm_joint_direction,
+    const Eigen::VectorXd& kp,
+    const Eigen::VectorXd& kd) {
+    arm_joint_direction_ = arm_joint_direction;
+    desire_arm_tau_ = Eigen::VectorXd::Zero(arm_joint_count_);
+
+    gravity_compensator_ = std::make_unique<ArmTorqueController>();
+    if (!gravity_compensator_->init(urdf_path, arm_joint_names, kp, kd)) {
+        gravity_compensator_.reset();
+        return false;
+    }
+    return true;
 }
 
 void MultiModeArmController::setMode(ArmControlMode mode) {
@@ -186,7 +209,8 @@ bool MultiModeArmController::update(double cmd_stance,
                                     const Eigen::VectorXd& current_arm_pos,
                                     const Eigen::VectorXd& current_arm_vel,
                                     Eigen::VectorXd* desire_q,
-                                    Eigen::VectorXd* desire_v) {
+                                    Eigen::VectorXd* desire_v,
+                                    Eigen::VectorXd* desire_tau) {
     if (!config_.enabled || !initialized_ || arm_joint_count_ <= 0) {
         return false;
     }
@@ -233,6 +257,26 @@ bool MultiModeArmController::update(double cmd_stance,
     if (should_override) {
         desire_arm_q_ = *desire_q;
         desire_arm_v_ = *desire_v;
+
+        // 计算力矩：G + kp*(q_d - q_m) + kd*(v_d - v_m)
+        if (desire_tau && gravity_compensator_ && gravity_compensator_->isInitialized()) {
+            // 将 policy 空间转换为 URDF 物理空间
+            Eigen::VectorXd arm_q_phys = arm_joint_direction_.array() * current_arm_pos.array();
+            Eigen::VectorXd arm_v_phys = arm_joint_direction_.array() * current_arm_vel.array();
+            gravity_compensator_->setMeasuredState(arm_q_phys, arm_v_phys);
+
+            // 期望状态也转换到物理空间
+            Eigen::VectorXd desire_q_phys = arm_joint_direction_.array() * desire_arm_q_.array();
+            Eigen::VectorXd desire_v_phys = arm_joint_direction_.array() * desire_arm_v_.array();
+
+            Eigen::VectorXd tau_phys = gravity_compensator_->computeTorque(desire_q_phys, desire_v_phys);
+            // 将物理空间力矩转换回 policy 空间
+            *desire_tau = arm_joint_direction_.array() * tau_phys.array();
+            desire_arm_tau_ = *desire_tau;
+        } else if (desire_tau) {
+            *desire_tau = Eigen::VectorXd::Zero(arm_joint_count_);
+            desire_arm_tau_ = *desire_tau;
+        }
     }
 
     return should_override;
@@ -277,7 +321,6 @@ bool MultiModeArmController::updateAuto(double cmd_stance,
             // 插值完成，重置标志以便下一帧重新捕获当前位置
             *desire_q = default_arm_pos_;
             *desire_v = Eigen::VectorXd::Zero(arm_joint_count_);
-            is_interpolating_to_default_ = false;
         }
 
         return true;

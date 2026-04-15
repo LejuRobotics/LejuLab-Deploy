@@ -28,7 +28,7 @@ ControllerManager::~ControllerManager() {
   }
 }
 
-bool ControllerManager::initialize(const std::string& config_file) {
+bool ControllerManager::initialize(const std::string& config_file, const std::string& urdf_path) {
   std::lock_guard<std::recursive_mutex> lock(controllers_mutex_);
 
   // 初始化 RobotData（订阅传感器数据）- 这会创建 DDS participant
@@ -38,7 +38,7 @@ bool ControllerManager::initialize(const std::string& config_file) {
   }
 
   // 从配置文件加载控制器
-  if (!loadControllersFromConfig(config_file)) {
+  if (!loadControllersFromConfig(config_file, urdf_path)) {
     RL_LOGE("Failed to load controllers from config");
     return false;
   }
@@ -558,7 +558,7 @@ ControllerBase* ControllerManager::getLastController() const {
   return nullptr;
 }
 
-bool ControllerManager::loadControllersFromConfig(const std::string& config_file) {
+bool ControllerManager::loadControllersFromConfig(const std::string& config_file, const std::string& urdf_path) {
   RL_LOGI("Loading config from: %s", config_file.c_str());
 
   // 检查文件是否存在
@@ -631,6 +631,11 @@ bool ControllerManager::loadControllersFromConfig(const std::string& config_file
       if (!controller) {
         RL_LOGW("Unknown controller type: %s", type.c_str());
         continue;
+      }
+
+      // GenericRLController 需要 URDF 路径用于手臂重力补偿
+      if (auto* generic_ctrl = dynamic_cast<GenericRLController*>(controller.get())) {
+        generic_ctrl->setUrdfPath(urdf_path);
       }
 
       // 设置部位关节名称（从 SDK 获取，解耦 ControllerBase 和 SDK）

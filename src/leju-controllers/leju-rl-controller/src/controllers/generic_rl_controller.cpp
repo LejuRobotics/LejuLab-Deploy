@@ -58,6 +58,24 @@ bool GenericRLController::initialize() {
 
     std::filesystem::path config_dir = std::filesystem::path(config_path_).parent_path();
 
+    // 2.6 初始化手臂力矩补偿（URDF 路径从 main 传入）
+    if (arm_controller_ && !urdf_path_.empty()) {
+      int n_arm = static_cast<int>(arm_joint_names_.size());
+      Eigen::VectorXd arm_direction(n_arm);
+      Eigen::VectorXd arm_kp(n_arm);
+      Eigen::VectorXd arm_kd(n_arm);
+      for (int i = 0; i < n_arm; ++i) {
+        int policy_idx = arm_policy_start_idx_ + i;
+        arm_direction[i] = joint_direction_[policy_idx];
+        arm_kp[i] = joint_kp_[policy_idx];
+        arm_kd[i] = joint_kd_[policy_idx];
+      }
+      if (!arm_controller_->initGravityCompensation(urdf_path_, arm_joint_names_,
+                                                     arm_direction, arm_kp, arm_kd)) {
+        RL_LOG_WARNING("Arm torque compensation init failed, continuing without it");
+      }
+    }
+
     // 3. 加载所有 motion 轨迹文件
     loadMotionTrajectories(config_dir.string());
 
@@ -598,6 +616,15 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
     const array_t& base_pos = (loader && loader->isLoaded())
         ? loader->getJointPos() : default_joint_pos_;
     q_target = joint_direction_ * (base_pos + actions_ * joint_action_scale_);
+    // motion 未播放时，手臂不叠加 action，防止 motion 冻结导致手臂发散
+    if (!motion_playing_ && loader)  {
+      for (int i = 0; i < policy_joint_count_; ++i) {
+        if (joint_names_[i].find("zarm") != std::string::npos) {
+          q_target[i] = joint_direction_[i] * base_pos[i];
+        }
+      }
+    }
+    ///////////////////////////////////////////////////////////
   }
 
   // 非策略控制的关节：保持当前位置
