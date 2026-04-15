@@ -548,7 +548,7 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
         ? loader->getJointPos() : default_joint_pos_;
     q_target = joint_direction_ * (base_pos + actions_ * joint_action_scale_);
     // motion 未播放时，手臂不叠加 action，防止 motion 冻结导致手臂发散
-    if (!motion_playing_) {
+    if (!motion_playing_ && loader)  {
       for (int i = 0; i < policy_joint_count_; ++i) {
         if (joint_names_[i].find("zarm") != std::string::npos) {
           q_target[i] = joint_direction_[i] * base_pos[i];
