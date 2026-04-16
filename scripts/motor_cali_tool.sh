@@ -22,7 +22,7 @@ set --
 # 定义工具路径和对应的setup路径
 declare -A TOOL_ENV_MAP=(
     ["$PROJECT_DIR/devel/lib/leju-hardware/hw_cali_tool"]="$PROJECT_DIR/devel/setup.bash"
-    ["$PROJECT_DIR/installed/bin/leju-hardware/hw_cali_tool"]="$PROJECT_DIR/installed/setup.bash"
+    ["$PROJECT_DIR/installed/bin/hw_cali_tool"]="$PROJECT_DIR/installed/setup.bash"
 )
 
 # 查找并执行工具
