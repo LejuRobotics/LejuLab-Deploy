@@ -43,6 +43,14 @@ class MotionTrajectory {
   array_t getJointPos() const;
 
   /**
+   * @brief 获取首帧的关节位置（不依赖 current_frame_）
+   *
+   * 用于查询 motion 的"起始姿态"，例如控制器切换时计算插值目标。
+   * 与 getJointPos() 不同：本方法始终返回第一帧，即使 motion 已播放完毕。
+   */
+  array_t getFirstFrameJointPos() const;
+
+  /**
    * @brief 获取当前帧的关节速度
    */
   array_t getJointVel() const;

@@ -259,9 +259,12 @@ Eigen::VectorXd GenericRLController::getDefaultArmPos() const {
   }
 
   // 获取目标位置：有 motion 用首帧，否则用默认配置
+  // 必须用 getFirstFrameJointPos()：motion 播放完毕后 current_frame_ 停在末帧，
+  // 切换控制器时若用末帧作为插值目标会把上一次播放的最终姿态带入新一轮，
+  // 例如 mimic_dance 跳完手臂张开 → 切到 amp → 再切回 mimic_dance 时手臂会维持张开。
   MotionTrajectory* motion = getCurrentMotion();
   array_t target_joint_pos = (motion && motion->isLoaded())
-      ? motion->getJointPos()
+      ? motion->getFirstFrameJointPos()
       : default_joint_pos_;
 
   // 构建电机空间的手臂位置（应用方向系数）
@@ -291,9 +294,10 @@ Eigen::VectorXd GenericRLController::getDefaultWaistPos() const {
   }
 
   // 获取目标位置：有 motion 用首帧，否则用默认配置
+  // 同 getDefaultArmPos：必须用首帧而非 current_frame_，否则切换控制器时会把上一次播放的末帧位置作为插值目标。
   MotionTrajectory* motion = getCurrentMotion();
   array_t target_joint_pos = (motion && motion->isLoaded())
-      ? motion->getJointPos()
+      ? motion->getFirstFrameJointPos()
       : default_joint_pos_;
 
   // 构建电机空间的腰部位置（应用方向系数）

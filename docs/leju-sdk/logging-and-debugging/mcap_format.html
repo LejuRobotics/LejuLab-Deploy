@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MCAP 数据格式 &mdash; LejuSDK 98317145a0 文档</title>
+  <title>MCAP 数据格式 &mdash; LejuSDK 6e4a3197 文档</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                98317145a0
+                6e4a3197
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -199,7 +199,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#id3">时间戳</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id4">文件大小与压缩</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id5">兼容性</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id6">参考</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mcap-cli">附: 官方 <code class="docutils literal notranslate"><span class="pre">mcap</span></code> CLI 安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">参考</a></li>
 </ul>
 </li>
 </ul>
@@ -315,11 +316,35 @@
 <li><p>其他支持 MCAP 格式的工具</p></li>
 </ul>
 </section>
-<section id="id6">
-<h2>参考<a class="headerlink" href="#id6" title="此标题的永久链接"></a></h2>
+<section id="mcap-cli">
+<h2>附: 官方 <code class="docutils literal notranslate"><span class="pre">mcap</span></code> CLI 安装<a class="headerlink" href="#mcap-cli" title="此标题的永久链接"></a></h2>
+<p>除了 Foxglove Studio，Foxglove 还提供命令行工具 <code class="docutils literal notranslate"><span class="pre">mcap</span></code>，用于查看文件元信息、切片、合并 bag 等。<strong>常见坑</strong>：</p>
+<ul class="simple">
+<li><p><strong>``npm i -g mcap-cli`` 装的不是这个</strong> —— <code class="docutils literal notranslate"><span class="pre">mcap-cli&#64;0.4.0</span></code> 是 mwaylabs 做的 app 脚手架，只是名字撞车。真的 MCAP 工具不在 npm 上，是 Foxglove 用 Go 写的。</p></li>
+<li><p><strong>``&#64;mcap/cli`` 这个包不存在</strong>，不要 <a href="#id6"><span class="problematic" id="id7">``</span></a>npm i``安装。</p></li>
+</ul>
+<p>推荐如下方式安装：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.local/bin
+<span class="c1"># 版本号到 https://github.com/foxglove/mcap/releases 找最新 &quot;releases/mcap-cli/vX.Y.Z&quot;</span>
+curl<span class="w"> </span>-fL<span class="w"> </span><span class="s2">&quot;https://github.com/foxglove/mcap/releases/download/releases%2Fmcap-cli%2Fv0.0.62/mcap-linux-amd64&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span>~/.local/bin/mcap
+chmod<span class="w"> </span>+x<span class="w"> </span>~/.local/bin/mcap
+mcap<span class="w"> </span>version<span class="w">   </span><span class="c1"># -&gt; v0.0.62</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">备注</p>
+<p>对于 <code class="docutils literal notranslate"><span class="pre">cyclone-dds-recorder</span></code> profile 的 MCAP （即 lejusdk-recorder 的录制产物），
+官方 <code class="docutils literal notranslate"><span class="pre">mcap</span></code> CLI 只能给出 header / statistics / 每 channel 的 message count；
+想解出 <code class="docutils literal notranslate"><span class="pre">leju::msgs::*</span></code> 消息内容，需要使用仓库内的 <code class="docutils literal notranslate"><span class="pre">scripts/mcap/</span></code> Python 脚本。</p>
+</div>
+</section>
+<section id="id8">
+<h2>参考<a class="headerlink" href="#id8" title="此标题的永久链接"></a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://mcap.dev/">MCAP 格式规范</a></p></li>
 <li><p><a class="reference external" href="https://foxglove.dev/docs/studio/connection/mcap">Foxglove MCAP 文档</a></p></li>
+<li><p><a class="reference external" href="https://github.com/foxglove/mcap/releases?q=mcap-cli">mcap CLI releases</a></p></li>
 </ul>
 </section>
 </section>
