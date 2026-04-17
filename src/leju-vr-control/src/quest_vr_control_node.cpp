@@ -8,7 +8,6 @@
 #include "leju-vr-control/arm_ctrl_mode_fsm.h"
 #include "leju-vr-control/quest_to_ik_converter.h"
 #include "leju-vr-control/quest_vr_fsm.h"
-#include "leju-vr-control/waist_teleop_controller.h"
 
 #include <leju-ik/Quest3IkAPI.h>
 #include <leju-ik/Quest3IkIncrementalAPI.h>
@@ -24,8 +23,6 @@
 #include <mutex>
 #include <string>
 #include <thread>
-
-#include <yaml-cpp/yaml.h>
 
 namespace {
 
@@ -64,51 +61,12 @@ void triggerEmergencyStopAndExit(leju::vr::KuavoVRAPI& vr_api) {
   g_running = false;
 }
 
-void restoreControlModesToAutoOnExit(leju::vr::KuavoVRAPI& vr_api,
-                                     bool waist_supported,
-                                     int timeout_ms = 1000) {
+void restoreControlModesToAutoOnExit(leju::vr::KuavoVRAPI& vr_api, int timeout_ms = 1000) {
   const bool arm_ok = vr_api.setArmMode(leju::vr::ControlMode::kAuto, timeout_ms);
   std::cout << "[VR] Arm mode set to Auto: " << (arm_ok ? "success" : "fail") << std::endl;
 
   const bool head_ok = vr_api.setHeadMode(leju::vr::ControlMode::kAuto, timeout_ms);
   std::cout << "[VR] Head mode set to Auto: " << (head_ok ? "success" : "fail") << std::endl;
-
-  if (waist_supported) {
-    const bool waist_ok = vr_api.setWaistMode(leju::vr::ControlMode::kAuto, timeout_ms);
-    std::cout << "[VR] Waist mode set to Auto: " << (waist_ok ? "success" : "fail")
-              << std::endl;
-  }
-}
-
-struct QuestVrControlConfig {
-  double waist_yaw_max_abs = 1.57;
-  double waist_deadzone = 0.05;
-};
-
-QuestVrControlConfig loadConfig(const std::string& yaml_path) {
-  QuestVrControlConfig cfg;
-  if (yaml_path.empty()) {
-    std::cerr << "[VR] QUEST_VR_CONTROL_YAML_PATH not set, using default config." << std::endl;
-    return cfg;
-  }
-
-  try {
-    const YAML::Node yaml = YAML::LoadFile(yaml_path);
-    const YAML::Node waist_control = yaml["waist_control"];
-    if (waist_control) {
-      if (waist_control["yaw_max_abs"]) {
-        cfg.waist_yaw_max_abs = waist_control["yaw_max_abs"].as<double>();
-      }
-      if (waist_control["deadzone"]) {
-        cfg.waist_deadzone = waist_control["deadzone"].as<double>();
-      }
-    }
-  } catch (const std::exception& e) {
-    std::cerr << "[VR] Failed to load config from " << yaml_path << ": " << e.what()
-              << ", using default config." << std::endl;
-  }
-
-  return cfg;
 }
 
 }  // namespace
@@ -131,15 +89,11 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  const bool waist_supported = IS_KUAVO5_LEGGED(robot_version);
-  if (!waist_supported && !IS_KUAVO4PRO_LEGGED(robot_version)) {
+  if (!IS_KUAVO5_LEGGED(robot_version) && !IS_KUAVO4PRO_LEGGED(robot_version)) {
     std::cerr << "[VR] Unsupported robot version for leju-vr-control: "
               << robot_version.version_name_short() << std::endl;
     return 1;
   }
-
-  std::string vr_config_path = getEnv("QUEST_VR_CONTROL_YAML_PATH");
-  const QuestVrControlConfig vr_config = loadConfig(vr_config_path);
 
   if (!leju::GlobalRobot::init_env(robot_version)) {
     std::cerr << "Failed to initialize lejusdk-lowlevel" << std::endl;
@@ -201,29 +155,11 @@ int main(int argc, char** argv) {
   leju::vr_control::QuestVrFSM fsm;
   leju::vr_control::ArmCtrlModeFSM arm_ctrl_mode_fsm;
   int current_arm_mode = 1;
-  bool waist_mode_ready = false;
-  if (waist_supported) {
-    waist_mode_ready = vr_api.setWaistMode(leju::vr::ControlMode::kExternal, 1000);
-    std::cout << "[VR] Waist mode set to External: " << (waist_mode_ready ? "success" : "fail")
-              << std::endl;
-  } else {
-    std::cout << "[VR] Waist teleop disabled for current robot version" << std::endl;
-  }
-
-  leju::vr_control::WaistTeleopConfig waist_cfg;
-  waist_cfg.enabled = waist_supported && waist_mode_ready;
-  waist_cfg.yaw_max_abs = vr_config.waist_yaw_max_abs;
-  waist_cfg.deadzone = vr_config.waist_deadzone;
-  leju::vr_control::WaistTeleopController waist_teleop(waist_cfg);
-  if (waist_cfg.enabled) {
-    std::cout << "[VR] Waist teleop enabled for Kuavo5(52)" << std::endl;
-  }
 
   auto last_joy_time = std::chrono::steady_clock::now();
   constexpr float GRIP_THRESHOLD = 0.5f;
   bool prev_left_grip = false;
   bool prev_right_grip = false;
-  bool prev_waist_active = false;
 
   vr_api.subscribeQuestBonePoses([&](const leju::vr::QuestBonePosesData& data) {
     std::lock_guard<std::mutex> lock(bone_mutex);
@@ -356,30 +292,10 @@ int main(int argc, char** argv) {
         ik_absolute->onJoystick(ik_joy);
       }
 
-      const auto waist_state = waist_teleop.update(joy_copy);
-      if (waist_cfg.enabled) {
-        if (waist_state.active != prev_waist_active) {
-          if (waist_state.active) {
-            std::cout << "[VR] Waist control active: target_yaw=" << waist_state.target_yaw
-                      << " rad" << std::endl;
-          } else {
-            std::cout << "[VR] Waist control inactive: target_yaw reset to zero" << std::endl;
-          }
-          prev_waist_active = waist_state.active;
-        }
-        vr_api.publishWaistJointCmd(waist_teleop.buildCommand());
-      }
-
       leju::vr::VrVelocityCmd vel;
-      if (waist_teleop.shouldBlockWalking()) {
-        vel.linear_x = 0.0;
-        vel.linear_y = 0.0;
-        vel.angular_z = 0.0;
-      } else {
-        vel.linear_x = joy_copy.left_y;
-        vel.linear_y = -joy_copy.left_x;
-        vel.angular_z = -joy_copy.right_x;
-      }
+      vel.linear_x = joy_copy.left_y;
+      vel.linear_y = -joy_copy.left_x;
+      vel.angular_z = -joy_copy.right_x;
       vr_api.publishVrVelocityCmd(vel);
     }
 
@@ -418,7 +334,7 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(interval);
   }
 
-  restoreControlModesToAutoOnExit(vr_api, waist_supported);
+  restoreControlModesToAutoOnExit(vr_api);
   leju::GlobalRobot::getInstance().shutdown();
   vr_api.shutdown();
   std::cout << "quest_vr_control_node exited." << std::endl;

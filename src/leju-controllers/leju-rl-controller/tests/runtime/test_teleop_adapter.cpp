@@ -10,14 +10,30 @@
 
 #include <cstring>
 
+#define private public
+#define protected public
 #include "leju-rl-controller/runtime/input/command_buffer.h"
+#include "leju-rl-controller/runtime/control_loop.h"
 #include "leju-rl-controller/runtime/input/teleop/joy_teleop_adapter.h"
+#include "leju-rl-controller/runtime/input/teleop/quest_teleop_adapter.h"
+#include "leju-rl-controller/runtime/input/teleop/teleop_input_source.h"
 #include "leju-rl-controller/runtime/input/teleop/teleop_binding_config.h"
 #include "leju-rl-controller/runtime/input/trigger_buffer.h"
+#undef protected
+#undef private
+
+#include "leju-rl-controller/controllers/controller_manager.h"
+#include "leju-rl-controller/robot_data.h"
+#include "leju-rl-controller/runtime/lifecycle.h"
 #include "lejusdk-lowlevel/data_types.h"
+#include "lejusdk-utils/robot_version.hpp"
+#include "lejusdk-vr/data_types.h"
 
 using namespace leju::runtime;
 using leju::JoyData;
+using leju::RobotData;
+using leju::ControllerManager;
+using leju::vr::QuestJoystickData;
 
 // ============================================================================
 // 辅助函数：创建测试数据
@@ -51,6 +67,32 @@ JoyData MakeJoyData(float left_x, float left_y, float right_x,
   }
   return joy;
 }
+
+QuestJoystickData MakeQuestData(float left_x, float left_y, float right_x) {
+  QuestJoystickData joy{};
+  joy.left_x = left_x;
+  joy.left_y = left_y;
+  joy.right_x = right_x;
+  return joy;
+}
+
+namespace {
+
+class StubInputSource : public InputSource {
+ public:
+  explicit StubInputSource(InputPriority priority) : priority_(priority) {}
+
+  CommandBuffer::Snapshot getSnapshot() const override { return snapshot_; }
+  InputPriority getPriority() const override { return priority_; }
+  const char* getName() const override { return "StubInput"; }
+
+  CommandBuffer::Snapshot snapshot_;
+
+ private:
+  InputPriority priority_;
+};
+
+}  // namespace
 
 // ============================================================================
 // TeleopBindingConfig 加载测试
@@ -99,6 +141,73 @@ TEST(JoyTeleopAdapterCommandBufferTest, GetSnapshotReturnsValidData) {
   // 获取快照（应该返回默认值）
   auto snapshot = adapter.getSnapshot();
   EXPECT_FALSE(snapshot.cmd_vel.valid);  // 默认无效
+}
+
+TEST(QuestTeleopAdapterRegressionTest, CombinesTranslationAndRotationInSingleCmd) {
+  TriggerBuffer trigger_buffer;
+  QuestTeleopAdapter adapter(leju::RobotVersions::KUAVO5_BASE, &trigger_buffer);
+
+  adapter.config_.stick_deadzone = 0.0f;
+  adapter.config_.max_linear_x = 0.55;
+  adapter.config_.max_linear_y = 0.30;
+  adapter.config_.max_angular_z = 1.00;
+
+  auto quest = MakeQuestData(0.4f, 0.6f, -0.25f);
+  adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
+
+  auto snapshot = adapter.getSnapshot();
+  ASSERT_TRUE(snapshot.cmd_vel.valid);
+  EXPECT_NEAR(snapshot.cmd_vel.linear_x, 0.6 * 0.55, 1e-6);
+  EXPECT_NEAR(snapshot.cmd_vel.linear_y, -0.4 * 0.30, 1e-6);
+  EXPECT_NEAR(snapshot.cmd_vel.angular_z, 0.25, 1e-6);
+}
+
+TEST(TeleopInputSourceRegressionTest, QuestTakesOverWhenJoyIsIdle) {
+  TriggerBuffer trigger_buffer;
+  TeleopInputSource input_source(leju::RobotVersions::KUAVO5_BASE, &trigger_buffer);
+
+  MotionCommand joy_cmd;
+  joy_cmd.setZero();
+  joy_cmd.valid = true;
+  input_source.joy_adapter_->cmd_buffer_.writeCmdVel(joy_cmd);
+
+  MotionCommand quest_cmd;
+  quest_cmd.linear_x = 0.2;
+  quest_cmd.linear_y = -0.1;
+  quest_cmd.angular_z = 0.3;
+  quest_cmd.valid = true;
+  input_source.quest_adapter_->cmd_buffer_.writeCmdVel(quest_cmd);
+
+  auto snapshot = input_source.getSnapshot();
+  ASSERT_TRUE(snapshot.cmd_vel.valid);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.linear_x, 0.2);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.linear_y, -0.1);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.angular_z, 0.3);
+}
+
+TEST(TeleopInputSourceRegressionTest, JoyStillWinsWhenActivelyMoving) {
+  TriggerBuffer trigger_buffer;
+  TeleopInputSource input_source(leju::RobotVersions::KUAVO5_BASE, &trigger_buffer);
+
+  MotionCommand joy_cmd;
+  joy_cmd.linear_x = 0.15;
+  joy_cmd.linear_y = 0.0;
+  joy_cmd.angular_z = 0.0;
+  joy_cmd.valid = true;
+  input_source.joy_adapter_->cmd_buffer_.writeCmdVel(joy_cmd);
+
+  MotionCommand quest_cmd;
+  quest_cmd.linear_x = 0.2;
+  quest_cmd.linear_y = -0.1;
+  quest_cmd.angular_z = 0.3;
+  quest_cmd.valid = true;
+  input_source.quest_adapter_->cmd_buffer_.writeCmdVel(quest_cmd);
+
+  auto snapshot = input_source.getSnapshot();
+  ASSERT_TRUE(snapshot.cmd_vel.valid);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.linear_x, 0.15);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.linear_y, 0.0);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.angular_z, 0.0);
 }
 
 // ============================================================================

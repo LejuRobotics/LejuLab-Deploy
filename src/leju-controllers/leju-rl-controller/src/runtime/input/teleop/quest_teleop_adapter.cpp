@@ -128,11 +128,17 @@ void QuestTeleopAdapter::onQuestData(const QuestJoystickData& data) {
 void QuestTeleopAdapter::processVelocityImpl(const QuestJoystickData& data,
                                              CommandBuffer& buffer,
                                              double /*current_time*/) {
-  (void)buffer;  // 使用内部 cmd_buffer_，忽略外部 buffer
+  // 一次性合成完整速度，避免右摇杆写入覆盖左摇杆的平移分量。
+  const float left_x = applyDeadzone(data.left_x);
+  const float left_y = applyDeadzone(data.left_y);
+  const float right_x = applyDeadzone(data.right_x);
 
-  // 分别处理左右控制器
-  processLeftController(data, cmd_buffer_, 0.0);
-  processRightController(data, cmd_buffer_, 0.0);
+  MotionCommand cmd;
+  cmd.linear_x = left_y * config_.max_linear_x;
+  cmd.linear_y = -left_x * config_.max_linear_y;
+  cmd.angular_z = -right_x * config_.max_angular_z;
+  cmd.valid = true;
+  buffer.writeCmdVel(cmd);
 }
 
 void QuestTeleopAdapter::processLeftController(const QuestJoystickData& data,

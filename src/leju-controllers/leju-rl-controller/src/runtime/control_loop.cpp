@@ -114,6 +114,7 @@ void ControlLoop::tick() {
   CommandBuffer::Snapshot merged_cmd;
   merged_cmd.cmd_vel = mergeAllCmdVel();
   merged_cmd.arm_target = mergeArmTarget();
+  merged_cmd.head_target = mergeHeadTarget();
 
   // J. 调用 ControlLogic 处理策略决策
   control_logic_.tick(state, triggers, lifecycle_, controller_manager_, merged_cmd, now);
@@ -160,6 +161,19 @@ std::optional<ExternalJointTarget> ControlLoop::mergeArmTarget() const {
     auto snapshot = source->getSnapshot();
     if (snapshot.arm_target.has_value()) {
       return snapshot.arm_target;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<ExternalJointTarget> ControlLoop::mergeHeadTarget() const {
+  // 按优先级遍历所有输入源（已排序，高优先级在前）
+  for (const auto* source : input_sources_) {
+    if (!source) continue;
+
+    auto snapshot = source->getSnapshot();
+    if (snapshot.head_target.has_value()) {
+      return snapshot.head_target;
     }
   }
   return std::nullopt;

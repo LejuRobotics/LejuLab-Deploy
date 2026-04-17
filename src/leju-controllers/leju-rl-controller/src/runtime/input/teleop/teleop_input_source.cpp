@@ -98,11 +98,18 @@ void TeleopInputSource::shutdown() {
 // ============================================================================
 
 CommandBuffer::Snapshot TeleopInputSource::getSnapshot() const {
+  const auto has_active_cmd = [](const CommandBuffer::Snapshot& snapshot) {
+    return snapshot.cmd_vel.valid &&
+           !snapshot.cmd_vel.isNearZero(VelocityDeadzone::kLinearX,
+                                        VelocityDeadzone::kLinearY,
+                                        VelocityDeadzone::kAngularZ);
+  };
+
   // 按优先级遍历：Joy > Quest
   // 1. 先尝试 Joy
   if (joy_adapter_) {
     auto snapshot = joy_adapter_->getSnapshot();
-    if (snapshot.cmd_vel.valid) {
+    if (has_active_cmd(snapshot)) {
       // RL_LOGD("TeleopInputSource: Using cmd_vel from Joy");
       return snapshot;
     }
@@ -111,7 +118,7 @@ CommandBuffer::Snapshot TeleopInputSource::getSnapshot() const {
   // 2. 再尝试 Quest
   if (quest_adapter_) {
     auto snapshot = quest_adapter_->getSnapshot();
-    if (snapshot.cmd_vel.valid) {
+    if (has_active_cmd(snapshot)) {
       // RL_LOGD("TeleopInputSource: Using cmd_vel from Quest");
       return snapshot;
     }

@@ -86,7 +86,6 @@ add_library(rl_controller_framework
   src/controllers/controller_registry.cpp
   src/controllers/generic_rl_controller.cpp
   src/robot_data.cpp
-  src/velocity_manager.cpp
   src/motion/motion_trajectory.cpp
   src/inference/openvino_model.cpp
   src/inference/onnxruntime_model.cpp

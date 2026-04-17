@@ -16,15 +16,20 @@ namespace {
 constexpr int POSE_INDEX_CHEST = 23;
 constexpr int POSE_INDEX_HEAD = 25;
 
-void quatToEulerZYX(const Eigen::Quaterniond& q, double& yaw, double& pitch, double& roll) {
+// Quest bone poses here behave like a Y-up frame:
+// - yaw   : rotation around Y
+// - pitch : rotation around X
+// We therefore extract Y-X-Z Tait-Bryan angles instead of the previous Z-Y-X
+// decomposition, which caused left/right head yaw to appear on the "pitch" term.
+void quatToEulerYXZ(const Eigen::Quaterniond& q, double& yaw, double& pitch, double& roll) {
   Eigen::Matrix3d R = q.toRotationMatrix();
-  pitch = std::asin(-R(2, 0));
+  pitch = std::asin(-R(1, 2));
   if (std::abs(std::cos(pitch)) > 1e-6) {
-    yaw = std::atan2(R(1, 0), R(0, 0));
-    roll = std::atan2(R(2, 1), R(2, 2));
+    yaw = std::atan2(R(0, 2), R(2, 2));
+    roll = std::atan2(R(1, 0), R(1, 1));
   } else {
-    yaw = 0.0;
-    roll = std::atan2(-R(0, 1), R(1, 1));
+    yaw = std::atan2(-R(2, 0), R(0, 0));
+    roll = 0.0;
   }
 }
 }  // namespace
@@ -50,11 +55,11 @@ bool computeHeadFromBones(const QuestBonePosesData& quest_poses,
 
   Eigen::Quaterniond q_rel = q_chest.inverse() * q_head;
   double yaw, pitch, roll;
-  quatToEulerZYX(q_rel, yaw, pitch, roll);
+  quatToEulerYXZ(q_rel, yaw, pitch, roll);
 
   out_q.resize(2);
-  out_q[0] = pitch;
-  out_q[1] = yaw;
+  out_q[0] = yaw;
+  out_q[1] = pitch;
   return true;
 }
 

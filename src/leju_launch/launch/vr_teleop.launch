@@ -16,7 +16,6 @@
   <arg name="models_path" default="$(find leju_assets)"/>
   <arg name="config_path" default="$(find leju-hardware)"/>
   <arg name="quest_ip" default=""/>
-  <arg name="vr_config_file" default="$(find leju-vr-control)/config/quest_vr_control.yaml"/>
   <!-- use_incremental_ik: true=增量IK(握把切换), false=绝对IK(双手扳机启动). 默认增量 -->
   <arg name="use_incremental_ik" default="true"/>
   <!-- quest3_incremental_ik.yaml 路径，默认 leju-ik 包内 -->
@@ -28,7 +27,6 @@
   <env name="ROBOT_VERSION" value="$(arg robot_version)"/>
   <env name="USE_INCREMENTAL_IK" value="$(arg use_incremental_ik)"/>
   <env name="QUEST3_IK_YAML_PATH" value="$(arg quest3_ik_yaml_path)"/>
-  <env name="QUEST_VR_CONTROL_YAML_PATH" value="$(arg vr_config_file)"/>
 
   <!-- leju-remote: Quest UDP to DDS bridge (quest_ip 为空时等待 Quest 广播发现) -->
   <node name="leju_remote" pkg="leju-remote" type="quest_udp_to_dds_node" output="screen"

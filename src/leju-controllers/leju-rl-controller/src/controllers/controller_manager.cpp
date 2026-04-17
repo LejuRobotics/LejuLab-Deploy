@@ -14,7 +14,6 @@
 #include "leju-rl-controller/runtime/input/trigger_buffer.h"
 #include "leju-rl-controller/rl_log.h"
 #include "leju-rl-controller/utils/uri_path_resolver.h"
-#include "leju-rl-controller/velocity_manager.h"
 #include "lejusdk-utils/time_utils.hpp"
 
 namespace leju {
@@ -402,12 +401,18 @@ RobotCmd ControllerManager::update(const RobotState& state,
     return cmd;
   }
 
-  // 从 CommandSnapshot 中提取速度指令（已在 ControlLoop::MergeCommands 中合并）
+  // 从 CommandSnapshot 中提取速度指令（输入优先级已在 ControlLoop::mergeAllCmdVel() 中选择）
   auto* controller = controllers_[active_index_].controller.get();
   VelocityCommand vel_cmd;
   vel_cmd.linear_x = command.cmd_vel.linear_x;
   vel_cmd.linear_y = command.cmd_vel.linear_y;
   vel_cmd.angular_z = command.cmd_vel.angular_z;
+
+  auto* arm_ctrl = controller->getArmController();
+  if (arm_ctrl && arm_ctrl->getMode() != ArmControlMode::kAuto) {
+    vel_cmd.setZero();
+  }
+
   controller->setVelocityCommand(vel_cmd);
 
   // 调用当前控制器的 update

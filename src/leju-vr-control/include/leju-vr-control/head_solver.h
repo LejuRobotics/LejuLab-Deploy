@@ -15,11 +15,11 @@ namespace vr_control {
 using leju::vr::QuestBonePosesData;
 
 /**
- * @brief Compute head joint target [pitch, yaw] (rad) from Quest bone poses.
+ * @brief Compute head joint target [yaw, pitch] (rad) from Quest bone poses.
  *
  * Uses poses[23] (Chest) and poses[25] (Head) to compute relative orientation.
  * @param quest_poses Quest bone poses
- * @param out_q Output: [pitch, yaw] in rad, or empty if invalid
+ * @param out_q Output: [yaw, pitch] in rad, or empty if invalid
  * @return true if successful
  */
 bool computeHeadFromBones(const QuestBonePosesData& quest_poses,

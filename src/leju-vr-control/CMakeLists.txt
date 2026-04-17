@@ -15,7 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   lejusdk-utils
 )
 find_package(Eigen3 REQUIRED)
-find_package(yaml-cpp REQUIRED)
 find_package(drake CONFIG QUIET)
 
 catkin_package(
@@ -35,7 +34,6 @@ set(SOURCES
   src/quest_to_ik_converter.cpp
   src/head_solver.cpp
   src/quest_vr_fsm.cpp
-  src/waist_teleop_controller.cpp
   src/quest_vr_control_node.cpp
 )
 
@@ -50,7 +48,6 @@ target_include_directories(quest_vr_control_node PRIVATE
 target_link_libraries(quest_vr_control_node
   ${catkin_LIBRARIES}
   Eigen3::Eigen
-  yaml-cpp
 )
 if(drake_FOUND)
   target_link_libraries(quest_vr_control_node drake::drake)

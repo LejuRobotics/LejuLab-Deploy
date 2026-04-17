@@ -402,7 +402,7 @@ void ControlLogic::processExternalTargets(ControllerManager& controller_manager,
 void ControlLogic::processVelocityCommand(ControllerManager& controller_manager,
                                           const CommandBuffer::Snapshot& command_snapshot) {
   // 处理速度指令（从已合并的 CommandSnapshot）
-  // 注意：速度合并已在 ControlLoop::MergeCommands 中完成
+  // 注意：输入优先级选择已在 ControlLoop::mergeAllCmdVel() 中完成
   if (command_snapshot.cmd_vel.valid) {
     VelocityCommand vel_cmd;
     vel_cmd.linear_x = command_snapshot.cmd_vel.linear_x;
