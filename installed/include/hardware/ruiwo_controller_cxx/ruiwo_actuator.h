@@ -166,7 +166,9 @@ public:
     void set_positions(const std::vector<uint8_t> &index,
         const std::vector<double> &positions,
         const std::vector<double> &torque,
-        const std::vector<double> &velocity) override;
+        const std::vector<double> &velocity,
+        const std::vector<double> &kp_pos = {},
+        const std::vector<double> &kd_pos = {}) override;
 
     /**
      * @brief 设置多个关节力矩（CST 模式）
@@ -305,9 +307,12 @@ private:
 
     bool target_update;
     std::atomic<bool> torque_only_mode_{false};  // CST 模式标志：kp=0, kd=0
+    std::atomic<bool> target_has_cmd_gains_{false};  // 本次 cmd 是否携带逐周期 kp/kd 覆盖
     std::vector<float> target_positions;
     std::vector<float> target_velocity;
     std::vector<float> target_torque;
+    std::vector<float> target_kp_pos;  // 逐周期 kp 覆盖（仅当 target_has_cmd_gains_ 为真时有效）
+    std::vector<float> target_kd_pos;
 
     std::vector<float> current_positions;
     std::vector<float> current_torque;
