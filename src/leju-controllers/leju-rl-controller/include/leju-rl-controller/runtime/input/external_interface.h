@@ -11,6 +11,7 @@
 #include "leju-rl-controller/runtime/input/command_buffer.h"
 #include "leju-rl-controller/runtime/data_types.hpp"
 #include "leju-rl-controller/runtime/input/input_source.h"
+#include "leju-rl-controller/runtime/input/teleop/teleop_binding_config.h"
 #include "leju-rl-controller/runtime/input/trigger_buffer.h"
 
 namespace leju {
@@ -70,6 +71,13 @@ class ExternalInterface : public InputSource {
    * @return 是否已初始化
    */
   bool isInitialized() const;
+
+  /**
+   * @brief 从 teleop 配置加载 External 速度映射上限
+   * @param config_path teleop_bindings.yaml 路径
+   * @return 是否加载成功
+   */
+  bool loadVelocityLimitsFromTeleopConfig(const std::string& config_path);
 
   /**
    * @brief 获取当前命令快照（线程安全）
@@ -205,6 +213,9 @@ private:
 
   // 生命周期管理器（由调用者提供，非拥有，用于检查系统运行状态）
   Lifecycle* lifecycle_ = nullptr;
+
+  // External VelocityCmd 归一化输入映射配置
+  TeleopConfig velocity_limits_;
 };
 
 } // namespace runtime

@@ -10,12 +10,14 @@
 
 #include "leju-rl-controller/runtime/input/external_interface.h"
 
+#include <algorithm>
 #include <chrono>
 #include <optional>
 #include <stdexcept>
 #include <string>
 
 #include <magic_enum/magic_enum.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include "leju-rl-controller/controllers/controller_manager.h"
 #include "leju-rl-controller/runtime/lifecycle.h"
@@ -234,6 +236,46 @@ bool ExternalInterface::isInitialized() const {
   return initialized_ && vr_api_ && vr_api_->isInitialized();
 }
 
+bool ExternalInterface::loadVelocityLimitsFromTeleopConfig(const std::string& config_path) {
+  try {
+    TeleopConfig config = velocity_limits_;
+    YAML::Node root = YAML::LoadFile(config_path);
+    YAML::Node velocity_limits = root["velocity_limits"];
+
+    if (!velocity_limits) {
+      RL_LOGW("ExternalInterface: 'velocity_limits' missing in %s, using TeleopConfig"
+              " defaults",
+              config_path.c_str());
+    } else {
+      if (velocity_limits["stick_deadzone"]) {
+        config.stick_deadzone = velocity_limits["stick_deadzone"].as<float>();
+      }
+      if (velocity_limits["linear_x"]) {
+        config.max_linear_x = velocity_limits["linear_x"].as<double>();
+      }
+      if (velocity_limits["linear_y"]) {
+        config.max_linear_y = velocity_limits["linear_y"].as<double>();
+      }
+      if (velocity_limits["angular_z"]) {
+        config.max_angular_z = velocity_limits["angular_z"].as<double>();
+      }
+    }
+
+    velocity_limits_ = config;
+    RL_LOGI("ExternalInterface: Loaded normalized velocity limits from %s"
+            " (linear_x=%.3f, linear_y=%.3f, angular_z=%.3f)",
+            config_path.c_str(),
+            velocity_limits_.max_linear_x,
+            velocity_limits_.max_linear_y,
+            velocity_limits_.max_angular_z);
+    return true;
+  } catch (const std::exception& e) {
+    RL_LOGW("ExternalInterface: Failed to parse velocity limits from %s: %s",
+            config_path.c_str(), e.what());
+    return false;
+  }
+}
+
 // ============================================================================
 // 私有方法
 // ============================================================================
@@ -287,9 +329,12 @@ void ExternalInterface::onWaistJointCmd(const JointTrajectoryPoint& cmd) {
 
 void ExternalInterface::onVelocityCmd(const vr::VelocityCmd& cmd) {
   MotionCommand motion_cmd;
-  motion_cmd.linear_x = cmd.linear_x;
-  motion_cmd.linear_y = cmd.linear_y;
-  motion_cmd.angular_z = cmd.angular_z;
+  const double normalized_x = std::clamp(cmd.linear_x, -1.0, 1.0);
+  const double normalized_y = std::clamp(cmd.linear_y, -1.0, 1.0);
+  const double normalized_z = std::clamp(cmd.angular_z, -1.0, 1.0);
+  motion_cmd.linear_x = normalized_x * velocity_limits_.max_linear_x;
+  motion_cmd.linear_y = normalized_y * velocity_limits_.max_linear_y;
+  motion_cmd.angular_z = normalized_z * velocity_limits_.max_angular_z;
   motion_cmd.valid = true;
   cmd_buffer_.writeCmdVel(motion_cmd);
 

@@ -172,6 +172,12 @@ int main(int argc, char** argv) {
       RL_LOGW("Failed to initialize ExternalInterface, continuing without VR support");
     } else {
       RL_LOGI("ExternalInterface initialized");
+      if (!teleop_config_path.empty() &&
+          !external_interface.loadVelocityLimitsFromTeleopConfig(teleop_config_path)) {
+        RL_LOGW("Failed to load External velocity limits from %s, using TeleopConfig"
+                " defaults",
+                teleop_config_path.c_str());
+      }
     }
 
     // ========================================================================
