@@ -415,7 +415,7 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
 
 | 文件 | 适用机器人 |
 |------|-----------|
-| `foxglove-roban2-1-layout.json` | Roban 2.1 |
+| `foxglove-roban2-layout.json` | Roban 2 |
 | `foxglove-kuavo4pro-layout.json` | Kuavo 4 Pro |
 | `foxglove-kuavo5-layout.json` | Kuavo 5 |
 

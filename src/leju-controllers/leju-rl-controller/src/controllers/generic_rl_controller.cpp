@@ -567,12 +567,12 @@ void GenericRLController::computeObservation() {
     for (size_t i = 0; i < obs_terms_.size(); ++i) {
       array_t term = getObsTerm(obs_terms_[i].name);
       std::vector<double> v(term.data(), term.data() + term.size());
-      logger_->publishVector("/" + name_ + "/obs/" + obs_terms_[i].name, v);
+      logger_->publishVector("/rl_controller/obs/" + obs_terms_[i].name, v);
     }
     // 发布拼接后的单帧观测向量
     std::vector<double> single_obs_vec(observations_.data(),
                                        observations_.data() + observations_.size());
-    logger_->publishVector("/" + name_ + "/observations", single_obs_vec);
+    logger_->publishVector("/rl_controller/observations", single_obs_vec);
   }
 }
 
@@ -687,9 +687,9 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
   // 发布调试数据
   if (logger_) {
     std::vector<double> qt(q_target.data(), q_target.data() + q_target.size());
-    logger_->publishVector("/" + name_ + "/q_target", qt);
+    logger_->publishVector("/rl_controller/q_target", qt);
     if (loader) {
-      logger_->publishValue("/" + name_ + "/motion_frame",
+      logger_->publishValue("/rl_controller/motion_frame",
                             static_cast<double>(loader->getCurrentFrame()));
     }
   }
@@ -705,7 +705,7 @@ void GenericRLController::updateArmCommand(RobotCmd& cmd) {
 
   // 发布手臂控制器模式
   if (logger_ && arm_controller_) {
-    logger_->publishValue("/" + name_ + "/arm_mode",
+    logger_->publishValue("/rl_controller/arm_mode",
                           static_cast<double>(arm_controller_->getMode()));
   }
 }
@@ -720,7 +720,7 @@ void GenericRLController::updateWaistCommand(RobotCmd& cmd) {
 
   // 发布腰部控制器模式
   if (logger_ && waist_controller_) {
-    logger_->publishValue("/" + name_ + "/waist_mode",
+    logger_->publishValue("/rl_controller/waist_mode",
                           static_cast<double>(waist_controller_->getMode()));
   }
 }
