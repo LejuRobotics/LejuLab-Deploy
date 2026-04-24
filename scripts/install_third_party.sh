@@ -3,6 +3,9 @@
 set -euo pipefail
 
 DRAKE_VERSION="1.19.0-1"
+PINOCCHIO_VERSION="2.6.21-1focal.20240830.092123"
+ROS_SNAPSHOT_DATE="2024-10-31"
+ROS_SNAPSHOT_KEY="4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -193,6 +196,37 @@ install_drake() {
   log_success "Drake 已锁定安装为 ${installed_version}"
 }
 
+install_pinocchio() {
+  log_info "配置 ROS snapshot apt 源 (${ROS_SNAPSHOT_DATE}) 以锁定 Pinocchio 版本..."
+
+  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
+    --recv-key "${ROS_SNAPSHOT_KEY}"
+
+  echo "deb http://snapshots.ros.org/noetic/${ROS_SNAPSHOT_DATE}/ubuntu $(lsb_release -sc) main" \
+    | sudo tee /etc/apt/sources.list.d/ros-snapshots.list >/dev/null
+
+  apt_update
+
+  if ! apt-cache madison ros-noetic-pinocchio | awk '{print $3}' | grep -Fxq "${PINOCCHIO_VERSION}"; then
+    log_error "当前 ROS snapshot 源中未找到 ros-noetic-pinocchio=${PINOCCHIO_VERSION}。"
+    log_error "为保证版本一致性，脚本不会回退安装其他版本。"
+    exit 1
+  fi
+
+  log_info "安装 ros-noetic-pinocchio=${PINOCCHIO_VERSION} (--reinstall)"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall \
+    "ros-noetic-pinocchio=${PINOCCHIO_VERSION}"
+
+  local installed_version
+  installed_version="$(dpkg-query -W -f='${Version}' ros-noetic-pinocchio 2>/dev/null || true)"
+  if [[ "${installed_version}" != "${PINOCCHIO_VERSION}" ]]; then
+    log_error "Pinocchio 安装结果校验失败，期望 ${PINOCCHIO_VERSION}，实际为 ${installed_version:-<未安装>}。"
+    exit 1
+  fi
+
+  log_success "Pinocchio 已锁定安装为 ${installed_version}"
+}
+
 configure_shell_env() {
   local user_home
   user_home="$(target_home)"
@@ -236,6 +270,7 @@ print_summary() {
 安装完成。已覆盖的系统侧第三方依赖包括：
   - Drake
   - OpenVINO
+  - Pinocchio
   - Eigen3 / yaml-cpp / Protobuf / protobuf-c
   - GLFW / Mesa / OSMesa / GLEW
   - LCM / gflags / glog / LMDB
@@ -255,6 +290,7 @@ main() {
   install_base_packages
   install_openvino
   install_drake
+  install_pinocchio
   configure_shell_env
   print_summary
 }
