@@ -1,164 +1,94 @@
 # LejuLab 模型部署指南
 
-## 1. 如何启动机器人执行的程序
+## 1. 部署流程概览
 
-### 编译
-
-首次部署或代码更新后，先在工作区根目录加载环境并编译：
-
-```bash
-cd <repo_path>
-source installed/setup.bash  # 开源仓库必需
-catkin build
-```
-
-### 实物启动
-
-AMP 示例：
-
-```bash
-sudo su
-
-# Roban2.1
-export ROBOT_VERSION=14
-
-# Roban2.2
-export ROBOT_VERSION=17
-
-# Kuavo4pro
-export ROBOT_VERSION=46
-
-# Kuavo5
-export ROBOT_VERSION=52
-
-source devel/setup.bash
-roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
-```
-
-Mimic HPNY 示例：
-
-```bash
-sudo su
-
-# Roban2.1
-export ROBOT_VERSION=14
-
-# Roban2.2
-export ROBOT_VERSION=17
-
-source devel/setup.bash
-roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/mimic_hpny_v1/controller_manager.yaml
-```
-
-### 仿真启动
-
-AMP 示例：
-
-```bash
-# Roban2.1
-export ROBOT_VERSION=14
-
-# Roban2.2
-export ROBOT_VERSION=17
-
-# Kuavo4pro
-export ROBOT_VERSION=46
-
-# Kuavo5
-export ROBOT_VERSION=52
-
-source devel/setup.bash
-roslaunch leju_launch load_mujoco_sim.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
-```
-
-### 说明
-
-- 配置对应机器人的版本号 `ROBOT_VERSION`
-- 实物需要以 `root` 用户启动
-- `controller_manager_config`: LejuLab 模型配置文件(YAML)的绝对路径
-
-## 2. 如何检测机器人是否在执行对应的模型程序
-
-### 检测命令
-
-实物：
-
-```bash
-pgrep -af "roslaunch leju_launch load_real.launch"
-```
-
-仿真：
-
-```bash
-pgrep -af "roslaunch leju_launch load_mujoco_sim.launch"
-```
-
-输出示例：
-
-```text
-3078626 /usr/bin/python3 /opt/ros/noetic/bin/roslaunch leju_launch load_real.launch controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
-```
-
-处理方式：
-
-- 根据当前启动的是实物还是仿真，执行对应的 `pgrep -af "roslaunch ..."` 命令
-- 再从输出命令行中读取 `controller_manager_config:=...`
-- 判断这个 YAML 路径是否和目标路径一致。若一致，则说明目标 launch 正在运行
-
-## 3. 如何停止机器人执行的程序
-
-### 方式一：直接结束整个 `roslaunch`
-
-实物：
-
-```bash
-sudo pkill -INT -f "roslaunch leju_launch load_real.launch"
-```
-
-仿真：
-
-```bash
-pkill -INT -f "roslaunch leju_launch load_mujoco_sim.launch"
-```
-
-适用场景：
-
-- 停止当前整套运行程序
-
-### 方式二：按启动参数精确结束对应控制器进程
-
-参考命令：
-
-```bash
-sudo pkill -INT -f "roslaunch leju_launch .*controller_manager_config:=/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml"
-```
-
-适用场景：
-
-- 按模型路径精确停止
-- 因实物运行需要 `root` 权限，故停止时需要 `sudo`
-
-## 4.1 手柄自启动配置切换
-
-### 简要介绍
-
-手柄自启动不会直接读取前端上传目录，而是固定读取当前激活配置：
+当前推荐使用手柄自启动服务部署实物模型。自启动服务不会直接读取创作平台上传目录，而是固定读取当前激活配置：
 
 ```text
 /root/.config/lejulab/auto_start_config/current/controller_manager.yaml
 ```
 
-部署自启动服务时，会额外复制一份固定脚本：
+日常部署一个模型时，流程是：
+
+1. 准备一个完整 profile 目录，目录内包含 `controller_manager.yaml`、控制器 YAML、ONNX 模型，Mimic 还需要 CSV 轨迹文件。
+2. 将完整 profile 上传到机器人。
+3. 使用 `set_active_profile.sh` 将该 profile 设置为当前激活配置。
+4. 用户通过手柄自启动服务拉起当前激活配置对应的模型。
+
+首次装机或服务更新时，还需要部署自启动服务。注意：服务部署脚本会编译工作区，并把当前激活配置重置到仓库默认配置目录；如果已经切换过创作平台上传的 profile，服务部署完成后需要再执行一次 `set_active_profile.sh` 切回目标 profile。
+
+## 2. 编译与自启动服务
+
+### 服务部署
+
+自启动服务部署脚本需要在工作区根目录以 `root` 身份执行。脚本会自动完成编译、CycloneDDS / iceoryx 配置部署、服务安装和启动。
+
+闭源仓库 `lejulab_platform`：
+
+```bash
+cd <lejulab_platform_workspace>
+sudo ./src/leju-joystick/services/deploy_joy_autostart.sh
+```
+
+开源仓库 `lejulab`：
+
+```bash
+cd <lejulab_workspace>
+sudo ./installed/share/leju-joystick/services/deploy_joy_autostart.sh
+```
+
+部署前如果需要让脚本重置到某个机器人版本的仓库默认配置，需要先设置 `ROBOT_VERSION`。
+
+部署脚本会做这些事：
+
+- 停止并禁用旧的 `lejulab_joy_monitor.service`
+- 编译整个工作区
+- 执行 `src/leju_launch/scripts/setup_cyclonedds_config.sh`
+- 复制创作平台可直接调用的配置切换脚本到 `/root/.config/lejulab/auto_start_config/set_active_profile.sh`
+- 将当前激活配置重置到仓库默认配置目录
+- 安装、启用并启动新的 `lejulab_joy_monitor.service`
+
+### 服务维护
+
+常用维护命令：
+
+```bash
+sudo systemctl status lejulab_joy_monitor.service --no-pager
+sudo journalctl -u lejulab_joy_monitor.service -f
+sudo systemctl restart lejulab_joy_monitor.service
+```
+
+卸载服务时执行同一路径并追加 `--remove`：
+
+```bash
+cd <lejulab_platform_workspace>
+sudo ./src/leju-joystick/services/deploy_joy_autostart.sh --remove
+
+cd <lejulab_workspace>
+sudo ./installed/share/leju-joystick/services/deploy_joy_autostart.sh --remove
+```
+
+## 3. 上传模型并切换激活配置
+
+### 激活配置脚本
+
+部署自启动服务时，会复制一份固定脚本：
 
 ```text
 /root/.config/lejulab/auto_start_config/set_active_profile.sh
 ```
 
-前端后续只需要调用这一个脚本，不需要再知道仓库路径。
+创作平台后续只需要调用这一个脚本，不需要再知道仓库路径。脚本会维护 profiles 目录和 `current` 入口：
 
-### 脚本的两种用法
+```text
+/root/.config/lejulab/auto_start_config/profiles/
+/root/.config/lejulab/auto_start_config/current
+/root/.config/lejulab/auto_start_config/current.meta.json
+```
 
-1. 前端导入一个完整模型目录，并替换激活 profile
+### 创作平台导入完整模型目录
+
+创作平台上传完整模型目录后，使用 `--import-from` 导入并替换激活 profile：
 
 ```bash
 sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
@@ -170,18 +100,19 @@ sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
 这个模式会做：
 
 - 校验 `/tmp/project_A/controller_manager.yaml` 是否存在
-- 将 `/tmp/project_A` 整目录复制到  
-  `/root/.config/lejulab/auto_start_config/profiles/project_A`
+- 将 `/tmp/project_A` 整目录复制到 `/root/.config/lejulab/auto_start_config/profiles/project_A`
 - 如果 `project_A` 已存在，则整目录替换，而不是叠加覆盖
 - 原子更新 `current`
-- 写审计信息到  
+- 写审计信息到
   `/root/.config/lejulab/auto_start_config/current.meta.json`
 
-2. 直接将 `current` 指到一个已有完整目录，适用于 joy 自启动部署
+### 指向已有完整目录
+
+也可以直接将 `current` 指到一个已有完整目录，适用于服务部署脚本重置默认配置，或手工切回仓库内置配置：
 
 ```bash
 sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
-  --target-dir lejulab/src/leju-controllers/leju-rl-controller/config/${ROBOT_VERSION:-46} \
+  --target-dir <workspace>/src/leju-controllers/leju-rl-controller/config/${ROBOT_VERSION:-46} \
   --source deploy
 ```
 
@@ -190,13 +121,52 @@ sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
 - 自启动部署脚本将激活配置重置到仓库默认目录
 - 手工排查时切回一个已存在的完整目录
 
-### 前端使用注意事项
+### 使用注意事项
 
-- 前端不要对已有 `profiles/project_A` 执行 `cp -r` 叠加覆盖，这会留下历史残留文件
+- 创作平台不要对已有 `profiles/project_A` 执行 `cp -r` 叠加覆盖，这会留下历史残留文件
 - 正确做法是先准备一个完整目录，再调用 `--import-from ... --profile-name ...`
 - 自定义 profile 必须是一整套完整配置目录，不能只上传一个 `controller_manager.yaml`
 - `current` 是唯一 source of truth，自启动只看它
 - `current.meta.json` 只用于记录谁改了、什么时候改，不参与启动判定
+
+## 4.1 自启动和手动启动
+
+### 自启动使用方式
+
+服务部署完成且当前激活配置切换正确后，实物机器人通过手柄自启动：
+
+- 第一次按 `START`：校验 `/root/.config/lejulab/auto_start_config/current/controller_manager.yaml` 后启动实物运行
+- 启动命令内部会显式传入 `controller_manager_config:=/root/.config/lejulab/auto_start_config/current/controller_manager.yaml`
+- 第二次按 `START`：仅在 runtime 进入等待状态时调用 `startRuntime()`
+
+### 手动启动
+
+用户仍然可以选择手动启动。手动启动时要特别确认 `controller_manager_config` 是否指向自己想要的配置。
+
+实物示例：
+
+```bash
+sudo su
+source /opt/ros/noetic/setup.bash
+source <lejulab_platform_workspace>/devel/setup.bash
+roslaunch leju_launch load_real.launch \
+  controller_manager_config:=/root/.config/lejulab/auto_start_config/current/controller_manager.yaml
+```
+
+仿真示例：
+
+```bash
+source /opt/ros/noetic/setup.bash
+source <lejulab_platform_workspace>/devel/setup.bash
+roslaunch leju_launch load_mujoco_sim.launch \
+  controller_manager_config:=/root/.config/lejulab/auto_start_config/profiles/amp_walk_v1/controller_manager.yaml
+```
+
+说明：
+
+- 实物运行需要 `root` 权限
+- `controller_manager_config` 是 LejuLab 模型入口 YAML 的绝对路径
+- 手动指定 profile 路径时，必须确认该目录就是目标模型目录；使用 `current/controller_manager.yaml` 时，必须先确认 `current` 已由 `set_active_profile.sh` 切到目标 profile
 
 ## 4.2 参数文件夹结构
 
@@ -212,33 +182,33 @@ LejuLab 部署目录包含的文件如下：
 LejuLab 部署目录：
 
 ```text
-/home/lab/.lejulab/auto_start_config/profiles/
+/root/.config/lejulab/auto_start_config/profiles/
 ```
 
 每个模型一个独立目录，例如：
 
-- `/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/`
-- `/home/lab/.lejulab/auto_start_config/profiles/mimic_hpny_v1/`
+- `/root/.config/lejulab/auto_start_config/profiles/amp_walk_v1/`
+- `/root/.config/lejulab/auto_start_config/profiles/mimic_hpny_v1/`
 
 ### 推荐目录结构
 
 AMP 以仓库当前 `46` 版本为默认参考：
 
 ```text
-/home/lab/.lejulab/auto_start_config/profiles/amp_walk_v1/
+/root/.config/lejulab/auto_start_config/profiles/amp_walk_v1/
 ├── controller_manager.yaml
 ├── config_amp.yaml
-└── amp_walk_v1.onnx
+└── model.onnx
 ```
 
 Mimic 以仓库当前 `14` 版本 `HPNY` 为默认参考：
 
 ```text
-/home/lab/.lejulab/auto_start_config/profiles/mimic_hpny_v1/
+/root/.config/lejulab/auto_start_config/profiles/mimic_hpny_v1/
 ├── controller_manager.yaml
-├── config_mimic_HPNY_dance.yaml
-├── mimic_hpny_v1.onnx
-└── HPNY_dance.csv
+├── config_mimic.yaml
+├── model.onnx
+└── trajectory.csv
 ```
 
 说明：
@@ -260,22 +230,81 @@ AMP 示例：
 
 ```yaml
 config: "config_amp.yaml"
-policy_path: "amp_walk_v1.onnx"
+policy_path: "model.onnx"
 ```
 
 Mimic 示例：
 
 ```yaml
-config: "config_mimic_HPNY_dance.yaml"
-policy_path: "mimic_hpny_v1.onnx"
-file: "HPNY_dance.csv"
+config: "config_mimic.yaml"
+policy_path: "model.onnx"
+file: "trajectory.csv"
 ```
 
 ### 重要注意事项
 
-- YAML 里不要写 `~/.lejulab/...`
+- YAML 里不要写 `~/.lejulab/...` 或 `~/.config/...`
 - 每个模型目录只保留一个入口 `controller_manager.yaml`
 - `controller_manager.yaml` 只建议保留**一个启用中的控制器**
+
+## 4.3 Mimic 训练配置转换脚本
+
+训练仓库导出的 Mimic `env.yaml` 可以用脚本转换成 LejuLab 部署侧的 mimic 控制器 YAML：
+
+```bash
+python3 scripts/mimic_config_train_to_deploy.py \
+  --env-yaml /path/to/env.yaml \
+  --dance-name leju_deploy \
+  --out /path/to/config_mimic.yaml
+```
+
+适用范围：
+
+- 只适用于 **Mimic** 模型配置转换
+- 不适用于 **AMP** 模型；AMP 的 `config_amp.yaml` 仍按 AMP 模板和模型自身配置维护
+- 当前脚本内置 roban 2.2 / 17 的 mimic 部署关节顺序、`joint_direction` 和 `actuator_control_mode`
+
+脚本输入：
+
+- `--env-yaml`：训练侧导出的 `env.yaml`
+- `--out`：输出的部署侧 mimic 控制器 YAML
+
+常用可选参数：
+
+- `--dance-name`：同时写入 `motion.default_motion` 和 `motion.motions[].name`；不传时默认 `leju_deploy`
+- `--policy-path`：写入 `policy_path`；不传时默认 `model.onnx`
+- `--motion-file`：写入 `motion.motions[].file`；不传时默认 `trajectory.csv`
+- `--inference-engine onnxruntime`：显式使用 ONNX Runtime；不传时默认 `openvino`，且参数值必须精确为 `onnxruntime`
+- `--template`：可选旧配置迁移参数，不是必需；仅用于复用旧 YAML 中的 `joint_direction`
+
+扁平化部署默认输出：
+
+```yaml
+HumanoidRobotCfg:
+  inference_engine: openvino
+  policy_path: model.onnx
+  motion:
+    default_motion: leju_deploy
+    motions:
+      - name: leju_deploy
+        file: trajectory.csv
+```
+
+因此创作平台准备 Mimic 部署目录时，通常放置：
+
+```text
+<profile>/
+├── controller_manager.yaml
+├── config_mimic.yaml          # 由 mimic_config_train_to_deploy.py 生成
+├── model.onnx
+└── trajectory.csv
+```
+
+注意：
+
+- 脚本只生成单个 mimic 控制器 YAML，不生成 `controller_manager.yaml`
+- `model.onnx` 需要来自本次训练导出的策略模型
+- `trajectory.csv` 需要由训练/动作数据转换流程单独生成，并与部署 mimic YAML 的关节顺序一致
 
 ## 5. 配置模板说明
 
