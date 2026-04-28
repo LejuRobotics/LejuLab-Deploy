@@ -5,8 +5,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include <atomic>
 #include <iterator>
+#include <atomic>
 #include "ruiwo_actuator_base.h"
 #include <iostream>
 
@@ -306,7 +306,6 @@ private:
     std::mutex update_lock;
 
     bool target_update;
-    std::atomic<bool> torque_only_mode_{false};  // CST 模式标志：kp=0, kd=0
     std::atomic<bool> target_has_cmd_gains_{false};  // 本次 cmd 是否携带逐周期 kp/kd 覆盖
     std::vector<float> target_positions;
     std::vector<float> target_velocity;

@@ -20,6 +20,11 @@ controllers:
     config: "controllers/config_mimic_dance.yaml"
     enabled: true
 
+  - name: "mimic_qqxinjiang"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_qqxinjiang.yaml"
+    enabled: true
+
   # 实物未测试: 勿运行
   # - name: "mimic_yongchun"
   #   type: "GenericRLController"
