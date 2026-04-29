@@ -611,24 +611,24 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
   // 计算目标关节位置：q_target = direction * (base_pos + action * scale)
   array_t q_target;
   MotionTrajectory* loader = getCurrentMotion();
-  if (motion_residual_action_ && motion_playing_ && loader) {
-    // 残差模式：动作叠加到 motion 参考轨迹上
-    array_t motion_joint_pos = loader->getJointPos();
-    q_target = joint_direction_ * (motion_joint_pos + actions_ * joint_action_scale_);
-  } else {
-    // 常规模式：有 motion 时用首帧位置（与 moveToDefaultPos 一致），否则用默认关节位置
-    const array_t& base_pos = (loader && loader->isLoaded())
-        ? loader->getJointPos() : default_joint_pos_;
-    q_target = joint_direction_ * (base_pos + actions_ * joint_action_scale_);
-    // motion 未播放时，手臂不叠加 action，防止 motion 冻结导致手臂发散
-    if (!motion_playing_ && loader)  {
-      for (int i = 0; i < policy_joint_count_; ++i) {
-        if (joint_names_[i].find("zarm") != std::string::npos) {
-          q_target[i] = joint_direction_[i] * base_pos[i];
+  if (loader) {
+    if (motion_residual_action_) {
+      const array_t& base_pos = loader->isLoaded()
+          ? loader->getJointPos()
+          : default_joint_pos_;
+
+      q_target = joint_direction_ * (base_pos + actions_ * joint_action_scale_);
+
+      if (!motion_playing_) {
+        for (int i = 0; i < policy_joint_count_; ++i) {
+          if (joint_names_[i].find("zarm") != std::string::npos) {
+            q_target[i] = joint_direction_[i] * base_pos[i];
+          }
         }
       }
+    } else {
+      q_target = joint_direction_ * (default_joint_pos_ + actions_ * joint_action_scale_);
     }
-    ///////////////////////////////////////////////////////////
   }
 
   // 非策略控制的关节：保持当前位置
