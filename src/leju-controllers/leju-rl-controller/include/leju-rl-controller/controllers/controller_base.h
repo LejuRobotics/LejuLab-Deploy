@@ -141,6 +141,14 @@ class ControllerBase {
   /// @brief 获取控制频率 [Hz]
   int getControlFrequency() const { return static_cast<int>(1.0 / loop_dt_); }
 
+  /// @brief 判断当前是否处于站立状态（速度指令接近零）
+  bool isStanding() const {
+    std::lock_guard<std::mutex> lock(cmd_mutex_);
+    return std::abs(velocity_cmd_.linear_x) < 0.01 &&
+           std::abs(velocity_cmd_.linear_y) < 0.01 &&
+           std::abs(velocity_cmd_.angular_z) < 0.01;
+  }
+
   /**
    * @brief 开始播放 motion（用于舞蹈/动作播放控制器）
    * @return 成功返回 true，不支持则返回 false
