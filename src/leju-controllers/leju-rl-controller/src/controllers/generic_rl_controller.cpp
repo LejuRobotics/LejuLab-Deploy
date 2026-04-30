@@ -629,6 +629,8 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
     } else {
       q_target = joint_direction_ * (default_joint_pos_ + actions_ * joint_action_scale_);
     }
+  } else {
+    q_target = joint_direction_ * (default_joint_pos_ + actions_ * joint_action_scale_);
   }
 
   // 非策略控制的关节：保持当前位置
