@@ -2,6 +2,33 @@
 
 set -euo pipefail
 
+if systemctl is-active --quiet roban_joy_monitor.service; then
+    echo "服务 roban_joy_monitor.service 已开启，正在停止..."
+    sudo systemctl stop roban_joy_monitor.service
+    sudo systemctl disable roban_joy_monitor.service
+    echo "服务 roban_joy_monitor.service 已停止。"
+else
+    echo "服务 roban_joy_monitor.service 未开启。"
+fi
+
+if systemctl is-active --quiet ocs2_h12pro_monitor.service; then
+    echo "服务 ocs2_h12pro_monitor.service 已开启，正在停止..."
+    sudo systemctl stop ocs2_h12pro_monitor.service
+    sudo systemctl disable ocs2_h12pro_monitor.service
+    echo "服务 ocs2_h12pro_monitor.service 已停止。"
+else
+    echo "服务 ocs2_h12pro_monitor.service 未开启。"
+fi
+
+if systemctl is-active --quiet lejulab_joy_monitor.service; then
+    echo "服务 lejulab_joy_monitor.service 已开启，正在停止..."
+    sudo systemctl stop lejulab_joy_monitor.service
+    sudo systemctl disable lejulab_joy_monitor.service
+    echo "服务 lejulab_joy_monitor.service 已停止。"
+else
+    echo "服务 lejulab_joy_monitor.service 未开启。"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 该脚本在两种仓库布局下都会被调用:
@@ -129,7 +156,11 @@ install_service() {
         exit 1
     fi
 
-    "${DEPLOYED_SET_ACTIVE_PROFILE_SCRIPT}" --target-dir "${default_profile_dir}" --source deploy
+    "${DEPLOYED_SET_ACTIVE_PROFILE_SCRIPT}" \
+        --target-dir "${default_profile_dir}" \
+        --source deploy \
+        --ws-root "${WS_ROOT}" \
+        --robot-version "${robot_version}"
 
     cp "${TEMPLATE_FILE}" "${SERVICE_FILE}"
     sed -i "s|@LEJULAB_WS@|$(escape_sed_replacement "${WS_ROOT}")|g" "${SERVICE_FILE}"

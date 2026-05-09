@@ -127,13 +127,19 @@ void JoyTeleopAdapter::onJoyData(const JoyData& joy, const JoyData::Buttons& pre
 void JoyTeleopAdapter::processSystemButtons(const JoyData& joy,
                                               const JoyData::Buttons& prev,
                                               std::vector<ActionTrigger>& out_triggers) {
-  if (joy.buttons.start && !prev.start) {
+  const bool back_edge  = joy.buttons.back  && !prev.back;
+  const bool start_edge = joy.buttons.start && !prev.start;
+
+  // 同帧检测：任意一边沿命中且当前帧两键都按下 → 立即 Quit，绝不再发 Start
+  if ((back_edge || start_edge) && joy.buttons.back && joy.buttons.start) {
+    out_triggers.push_back(ActionTrigger(ActionType::Quit));
+    RL_LOGI("JoyTeleopAdapter: BACK+START combo => Quit");
+    return;
+  }
+
+  if (start_edge && !joy.buttons.back) {
     out_triggers.push_back(ActionTrigger(ActionType::Start));
     RL_LOGI("JoyTeleopAdapter: START button pressed");
-  }
-  if (joy.buttons.back && !prev.back) {
-    out_triggers.push_back(ActionTrigger(ActionType::Quit));
-    RL_LOGI("JoyTeleopAdapter: BACK button pressed");
   }
 }
 

@@ -47,7 +47,7 @@ joy_bindings:
   # Motion 播放触发
   # -------------------------------------------------------------------------
   # 注意：当前版本未配置舞蹈控制器，如需启用请在 controller_manager.yaml 中添加 mimic 控制器
-  # - buttons: ["GUIDE"]
+  # - buttons: ["A"]
   #   action:
   #     type: MotionCommand
   #     args:

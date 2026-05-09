@@ -45,6 +45,7 @@ sudo ./installed/share/leju-joystick/services/deploy_joy_autostart.sh
 - 编译整个工作区
 - 执行 `src/leju_launch/scripts/setup_cyclonedds_config.sh`
 - 复制创作平台可直接调用的配置切换脚本到 `/root/.config/lejulab/auto_start_config/set_active_profile.sh`
+- 调用 `set_active_profile.sh --source deploy --ws-root ... --robot-version ...`，把 `ws_root` 和 `robot_version` 写入 `/root/.config/lejulab/auto_start_config/current.meta.json`，供 `--source frontend` 合成时定位仓库
 - 将当前激活配置重置到仓库默认配置目录
 - 安装、启用并启动新的 `lejulab_joy_monitor.service`
 
@@ -102,9 +103,43 @@ sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
 - 校验 `/tmp/project_A/controller_manager.yaml` 是否存在
 - 将 `/tmp/project_A` 整目录复制到 `/root/.config/lejulab/auto_start_config/profiles/project_A`
 - 如果 `project_A` 已存在，则整目录替换，而不是叠加覆盖
+- **`--source frontend` 时合成 `controller_manager.yaml`**（详见下文「frontend profile 合成机制」）：以仓库当前 `ROBOT_VERSION` 的 `controller_manager.yaml` 为底板，注入 AMP（绝对路径回指仓库）和 mimic（相对 profile 内 `config_mimic.yaml`）两条控制器，覆盖前端上传的那份
 - 原子更新 `current`
 - 写审计信息到
   `/root/.config/lejulab/auto_start_config/current.meta.json`
+
+#### frontend profile 合成机制
+
+为什么要合成：前端上传的 profile 只带 mimic 资产，没有 AMP；同时 `controller_manager.yaml` 里有 `switch_interpolation` 这种随仓库版本演进的字段，前端无法维护。合成脚本以仓库当前版本的 `controller_manager.yaml` 为底板，重写 `controllers` 为固定两条，其他顶层字段（`switch_interpolation` / `loop_dt` / 未来新增）原样透传。
+
+合成结果示例（仓库为 `17` 版本）：
+
+```yaml
+loop_dt: 0.001
+default_controller: amp
+switch_interpolation:
+  arm_kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
+  arm_kd: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
+  waist_kp: [40.179]
+  waist_kd: [2.557]
+controllers:
+  - name: amp
+    type: GenericRLController
+    config: <WS_ROOT>/src/leju-controllers/leju-rl-controller/config/17/controllers/config_amp.yaml
+    enabled: true
+  - name: mimic_dance
+    type: GenericRLController
+    config: config_mimic.yaml
+    enabled: true
+```
+
+要点：
+
+- AMP 走绝对路径指回仓库，AMP 的 `policy_path` 仍以 `config_amp.yaml` 自身所在目录为 base，自动命中仓库内真实 onnx，无须前端上传 AMP 模型
+- profile 必须包含 `config_mimic.yaml`（缺则报错并清理 staging）
+- mimic 控制器的 `name` 取自仓库 `<v>/teleop_bindings.yaml` 中第一条非 amp 的 `SwitchController` 绑定（14 → `mimic_hpny`，17 → `mimic_dance`，46 当前无绑定 → fallback `mimic_user`）
+- 合成依赖 `current.meta.json` 中的 `ws_root` 和 `robot_version`；部署脚本只在调用 `set_active_profile.sh --source deploy` 时传入并写入这两个字段，其他来源更新 meta 时只刷新 `active_dir` / `source` / `updated_at` / `updated_by` / `hostname`
+- 如果切换了 `ROBOT_VERSION` 或移动了工作区，必须重跑 `deploy_joy_autostart.sh`，再重新 `--import-from`
 
 ### 指向已有完整目录
 
@@ -127,7 +162,7 @@ sudo /root/.config/lejulab/auto_start_config/set_active_profile.sh \
 - 正确做法是先准备一个完整目录，再调用 `--import-from ... --profile-name ...`
 - 自定义 profile 必须是一整套完整配置目录，不能只上传一个 `controller_manager.yaml`
 - `current` 是唯一 source of truth，自启动只看它
-- `current.meta.json` 只用于记录谁改了、什么时候改，不参与启动判定
+- `current.meta.json` 不参与启动判定，但承载两类字段：活动审计字段（`active_dir` / `source` / `updated_at` / `updated_by` / `hostname`，每次激活刷新），以及部署定位字段（`ws_root` / `robot_version`，仅 `set_active_profile.sh --source deploy` 可写），`--source frontend` 合成 `controller_manager.yaml` 时读这两个字段定位仓库
 
 ## 4.1 自启动和手动启动
 
@@ -262,7 +297,7 @@ python3 scripts/mimic_config_train_to_deploy.py \
 
 - 只适用于 **Mimic** 模型配置转换
 - 不适用于 **AMP** 模型；AMP 的 `config_amp.yaml` 仍按 AMP 模板和模型自身配置维护
-- 当前脚本内置 roban 2.2 / 17 的 mimic 部署关节顺序、`joint_direction` 和 `actuator_control_mode`
+- 当前脚本内置 roban 2.2 / 17 的 mimic 部署关节顺序、`joint_direction`；`actuator_control_mode` 通过 `--legs-waist-mode` / `--arms-mode` 按"腿+腰"和"手臂"两组指定（取值 `CST` / `CSV` / `CSP`，分别对应 `0` / `1` / `2`），不传时默认全身 `CST`
 
 脚本输入：
 
@@ -275,6 +310,8 @@ python3 scripts/mimic_config_train_to_deploy.py \
 - `--policy-path`：写入 `policy_path`；不传时默认 `model.onnx`
 - `--motion-file`：写入 `motion.motions[].file`；不传时默认 `trajectory.csv`
 - `--inference-engine onnxruntime`：显式使用 ONNX Runtime；不传时默认 `openvino`，且参数值必须精确为 `onnxruntime`
+- `--legs-waist-mode {CST,CSV,CSP}`：腿和腰关节的控制模式；不传默认 `CST`
+- `--arms-mode {CST,CSV,CSP}`：手臂关节的控制模式；不传默认 `CST`
 - `--template`：可选旧配置迁移参数，不是必需；仅用于复用旧 YAML 中的 `joint_direction`
 
 扁平化部署默认输出：

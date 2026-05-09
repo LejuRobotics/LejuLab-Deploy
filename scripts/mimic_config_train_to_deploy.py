@@ -123,29 +123,35 @@ ROBAN2_2_MIMIC_JOINT_DIRECTION = [
     1.0,
 ]
 
-ROBAN2_2_MIMIC_ACTUATOR_CONTROL_MODE = [
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-]
+CONTROL_MODE_NAME_TO_VALUE = {"CST": 0, "CSV": 1, "CSP": 2}
+DEFAULT_CONTROL_MODE_NAME = "CST"
+
+
+def classify_joint_group(joint_name: str) -> str:
+    """Return 'arms' for arm joints, 'legs_waist' for leg/waist joints.
+
+    Raises ValueError on unrecognized names so an unexpected `--joint-order`
+    fails loudly instead of silently grouping into the wrong mode bucket.
+    """
+    if "arm" in joint_name:
+        return "arms"
+    if "leg" in joint_name or "waist" in joint_name:
+        return "legs_waist"
+    raise ValueError(
+        f"cannot classify joint {joint_name!r} into 'arms' or 'legs_waist' "
+        "(expected name to contain 'arm', 'leg', or 'waist')"
+    )
+
+
+def build_actuator_control_mode(
+    joint_names: list[str], legs_waist_mode: str, arms_mode: str
+) -> list[int]:
+    legs_waist_val = CONTROL_MODE_NAME_TO_VALUE[legs_waist_mode]
+    arms_val = CONTROL_MODE_NAME_TO_VALUE[arms_mode]
+    return [
+        arms_val if classify_joint_group(jn) == "arms" else legs_waist_val
+        for jn in joint_names
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -341,15 +347,9 @@ def convert(env_cfg: dict, tpl: dict, args: argparse.Namespace) -> dict:
     joint_direction = resolve_human_authored_array(
         "joint_direction", args.joint_direction, tpl, joint_names, ROBAN2_2_MIMIC_JOINT_DIRECTION
     )
-    if args.actuator_control_mode is not None:
-        if len(args.actuator_control_mode) != len(joint_names):
-            raise ValueError(
-                f"actuator_control_mode has length {len(args.actuator_control_mode)}, "
-                f"expected {len(joint_names)} (to match deploy joint_names)"
-            )
-        actuator_control_mode = list(args.actuator_control_mode)
-    else:
-        actuator_control_mode = list(ROBAN2_2_MIMIC_ACTUATOR_CONTROL_MODE)
+    actuator_control_mode = build_actuator_control_mode(
+        joint_names, args.legs_waist_mode, args.arms_mode
+    )
     inference_engine = args.inference_engine or DEFAULT_INFERENCE_ENGINE
     policy_path = args.policy_path or DEFAULT_POLICY_PATH
     dance_name = args.dance_name or args.motion_name or DEFAULT_DANCE_NAME
@@ -431,10 +431,6 @@ def _parse_float_list(s: str) -> list[float]:
     return [float(x) for x in s.replace(",", " ").split() if x]
 
 
-def _parse_int_list(s: str) -> list[int]:
-    return [int(x) for x in s.replace(",", " ").split() if x]
-
-
 def _parse_str_list(s: str) -> list[str]:
     return [x for x in s.replace(",", " ").split() if x]
 
@@ -492,10 +488,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Override joint_direction array, comma/space separated (length must match joint_names).",
     )
     ap.add_argument(
-        "--actuator-control-mode",
-        type=_parse_int_list,
-        default=None,
-        help="Override actuator_control_mode array, comma/space separated (0=CST, 2=CSP).",
+        "--legs-waist-mode",
+        choices=list(CONTROL_MODE_NAME_TO_VALUE.keys()),
+        default=DEFAULT_CONTROL_MODE_NAME,
+        help="Control mode for leg and waist joints (CST=0, CSV=1, CSP=2). Default: CST.",
+    )
+    ap.add_argument(
+        "--arms-mode",
+        choices=list(CONTROL_MODE_NAME_TO_VALUE.keys()),
+        default=DEFAULT_CONTROL_MODE_NAME,
+        help="Control mode for arm joints (CST=0, CSV=1, CSP=2). Default: CST.",
     )
     args = ap.parse_args(argv)
 
