@@ -1,13 +1,9 @@
 loop_dt: 0.001
 default_controller: "mimic_dance"
 
-# 控制器切换期间插值用的 kp/kd（确保能跟踪到位）
+# 控制器切换配置
 switch_interpolation:
-  arm_kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
-  arm_kd: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
-  # 17版本: 1个腰部关节
-  waist_kp: [40.179]
-  waist_kd: [2.557]
+  duration: 2.0    #策略切换时间
 
 controllers:
   - name: "amp"

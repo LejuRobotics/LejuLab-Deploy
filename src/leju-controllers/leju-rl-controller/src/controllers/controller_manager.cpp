@@ -18,6 +18,108 @@
 
 namespace leju {
 
+namespace {
+
+//五次多项式插值
+double QuinticBlend(double x) {
+  if (x <= 0.0) return 0.0;
+  if (x >= 1.0) return 1.0;
+  return x * x * x * (10.0 + x * (-15.0 + 6.0 * x));
+}
+
+double BlendScalar(double source, double target, double blend) {
+  return source + (target - source) * blend;
+}
+
+//插值力矩计算
+RobotCmd BlendRobotCmd(const RobotCmd& source_cmd,
+                       const RobotCmd& target_cmd,
+                       const RobotCmd* source_ref_cmd,
+                       const RobotCmd* target_ref_cmd,
+                       const array_t* source_torque_limits,
+                       const array_t* target_torque_limits,
+                       const array_i* source_recompute_mask,
+                       const array_i* target_recompute_mask,
+                       const RobotState& state,
+                       double alpha) {
+  if (!source_cmd.isValid() || !target_cmd.isValid() ||
+      source_cmd.q.size() != target_cmd.q.size()) {
+    return target_cmd;
+  }
+
+  const double blend = QuinticBlend(alpha);
+  RobotCmd blended = target_cmd;
+  const size_t joint_count = source_cmd.q.size();
+  blended.resize(joint_count);
+
+  if (!source_ref_cmd || !target_ref_cmd ||
+      !source_torque_limits || !target_torque_limits ||
+      !source_recompute_mask || !target_recompute_mask ||
+      !source_ref_cmd->isValid() || !target_ref_cmd->isValid() ||
+      source_ref_cmd->q.size() != joint_count ||
+      target_ref_cmd->q.size() != joint_count ||
+      state.q.size() != joint_count ||
+      state.v.size() != joint_count ||
+      source_torque_limits->size() != joint_count ||
+      target_torque_limits->size() != joint_count ||
+      source_recompute_mask->size() != joint_count ||
+      target_recompute_mask->size() != joint_count) {
+    return blended;
+  }
+
+  for (size_t i = 0; i < joint_count; ++i) {
+    //针对手臂和腰这种不是纯RL控制的关节，对输入到驱动器的力矩进行插值平滑输出
+    if ((*source_recompute_mask)[i] == 0 || (*target_recompute_mask)[i] == 0){
+      blended.tau[i] = BlendScalar(source_cmd.tau[i], target_cmd.tau[i], blend);
+      blended.kp[i] = BlendScalar(source_cmd.kp[i], target_cmd.kp[i], blend);
+      blended.kd[i] = BlendScalar(source_cmd.kd[i], target_cmd.kd[i], blend);
+      blended.modes[i] = (alpha < 1.0) ? source_cmd.modes[i] : target_cmd.modes[i];
+      continue;
+    }
+
+    const double q_target =
+        BlendScalar((*source_ref_cmd).q[i], (*target_ref_cmd).q[i], blend);
+    const double kp =
+        BlendScalar((*source_ref_cmd).kp[i], (*target_ref_cmd).kp[i], blend);
+    const double kd =
+        BlendScalar((*source_ref_cmd).kd[i], (*target_ref_cmd).kd[i], blend);
+    const int mode = (alpha < 0.5) ? (*source_ref_cmd).modes[i] : (*target_ref_cmd).modes[i];
+    const double q_feedback = state.q[i];
+    const double v_feedback = state.v[i];
+
+    double tau = kp * (q_target - q_feedback);
+    if (mode == 0) {
+      tau += kd * (-v_feedback);
+    }
+
+    const double source_limit = (*source_torque_limits)[i];
+    const double target_limit = (*target_torque_limits)[i];
+    const double tau_limit = (source_limit > 0.0 && target_limit > 0.0)
+                                 ? BlendScalar(source_limit, target_limit, blend)
+                                 : std::max(source_limit, target_limit);
+    if (tau_limit > 0.0) {
+      tau = std::clamp(tau, -tau_limit, tau_limit);
+    }
+
+    blended.timestamp = target_cmd.timestamp;
+    blended.q[i] = q_feedback;
+    blended.v[i] = 0.0;
+    blended.tau[i] = tau;
+    blended.modes[i] = (mode == 0) ? 0 : 2;
+    // if (mode == 0) {
+    //   blended.kp[i] = 0.0;
+    //   blended.kd[i] = 0.0;
+    // } else {
+    //   blended.kp[i] = kp;
+    //   blended.kd[i] = kd;
+    // }
+  }
+
+  return blended;
+}
+
+}  // namespace
+
 ControllerManager::~ControllerManager() {
   // 停止 DDS 通信，确保回调不再被触发
   // 必须在 controllers_ 和 robot_data_ 析构之前调用
@@ -150,105 +252,24 @@ bool ControllerManager::requestSwitch(const std::string& name, double now) {
   // 启动过渡流程
   std::string from_name = (active_index_ >= 0) ? controllers_[active_index_].name : "(none)";
 
-  transition_.state = SwitchState::kTransitioning;
-  transition_.from_controller = from_name;
-  transition_.to_controller = name;
-  transition_.start_time = now;
-
-  // 初始化手臂插值器
-  transition_.arm_interpolation_initialized = false;
-  transition_.arm_interpolator.reset();
-
-  // 初始化腰部插值器
-  transition_.waist_interpolation_initialized = false;
-  transition_.waist_interpolator.reset();
-
   ControllerBase* from_controller = (active_index_ >= 0) ? controllers_[active_index_].controller.get() : nullptr;
   ControllerBase* to_controller = controllers_[target_index].controller.get();
 
-  if (from_controller && to_controller) {
-    size_t from_arm_count = from_controller->getArmJointCount();
-    size_t to_arm_count = to_controller->getArmJointCount();
+  transition_.state = SwitchState::kTransitioning;
+  transition_.from_controller = from_name;
+  transition_.to_controller = name;
+  transition_.source_index = active_index_;
+  transition_.target_index = target_index;
+  transition_.start_time = now;
+  transition_.rl_to_rl_dual_inference_active =
+      (from_controller != nullptr && to_controller != nullptr);
+  transition_.target_prestarted = false;
 
-    // 只有当两个控制器都有手臂配置时才进行插值
-    if (from_arm_count > 0 && to_arm_count > 0 && from_arm_count == to_arm_count) {
-      // 获取当前手臂位置（从机器人状态）
-      RobotState current_state;
-      if (robot_data_.getRobotState(current_state)) {
-        const auto& arm_ids = from_controller->getArmJointIds();
-        Eigen::VectorXd from_arm_pos(from_arm_count);
-        bool valid_state = true;
-
-        for (size_t i = 0; i < from_arm_count; ++i) {
-          int idx = arm_ids[i];
-          if (idx >= 0 && idx < static_cast<int>(current_state.q.size())) {
-            from_arm_pos[i] = current_state.q[idx];
-          } else {
-            valid_state = false;
-            break;
-          }
-        }
-
-        if (valid_state) {
-          // 获取目标控制器的默认手臂姿态
-          Eigen::VectorXd to_arm_pos = to_controller->getDefaultArmPos();
-
-          if (to_arm_pos.size() == static_cast<int>(to_arm_count)) {
-            // 设置插值器
-            if (transition_.arm_interpolator.setup(from_arm_pos, to_arm_pos, transition_.duration)) {
-              transition_.arm_joint_ids = arm_ids;
-              transition_.arm_joint_count = static_cast<int>(from_arm_count);
-              transition_.arm_interpolation_initialized = true;
-              RL_LOGI("Arm interpolation initialized: %zu joints, duration=%.3fs",
-                      from_arm_count, transition_.duration);
-            }
-          } else {
-            RL_LOGW("Arm pos size mismatch: from=%zu, to=%zu, expected=%zu",
-                    from_arm_pos.size(), to_arm_pos.size(), to_arm_count);
-          }
-        }
-      }
-    }
-
-    // 腰部插值初始化
-    size_t from_waist_count = from_controller->getWaistJointCount();
-    size_t to_waist_count = to_controller->getWaistJointCount();
-
-    if (from_waist_count > 0 && to_waist_count > 0 && from_waist_count == to_waist_count) {
-      RobotState current_state;
-      if (robot_data_.getRobotState(current_state)) {
-        const auto& waist_ids = from_controller->getWaistJointIds();
-        Eigen::VectorXd from_waist_pos(from_waist_count);
-        bool valid_state = true;
-
-        for (size_t i = 0; i < from_waist_count; ++i) {
-          int idx = waist_ids[i];
-          if (idx >= 0 && idx < static_cast<int>(current_state.q.size())) {
-            from_waist_pos[i] = current_state.q[idx];
-          } else {
-            valid_state = false;
-            break;
-          }
-        }
-
-        if (valid_state) {
-          Eigen::VectorXd to_waist_pos = to_controller->getDefaultWaistPos();
-
-          if (to_waist_pos.size() == static_cast<int>(to_waist_count)) {
-            if (transition_.waist_interpolator.setup(from_waist_pos, to_waist_pos, transition_.duration)) {
-              transition_.waist_joint_ids = waist_ids;
-              transition_.waist_joint_count = static_cast<int>(from_waist_count);
-              transition_.waist_interpolation_initialized = true;
-              RL_LOGI("Waist interpolation initialized: %zu joints, duration=%.3fs",
-                      from_waist_count, transition_.duration);
-            }
-          } else {
-            RL_LOGW("Waist pos size mismatch: from=%zu, to=%zu, expected=%zu",
-                    from_waist_pos.size(), to_waist_pos.size(), to_waist_count);
-          }
-        }
-      }
-    }
+  if (transition_.rl_to_rl_dual_inference_active) {
+    RL_LOGI("Starting RL->RL dual inference switch: %s -> %s",
+            from_name.c_str(), name.c_str());
+    to_controller->resume();
+    transition_.target_prestarted = true;
   }
 
   RL_LOGI("RequestSwitch: %s -> %s (start_time=%.3f, duration=%.3f)",
@@ -258,41 +279,51 @@ bool ControllerManager::requestSwitch(const std::string& name, double now) {
 }
 
 void ControllerManager::commitSwitch() {
-  // 查找目标控制器索引
-  int target_index = -1;
-  for (size_t i = 0; i < controllers_.size(); ++i) {
-    if (controllers_[i].name == transition_.to_controller) {
-      target_index = static_cast<int>(i);
-      break;
-    }
-  }
+  int target_index = transition_.target_index;
 
-  if (target_index < 0) {
+  if (target_index < 0 || target_index >= static_cast<int>(controllers_.size())) {
     RL_LOGE("CommitSwitch: Target controller not found: %s",
             transition_.to_controller.c_str());
     transition_.state = SwitchState::kIdle;
+    transition_.rl_to_rl_dual_inference_active = false;
+    transition_.target_prestarted = false;
+    transition_.source_index = -1;
+    transition_.target_index = -1;
     return;
   }
 
-  std::string from_name = (active_index_ >= 0) ? controllers_[active_index_].name : "(none)";
+  const int source_index = transition_.source_index;
+  std::string from_name =
+      (source_index >= 0 && source_index < static_cast<int>(controllers_.size()))
+          ? controllers_[source_index].name
+          : "(none)";
 
   // 暂停当前控制器（OnExit）
-  if (active_index_ >= 0) {
+  if (source_index >= 0 && source_index < static_cast<int>(controllers_.size())) {
     RL_LOGI("Pausing current controller: %s", from_name.c_str());
-    controllers_[active_index_].controller->pause();
+    controllers_[source_index].controller->pause();
   }
 
   // 记录上一个控制器索引，切换到新控制器
-  last_index_ = active_index_;
+  last_index_ = source_index;
   active_index_ = target_index;
 
   // 恢复新控制器（OnEnter）
   auto* new_controller = controllers_[active_index_].controller.get();
-  RL_LOGI("Resuming new controller: %s", transition_.to_controller.c_str());
-  new_controller->resume();
+  if (!transition_.target_prestarted) {
+    RL_LOGI("Resuming new controller: %s", transition_.to_controller.c_str());
+    new_controller->resume();
+  } else {
+    RL_LOGI("Dual inference switch committed, target controller kept running: %s",
+            transition_.to_controller.c_str());
+  }
 
   // 重置过渡状态
   transition_.state = SwitchState::kIdle;
+  transition_.rl_to_rl_dual_inference_active = false;
+  transition_.target_prestarted = false;
+  transition_.source_index = -1;
+  transition_.target_index = -1;
 
   RL_LOG_SUCCESS("CommitSwitch complete: %s -> %s", from_name.c_str(),
           transition_.to_controller.c_str());
@@ -362,13 +393,6 @@ void ControllerManager::stop() {
   std::cout.flush();
 }
 
-// SmoothStep 插值函数：s = 3x² - 2x³
-static double SmoothStep(double x) {
-  if (x <= 0.0) return 0.0;
-  if (x >= 1.0) return 1.0;
-  return x * x * (3.0 - 2.0 * x);
-}
-
 RobotCmd ControllerManager::update(const RobotState& state,
                                    const ImuData& imu_state,
                                    const runtime::CommandBuffer::Snapshot& command) {
@@ -430,9 +454,56 @@ RobotCmd ControllerManager::update(const RobotState& state,
 
   controller->setVelocityCommand(vel_cmd);
 
-  // 调用当前控制器的 update
   double time = common::GetSteadyTimestampNs() * 1e-9;
-  if (controller->update(time, state, imu_state, cmd)) {
+  bool update_ok = false;
+  if (transition_.state == SwitchState::kTransitioning &&
+      transition_.rl_to_rl_dual_inference_active &&
+      transition_.source_index >= 0 &&
+      transition_.target_index >= 0 &&
+      transition_.source_index < static_cast<int>(controllers_.size()) &&
+      transition_.target_index < static_cast<int>(controllers_.size()) &&
+      transition_elapsed >= 0.0 && transition_elapsed <= transition_.duration) {
+    auto* source_controller = controllers_[transition_.source_index].controller.get();
+    auto* target_controller = controllers_[transition_.target_index].controller.get();
+    RobotCmd source_cmd;
+    RobotCmd target_cmd;
+    VelocityCommand zero_vel_cmd;
+    zero_vel_cmd.setZero();
+
+    if (source_controller) source_controller->setVelocityCommand(zero_vel_cmd);
+    if (target_controller) target_controller->setVelocityCommand(zero_vel_cmd);
+
+    const bool source_ok =
+        source_controller && source_controller->update(time, state, imu_state, source_cmd);
+    const bool target_ok =
+        target_controller && target_controller->update(time, state, imu_state, target_cmd);
+
+    if (source_ok && target_ok) {
+      const double alpha = std::clamp(transition_elapsed / transition_.duration, 0.0, 1.0);
+      cmd = BlendRobotCmd(source_cmd,
+                          target_cmd,
+                          source_controller->getDualInferenceBlendReferenceCmd(),
+                          target_controller->getDualInferenceBlendReferenceCmd(),
+                          source_controller->getDualInferenceTorqueLimits(),
+                          target_controller->getDualInferenceTorqueLimits(),
+                          source_controller->getDualInferenceRecomputeMask(),
+                          target_controller->getDualInferenceRecomputeMask(),
+                          state,
+                          alpha);
+      update_ok = true;
+    } else {
+      RL_LOGE("RL->RL dual inference update failed: source_ok=%d, target_ok=%d",
+              static_cast<int>(source_ok), static_cast<int>(target_ok));
+      if (source_ok) {
+        cmd = source_cmd;
+        update_ok = true;
+      }
+    }
+  } else {
+    update_ok = controller->update(time, state, imu_state, cmd);
+  }
+
+  if (update_ok) {
     // 头部指令透传（头部是最后 2 个关节）
     {
       std::lock_guard<std::mutex> lock(head_cmd_mutex_);
@@ -447,69 +518,6 @@ RobotCmd ControllerManager::update(const RobotState& state,
       }
     }
 
-    // 控制器切换期间：执行手臂插值并覆盖手臂关节
-    if (transition_.state == SwitchState::kTransitioning &&
-        transition_.arm_interpolation_initialized &&
-        transition_elapsed >= 0.0 && transition_elapsed <= transition_.duration) {
-      Eigen::VectorXd arm_pos, arm_vel;
-      if (transition_.arm_interpolator.evaluate(transition_elapsed, arm_pos, arm_vel)) {
-        // 确保 cmd 数组足够大
-        int max_arm_idx = 0;
-        for (int idx : transition_.arm_joint_ids) {
-          if (idx > max_arm_idx) max_arm_idx = idx;
-        }
-        if (max_arm_idx < static_cast<int>(cmd.q.size()) &&
-            arm_pos.size() == transition_.arm_joint_count) {
-          for (int i = 0; i < transition_.arm_joint_count; ++i) {
-            int idx = transition_.arm_joint_ids[i];
-            cmd.q[idx] = arm_pos[i];
-            if (arm_vel.size() > i) {
-              cmd.v[idx] = arm_vel[i];
-            }
-            // 使用配置的 kp/kd，确保能跟踪到位
-            if (i < static_cast<int>(transition_.arm_kp.size())) {
-              cmd.kp[idx] = transition_.arm_kp[i];
-            }
-            if (i < static_cast<int>(transition_.arm_kd.size())) {
-              cmd.kd[idx] = transition_.arm_kd[i];
-            }
-            cmd.modes[idx] = 2;  // CSP 模式
-            cmd.tau[idx] = 0.0;  // 清零前馈力矩，避免与 PD 控制冲突
-          }
-        }
-      }
-    }
-
-    // 控制器切换期间：执行腰部插值并覆盖腰部关节
-    if (transition_.state == SwitchState::kTransitioning &&
-        transition_.waist_interpolation_initialized &&
-        transition_elapsed >= 0.0 && transition_elapsed <= transition_.duration) {
-      Eigen::VectorXd waist_pos, waist_vel;
-      if (transition_.waist_interpolator.evaluate(transition_elapsed, waist_pos, waist_vel)) {
-        int max_waist_idx = 0;
-        for (int idx : transition_.waist_joint_ids) {
-          if (idx > max_waist_idx) max_waist_idx = idx;
-        }
-        if (max_waist_idx < static_cast<int>(cmd.q.size()) &&
-            waist_pos.size() == transition_.waist_joint_count) {
-          for (int i = 0; i < transition_.waist_joint_count; ++i) {
-            int idx = transition_.waist_joint_ids[i];
-            cmd.q[idx] = waist_pos[i];
-            if (waist_vel.size() > i) {
-              cmd.v[idx] = waist_vel[i];
-            }
-            if (i < static_cast<int>(transition_.waist_kp.size())) {
-              cmd.kp[idx] = transition_.waist_kp[i];
-            }
-            if (i < static_cast<int>(transition_.waist_kd.size())) {
-              cmd.kd[idx] = transition_.waist_kd[i];
-            }
-            cmd.modes[idx] = 2;
-            cmd.tau[idx] = 0.0;
-          }
-        }
-      }
-    }
   }
 
   return cmd;
@@ -757,51 +765,14 @@ void ControllerManager::loadSwitchInterpolationConfig(const YAML::Node& config) 
   if (config["switch_interpolation"]) {
     const auto& switch_config = config["switch_interpolation"];
 
-    // 加载手臂 kp
-    if (switch_config["arm_kp"] && switch_config["arm_kp"].IsSequence()) {
-      transition_.arm_kp.clear();
-      for (const auto& val : switch_config["arm_kp"]) {
-        transition_.arm_kp.push_back(val.as<double>());
-      }
-    }
-
-    // 加载手臂 kd
-    if (switch_config["arm_kd"] && switch_config["arm_kd"].IsSequence()) {
-      transition_.arm_kd.clear();
-      for (const auto& val : switch_config["arm_kd"]) {
-        transition_.arm_kd.push_back(val.as<double>());
-      }
-    }
-
-    // 加载腰部 kp
-    if (switch_config["waist_kp"] && switch_config["waist_kp"].IsSequence()) {
-      transition_.waist_kp.clear();
-      for (const auto& val : switch_config["waist_kp"]) {
-        transition_.waist_kp.push_back(val.as<double>());
-      }
-    }
-
-    // 加载腰部 kd
-    if (switch_config["waist_kd"] && switch_config["waist_kd"].IsSequence()) {
-      transition_.waist_kd.clear();
-      for (const auto& val : switch_config["waist_kd"]) {
-        transition_.waist_kd.push_back(val.as<double>());
-      }
+    if (switch_config["duration"]) {
+      transition_.duration = switch_config["duration"].as<double>();
     }
 
     RL_LOGI("Loaded switch_interpolation config:");
-    RL_LOGI("  arm_kp: [%zu values]", transition_.arm_kp.size());
-    RL_LOGI("  arm_kd: [%zu values]", transition_.arm_kd.size());
-    RL_LOGI("  waist_kp: [%zu values]", transition_.waist_kp.size());
-    RL_LOGI("  waist_kd: [%zu values]", transition_.waist_kd.size());
+    RL_LOGI("  duration: %.3f s", transition_.duration);
   } else {
-    // 没有配置则清空（不使用默认值）
-    transition_.arm_kp.clear();
-    transition_.arm_kd.clear();
-    transition_.waist_kp.clear();
-    transition_.waist_kd.clear();
-
-    RL_LOGW("No switch_interpolation config found, switch interpolation will use controller's kp/kd");
+    RL_LOGW("No switch_interpolation config found, using built-in transition defaults");
   }
 }
 

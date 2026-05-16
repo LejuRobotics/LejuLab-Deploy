@@ -3,8 +3,11 @@
 #include <deque>
 #include <map>
 #include <memory>
+#include <atomic>
 #include <mutex>
+#include <condition_variable>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
@@ -62,6 +65,29 @@ class GenericRLController : public ControllerBase {
   std::string getCurrentMotionName() const;
   /// @brief 检查是否正在播放 motion
   bool isMotionPlaying() const { return motion_playing_; }
+
+  /// @brief 获取策略计算得到的参考关节位置q_ref 
+  const RobotCmd* getDualInferenceBlendReferenceCmd() const override {
+    return blend_reference_cmd_.isValid() ? &blend_reference_cmd_ : nullptr;
+  }
+
+  /// @brief 获取策略的力矩限幅 
+  const array_t* getDualInferenceTorqueLimits() const override {
+    return blend_reference_cmd_.isValid() ? &blend_torque_limits_ : nullptr;
+  }
+
+  /// @brief 重算掩码，对于某些关节（如手臂/腰部）在策略切换时不重算 tau，而是直接插值原始 tau 输出 
+  const array_i* getDualInferenceRecomputeMask() const override {
+    return blend_reference_cmd_.isValid() ? &blend_recompute_mask_ : nullptr;
+  }
+
+  /// @brief 获取最近一次观测提交/推理完成时间戳（steady time, s）
+  double getLastObservationSubmitTimeSec() const {
+    return last_observation_submit_time_sec_.load();
+  }
+  double getLastInferenceFinishTimeSec() const {
+    return last_inference_finish_time_sec_.load();
+  }
 
  protected:
   // ==================== 模板方法实现 ====================
@@ -127,6 +153,31 @@ class GenericRLController : public ControllerBase {
   /// @brief 获取当前 motion，无则返回 nullptr
   MotionTrajectory* getCurrentMotion() const;
 
+  /// @brief 启动/停止异步推理线程
+  void startInferenceThread();
+  void stopInferenceThread();
+
+  /// @brief 推理线程主循环
+  void inferenceThreadLoop();
+
+  /// @brief 提交一帧观测给推理线程
+  void submitObservationForInference(const array_t& observation);
+
+  /// @brief 从缓存中读取当前动作快照
+  array_t getActionsSnapshot() const;
+
+  /// @brief 线程安全地更新动作缓存
+  void updateActionCache(const array_t& new_actions);
+
+  /// @brief 用指定观测执行一次推理
+  bool inferActions(const array_t& observation, array_t& inferred_actions);
+
+  /// @brief 清零推理时间戳，避免切换首帧沿用旧值
+  void clearInferenceTimestamps();
+
+  /// @brief 刷新策略切换参考命令（在手臂/腰部覆盖之后调用）
+  void updateBlendReferenceCmd(const RobotCmd& final_cmd);
+
   // ==================== 机器人配置 ====================
   RobotVersion robot_version_;              ///< 机器人版本
   int motor_count_ = 0;                     ///< SDK 电机总数
@@ -167,6 +218,24 @@ class GenericRLController : public ControllerBase {
   // ==================== 运行时状态 ====================
   double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw
   bool motion_playing_ = false;             ///< motion 是否正在播放
+
+  // ==================== 异步推理线程 ====================
+  mutable std::mutex action_mutex_;         ///< 保护 actions_/last_actions_
+  std::mutex inference_mutex_;              ///< 保护待推理观测
+  std::condition_variable inference_cv_;    ///< 推理线程唤醒条件变量
+  std::thread inference_thread_;            ///< 独立推理线程
+  bool inference_thread_running_ = false;   ///< 推理线程是否运行
+  bool inference_stop_requested_ = false;   ///< 请求停止推理线程
+  bool has_pending_observation_ = false;    ///< 是否有待推理观测
+  array_t pending_observation_;             ///< 待推理观测缓存
+  std::atomic<double> last_observation_submit_time_sec_{0.0};  ///< 最近一次提交观测时间
+  std::atomic<double> last_inference_finish_time_sec_{0.0};    ///< 最近一次推理完成时间
+
+  // ==================== 策略切换参考 ====================
+  array_t last_policy_q_target_;  ///< 最近一次策略关节目标位置（策略空间→电机空间）
+  RobotCmd blend_reference_cmd_;  ///< 策略切换用参考命令（q 中保存 q_target）
+  array_t blend_torque_limits_;   ///< 策略切换时的策略关节力矩限幅（电机空间）
+  array_i blend_recompute_mask_;  ///< 1=按 q_target 重算 tau；0=沿用旧整包混合
 
   // ==================== 日志 ====================
   std::unique_ptr<TopicLogger> logger_;     ///< DDS 调试数据发布器

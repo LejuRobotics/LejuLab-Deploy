@@ -1,6 +1,7 @@
 #include "leju-rl-controller/controllers/generic_rl_controller.h"
 
 #include <Eigen/Geometry>
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <filesystem>
@@ -25,7 +26,9 @@ GenericRLController::GenericRLController(const RobotVersion& version,
   name_ = name;
 }
 
-GenericRLController::~GenericRLController() = default;
+GenericRLController::~GenericRLController() {
+  stopInferenceThread();
+}
 
 // ============================================================================
 // ControllerBase 生命周期
@@ -89,17 +92,22 @@ bool GenericRLController::initialize() {
       return false;
     }
 
-    // 6. 初始化动作向量
-    actions_.resize(policy_joint_count_);
-    actions_.setZero();
-    last_actions_.resize(policy_joint_count_);
-    last_actions_.setZero();
+  // 6. 初始化动作向量
+  actions_.resize(policy_joint_count_);
+  actions_.setZero();
+  last_actions_.resize(policy_joint_count_);
+  last_actions_.setZero();
+  last_policy_q_target_.resize(policy_joint_count_);
+  last_policy_q_target_.setZero();
+  pending_observation_.resize(0);
+  clearInferenceTimestamps();
 
     // 7. 创建 TopicLogger
     logger_ = TopicLogger::create();
 
     // 8. 计算 decimation（控制循环每 decimation_ 步执行一次策略推理）
     decimation_ = static_cast<int>(std::round(policy_dt_ / loop_dt_));
+    startInferenceThread();
 
     state_ = ControllerState::kPaused;
     RL_LOG_SUCCESS("GenericRLController initialized");
@@ -127,7 +135,7 @@ bool GenericRLController::updateImpl(double time, const RobotState& state,
   // 按 decimation 降频执行策略推理
   if (step_count_ % decimation_ == 0) {
     computeObservation();
-    computeActions();
+    submitObservationForInference(observations_);
   }
 
   // 每个控制周期都更新电机命令
@@ -154,11 +162,16 @@ void GenericRLController::reset() {
   ControllerBase::reset();
 
   resetObsHistory();
-  actions_.setZero();
-  last_actions_.setZero();
+  {
+    std::lock_guard<std::mutex> lock(action_mutex_);
+    actions_.setZero();
+    last_actions_.setZero();
+  }
+  last_policy_q_target_.setZero();
   motion_playing_ = false;
   dummy_world_yaw_ = 0.0;
   velocity_cmd_.setZero();
+  clearInferenceTimestamps();
 
   MotionTrajectory* loader = getCurrentMotion();
   if (loader) {
@@ -578,27 +591,9 @@ void GenericRLController::computeObservation() {
 
 /// 执行策略推理：observations_ → model_ → actions_
 void GenericRLController::computeActions() {
-  if (!model_ || !model_->isLoaded()) {
-    return;
-  }
-
-  // double → float（OpenVINO 输入）
-  std::vector<float> obs_vec(observations_.size());
-  for (int i = 0; i < observations_.size(); ++i) {
-    obs_vec[i] = static_cast<float>(observations_[i]);
-  }
-
-  std::vector<float> action_vec = model_->forward(obs_vec);
-
-  // float → double（内部使用）
-  last_actions_ = actions_;
-  if (action_vec.size() == static_cast<size_t>(policy_joint_count_)) {
-    for (int i = 0; i < policy_joint_count_; ++i) {
-      actions_[i] = static_cast<double>(action_vec[i]);
-    }
-  } else {
-    RL_LOG_WARNING("Action size mismatch: got %zu, expected %d",
-                   action_vec.size(), policy_joint_count_);
+  array_t inferred_actions;
+  if (inferActions(observations_, inferred_actions)) {
+    updateActionCache(inferred_actions);
   }
 }
 
@@ -610,6 +605,7 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
 
   // 计算目标关节位置：q_target = direction * (base_pos + action * scale)
   array_t q_target;
+  const array_t local_actions = getActionsSnapshot();
   MotionTrajectory* loader = getCurrentMotion();
   if (loader) {
     if (motion_residual_action_) {
@@ -617,7 +613,7 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
           ? loader->getJointPos()
           : default_joint_pos_;
 
-      q_target = joint_direction_ * (base_pos + actions_ * joint_action_scale_);
+      q_target = joint_direction_ * (base_pos + local_actions * joint_action_scale_);
 
       if (!motion_playing_) {
         for (int i = 0; i < policy_joint_count_; ++i) {
@@ -627,11 +623,13 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
         }
       }
     } else {
-      q_target = joint_direction_ * (default_joint_pos_ + actions_ * joint_action_scale_);
+      q_target = joint_direction_ * (default_joint_pos_ + local_actions * joint_action_scale_);
     }
   } else {
-    q_target = joint_direction_ * (default_joint_pos_ + actions_ * joint_action_scale_);
+    q_target = joint_direction_ * (default_joint_pos_ + local_actions * joint_action_scale_);
   }
+
+  last_policy_q_target_ = q_target;
 
   // 非策略控制的关节：保持当前位置
   for (int i = 0; i < motor_count_; ++i) {
@@ -720,10 +718,64 @@ void GenericRLController::updateWaistCommand(RobotCmd& cmd) {
   // 调用基类实现
   ControllerBase::updateWaistCommand(cmd);
 
+  //更新策略计算的参考关节位置
+  updateBlendReferenceCmd(cmd);
+
   // 发布腰部控制器模式
   if (logger_ && waist_controller_) {
     logger_->publishValue("/rl_controller/waist_mode",
                           static_cast<double>(waist_controller_->getMode()));
+  }
+}
+
+
+void GenericRLController::updateBlendReferenceCmd(const RobotCmd& final_cmd) {
+  blend_reference_cmd_ = final_cmd;
+  if (!blend_reference_cmd_.isValid() ||
+      blend_reference_cmd_.q.size() != current_state_.q.size()) {
+    blend_reference_cmd_ = RobotCmd();
+    blend_torque_limits_.resize(0);
+    blend_recompute_mask_.resize(0);
+    return;
+  }
+
+  const int motor_count = static_cast<int>(blend_reference_cmd_.q.size());
+  blend_torque_limits_.resize(motor_count);
+  blend_torque_limits_.setZero();
+  blend_recompute_mask_.resize(motor_count);
+  blend_recompute_mask_.setZero();
+
+  // 是否被外部控制器接管：与 ControllerBase::updateArm/WaistCommand 的早返回条件一致
+  const bool arm_taken_over   = (arm_controller_   != nullptr) && !arm_joint_names_.empty();
+  const bool waist_taken_over = (waist_controller_ != nullptr) && !waist_joint_names_.empty();
+
+  for (int i = 0; i < policy_joint_count_; ++i) {
+    const int motor_id = policy_joint_ids_[i];
+    if (motor_id < 0 || motor_id >= motor_count) {
+      continue;
+    }
+
+    // 显式判定该关节是否会被 arm/waist 控制器在 updateRobotCmd() 之后改写：
+    //  - 手臂关节 + arm_controller 启用 → 已被外部接管，mask=0（沿用 final_cmd 的字段）
+    //  - 腰部关节 + waist_controller 启用 → 同上
+    //  - 其余 policy 关节（腿、以及 controller 未启用时的手臂/腰）→ 纯 RL 控制，mask=1
+    const bool is_arm =
+        std::find(arm_joint_ids_.begin(), arm_joint_ids_.end(), motor_id) != arm_joint_ids_.end();
+    const bool is_waist =
+        std::find(waist_joint_ids_.begin(), waist_joint_ids_.end(), motor_id) != waist_joint_ids_.end();
+    const bool overridden_externally =
+        (is_arm && arm_taken_over) || (is_waist && waist_taken_over);
+    if (overridden_externally) {
+      continue;
+    }
+
+    blend_reference_cmd_.q[motor_id] = last_policy_q_target_[i];
+    blend_reference_cmd_.v[motor_id] = 0.0;
+    blend_reference_cmd_.kp[motor_id] = joint_kp_[i];
+    blend_reference_cmd_.kd[motor_id] = joint_kd_[i];
+    blend_reference_cmd_.modes[motor_id] = (joint_control_mode_[i] == 0) ? 0 : 2;
+    blend_torque_limits_[motor_id] = joint_torque_limit_[i];
+    blend_recompute_mask_[motor_id] = 1;
   }
 }
 
@@ -889,7 +941,7 @@ array_t GenericRLController::getObsTerm(const std::string& name) const {
   } else if (name == "joint_vel") {
     return getPolicyJointVel();
   } else if (name == "actions") {
-    return actions_;
+    return getActionsSnapshot();
   } else if (name == "velocity_commands") {
     return getVelocityCommands();
   } else if (name == "motion_command") {
@@ -918,6 +970,101 @@ array_t GenericRLController::getObsTerm(const std::string& name) const {
 
   RL_LOG_WARNING("Unknown obs term: %s", name.c_str());
   return array_t();
+}
+
+void GenericRLController::startInferenceThread() {
+  stopInferenceThread();
+  inference_stop_requested_ = false;
+  inference_thread_running_ = true;
+  inference_thread_ = std::thread(&GenericRLController::inferenceThreadLoop, this);
+}
+
+void GenericRLController::stopInferenceThread() {
+  {
+    std::lock_guard<std::mutex> lock(inference_mutex_);
+    inference_stop_requested_ = true;
+    has_pending_observation_ = false;
+  }
+  inference_cv_.notify_all();
+  if (inference_thread_.joinable()) {
+    inference_thread_.join();
+  }
+  inference_thread_running_ = false;
+}
+
+void GenericRLController::submitObservationForInference(const array_t& observation) {
+  last_observation_submit_time_sec_.store(common::GetSteadyTimestampNs() * 1e-9);
+  {
+    std::lock_guard<std::mutex> lock(inference_mutex_);
+    pending_observation_ = observation;
+    has_pending_observation_ = true;
+  }
+  inference_cv_.notify_one();
+}
+
+array_t GenericRLController::getActionsSnapshot() const {
+  std::lock_guard<std::mutex> lock(action_mutex_);
+  return actions_;
+}
+
+void GenericRLController::updateActionCache(const array_t& new_actions) {
+  std::lock_guard<std::mutex> lock(action_mutex_);
+  last_actions_ = actions_;
+  actions_ = new_actions;
+}
+
+void GenericRLController::clearInferenceTimestamps() {
+  last_observation_submit_time_sec_.store(0.0);
+  last_inference_finish_time_sec_.store(0.0);
+}
+
+bool GenericRLController::inferActions(const array_t& observation, array_t& inferred_actions) {
+  if (!model_ || !model_->isLoaded()) {
+    return false;
+  }
+
+  std::vector<float> obs_vec(observation.size());
+  for (int i = 0; i < observation.size(); ++i) {
+    obs_vec[i] = static_cast<float>(observation[i]);
+  }
+
+  std::vector<float> action_vec = model_->forward(obs_vec);
+  if (action_vec.size() != static_cast<size_t>(policy_joint_count_)) {
+    RL_LOG_WARNING("Action size mismatch: got %zu, expected %d",
+                   action_vec.size(), policy_joint_count_);
+    return false;
+  }
+
+  inferred_actions.resize(policy_joint_count_);
+  for (int i = 0; i < policy_joint_count_; ++i) {
+    inferred_actions[i] = static_cast<double>(action_vec[i]);
+  }
+  return true;
+}
+
+void GenericRLController::inferenceThreadLoop() {
+  while (true) {
+    array_t observation;
+    {
+      std::unique_lock<std::mutex> lock(inference_mutex_);
+      inference_cv_.wait(lock, [this] {
+        return inference_stop_requested_ || has_pending_observation_;
+      });
+
+      if (inference_stop_requested_) {
+        break;
+      }
+
+      observation = pending_observation_;
+      has_pending_observation_ = false;
+    }
+
+    array_t inferred_actions;
+    if (inferActions(observation, inferred_actions)) {
+      updateActionCache(inferred_actions);
+      last_inference_finish_time_sec_.store(common::GetSteadyTimestampNs() * 1e-9);
+    }
+  }
 }
 
 /// 返回观测项维度

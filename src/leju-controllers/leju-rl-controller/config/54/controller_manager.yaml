@@ -1,6 +1,9 @@
 loop_dt: 0.001
 default_controller: "amp"
 
+switch_interpolation:
+  duration: 2.0   #策略切换时间
+
 controllers:
   - name: "amp"
     type: "GenericRLController"

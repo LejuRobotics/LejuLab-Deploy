@@ -141,6 +141,15 @@ class ControllerBase {
   /// @brief 获取控制频率 [Hz]
   int getControlFrequency() const { return static_cast<int>(1.0 / loop_dt_); }
 
+  /// @brief 策略切换时用于重建 q_target/kp/kd 的参考命令
+  virtual const RobotCmd* getDualInferenceBlendReferenceCmd() const { return nullptr; }
+
+  /// @brief 策略切换时策略关节的力矩限幅（电机空间）
+  virtual const array_t* getDualInferenceTorqueLimits() const { return nullptr; }
+
+  /// @brief 策略切换时哪些关节应使用 q_target 重算 tau
+  virtual const array_i* getDualInferenceRecomputeMask() const { return nullptr; }
+
   /// @brief 判断当前是否处于站立状态（速度指令接近零）
   bool isStanding() const {
     std::lock_guard<std::mutex> lock(cmd_mutex_);

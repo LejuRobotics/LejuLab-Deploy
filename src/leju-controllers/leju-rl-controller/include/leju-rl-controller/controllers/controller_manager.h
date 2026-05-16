@@ -16,7 +16,6 @@
 #include "leju-rl-controller/runtime/data_types.hpp"
 #include "leju-rl-controller/runtime/input/command_buffer.h"
 #include "leju-rl-controller/robot_data.h"
-#include "leju-rl-controller/trajectory/interpolator/minimum_jerk_interpolator.h"
 
 namespace leju {
 
@@ -37,26 +36,14 @@ struct SwitchTransition {
   std::string from_controller;  ///< 源控制器名称
   std::string to_controller;    ///< 目标控制器名称
 
+  int source_index = -1;        ///< 源控制器索引
+  int target_index = -1;        ///< 目标控制器索引
+
   double start_time = 0.0;   ///< 过渡开始时间 [s]
   double duration = 2.0;     ///< 过渡持续时间 [s]
 
-  // 手臂插值相关
-  MinimumJerkInterpolator arm_interpolator;  ///< 手臂关节插值器
-  std::vector<int> arm_joint_ids;            ///< 手臂关节在 cmd.q 中的索引
-  int arm_joint_count = 0;                   ///< 手臂关节数量
-  bool arm_interpolation_initialized = false; ///< 插值器是否已初始化
-
-  // 腰部插值相关
-  MinimumJerkInterpolator waist_interpolator;  ///< 腰部关节插值器
-  std::vector<int> waist_joint_ids;            ///< 腰部关节在 cmd.q 中的索引
-  int waist_joint_count = 0;                   ///< 腰部关节数量
-  bool waist_interpolation_initialized = false; ///< 插值器是否已初始化
-
-  // 切换插值用的 kp/kd（从配置加载，确保能跟踪到位）
-  std::vector<double> arm_kp;    ///< 手臂关节 kp
-  std::vector<double> arm_kd;    ///< 手臂关节 kd
-  std::vector<double> waist_kp;  ///< 腰部关节 kp
-  std::vector<double> waist_kd;  ///< 腰部关节 kd
+  bool rl_to_rl_dual_inference_active = false;  ///< 是否启用 RL->RL 双推理混合
+  bool target_prestarted = false;               ///< 目标控制器是否已提前启动
 };
 
 /**
