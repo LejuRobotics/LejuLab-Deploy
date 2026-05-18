@@ -153,30 +153,30 @@ void ControlLoop::publishRobotCmd(const RobotCmd& cmd) {
 // 命令合并
 // ============================================================================
 
-std::optional<ExternalJointTarget> ControlLoop::mergeArmTarget() const {
+VersionedJointTarget ControlLoop::mergeArmTarget() const {
   // 按优先级遍历所有输入源（已排序，高优先级在前）
   for (const auto* source : input_sources_) {
     if (!source) continue;
 
     auto snapshot = source->getSnapshot();
-    if (snapshot.arm_target.has_value()) {
-      return snapshot.arm_target;
+    if (snapshot.arm_target.hasValue()) {
+      return snapshot.arm_target;  // 含 seq 一起返回
     }
   }
-  return std::nullopt;
+  return {};
 }
 
-std::optional<ExternalJointTarget> ControlLoop::mergeHeadTarget() const {
+VersionedJointTarget ControlLoop::mergeHeadTarget() const {
   // 按优先级遍历所有输入源（已排序，高优先级在前）
   for (const auto* source : input_sources_) {
     if (!source) continue;
 
     auto snapshot = source->getSnapshot();
-    if (snapshot.head_target.has_value()) {
+    if (snapshot.head_target.hasValue()) {
       return snapshot.head_target;
     }
   }
-  return std::nullopt;
+  return {};
 }
 
 MotionCommand ControlLoop::mergeAllCmdVel() const {

@@ -20,9 +20,9 @@ public:
   struct Snapshot {
     MotionCommand cmd_vel;
 
-    std::optional<ExternalJointTarget> arm_target;
-    std::optional<ExternalJointTarget> head_target;
-    std::optional<ExternalJointTarget> waist_target;
+    VersionedJointTarget arm_target;
+    VersionedJointTarget head_target;
+    VersionedJointTarget waist_target;
   };
 
   /**

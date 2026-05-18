@@ -29,6 +29,32 @@ using WaistControlMode = leju::WaistControlMode;  ///< 腰部控制模式
 using ExternalJointTarget = ::leju::vr::JointTrajectoryPoint;
 
 /**
+ * @brief 带版本号的外部关节目标
+ *
+ * 将目标值与单调递增的 seq 绑定，用于消费侧按版本号去重，避免
+ * CommandBuffer 粘性缓存导致旧目标被反复重推。
+ */
+struct VersionedJointTarget {
+  std::optional<ExternalJointTarget> value;  ///< 目标值，无效时为 nullopt
+  uint64_t seq = 0;                          ///< 写入版本号，writeXxxTarget 时自增
+
+  /// 是否携带有效目标
+  bool hasValue() const { return value.has_value(); }
+
+  /// 取出目标值（调用前需确保 hasValue() == true）
+  const ExternalJointTarget& getValue() const { return *value; }
+
+  /**
+   * @brief 判断是否相对 last_seen_seq 有新写入
+   * @param last_seen_seq 消费者上次应用过的 seq
+   * @return 有值且 seq 与 last_seen_seq 不同时返回 true
+   */
+  bool isNewerThan(uint64_t last_seen_seq) const {
+    return hasValue() && seq != last_seen_seq;
+  }
+};
+
+/**
  * @brief 将字符串转换为 ArmControlMode
  * @param str 模式名称字符串 (如 "kKeepPose", "keep_pose", "0")
  * @return 手臂控制模式，无效值返回 std::nullopt

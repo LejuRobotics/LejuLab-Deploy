@@ -134,9 +134,9 @@ class ControlLoop {
    * 按照输入源的优先级（数值越小优先级越高）合手臂目标。
    * 高优先级的有效目标会覆盖低优先级的目标。
    *
-   * @return 合并后的手臂目标
+   * @return 合并后的手臂目标（含 seq，用于消费侧去重）
    */
-  std::optional<ExternalJointTarget> mergeArmTarget() const;
+  VersionedJointTarget mergeArmTarget() const;
 
   /**
    * @brief 合并所有输入源的头部目标
@@ -144,9 +144,9 @@ class ControlLoop {
    * 按照输入源的优先级（数值越小优先级越高）合并头部目标。
    * 高优先级的有效目标会覆盖低优先级的目标。
    *
-   * @return 合并后的头部目标
+   * @return 合并后的头部目标（含 seq，用于消费侧去重）
    */
-  std::optional<ExternalJointTarget> mergeHeadTarget() const;
+  VersionedJointTarget mergeHeadTarget() const;
 
  private:
   std::atomic<bool> running_{false};       ///< 运行标志

@@ -200,6 +200,12 @@ class ControlLogic {
  private:
   LifecycleState last_lifecycle_state_ = LifecycleState::kWaitingForReady;
   bool running_entry_handled_ = false;  ///< 标记 Running 入口是否已处理
+
+  // 已应用过的外部目标 seq，用于去重：只在 snapshot 里的 seq 跟这个不一致时
+  // 才调用 setXxxTarget，避免 CommandBuffer 的粘性缓存被反复重推。
+  uint64_t last_applied_arm_target_seq_ = 0;
+  uint64_t last_applied_head_target_seq_ = 0;
+  uint64_t last_applied_waist_target_seq_ = 0;
 };
 
 }  // namespace runtime

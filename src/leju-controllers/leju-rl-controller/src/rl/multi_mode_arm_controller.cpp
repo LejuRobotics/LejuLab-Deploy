@@ -97,19 +97,18 @@ void MultiModeArmController::setMode(ArmControlMode mode) {
         return;
     }
 
-    // 计算模式切换的目标位置
-    Eigen::VectorXd target_q;
+    // 仅 kAuto 需要 transition 走到 default_arm_pos_，其余模式跳过让 update 直接接管
+    bool needs_transition = false;
+    Eigen::VectorXd transition_target;
     switch (mode) {
         case ArmControlMode::kKeepPose:
-            // 切换到 KEEP_POSE: 目标是当前位置
             keep_pose_q_ = current_arm_pos_;
-            target_q = current_arm_pos_;
             break;
 
         case ArmControlMode::kAuto:
-            // 切换到 AUTO: 目标是默认姿态
-            target_q = default_arm_pos_;
             is_interpolating_to_default_ = false;
+            transition_target = default_arm_pos_;
+            needs_transition = true;
             break;
 
         case ArmControlMode::kExternal: {
@@ -120,7 +119,6 @@ void MultiModeArmController::setMode(ArmControlMode mode) {
             target_received_ = false;
 
             // 切换到 EXTERNAL: 从当前位置开始，等待新的外部命令
-            target_q = current_arm_pos_;
             raw_target_q_ = current_arm_pos_;
             filtered_target_q_ = current_arm_pos_;
             target_filter_.reset(current_arm_pos_);
@@ -135,11 +133,14 @@ void MultiModeArmController::setMode(ArmControlMode mode) {
         }
     }
 
-    // 启动平滑过渡
-    Eigen::VectorXd from_q = desire_arm_q_.size() > 0 ? desire_arm_q_ : current_arm_pos_;
-    startModeTransition(from_q, target_q);
-
     pending_mode_ = mode;
+    if (needs_transition) {
+        // from_q 用 desire_arm_q_（= 上一帧实际 cmd.q）保证 cmd.q 不跳变
+        startModeTransition(desire_arm_q_, transition_target);
+    } else {
+        mode_ = mode;
+        mode_transitioning_ = false;
+    }
 }
 
 void MultiModeArmController::setExternalTarget(const Eigen::VectorXd& q,
@@ -225,33 +226,30 @@ bool MultiModeArmController::update(double cmd_stance,
     desire_q->resize(arm_joint_count_);
     desire_v->resize(arm_joint_count_);
 
-    // 处理模式切换过渡
+    // transition 期间也走 should_override 末尾块，保证 tau 被计算（避免重力补偿丢失）
+    bool should_override = false;
     if (mode_transitioning_) {
-        bool transition_done = updateModeTransition(desire_q, desire_v);
-        desire_arm_q_ = *desire_q;
-
-        if (!transition_done) {
-            return true;  // 过渡期间始终覆盖
-        }
-        // 过渡完成，继续执行新模式逻辑
+        updateModeTransition(desire_q, desire_v);
+        should_override = true;
     }
 
-    // 根据模式调用对应的更新函数
-    bool should_override = false;
-    switch (mode_) {
-        case ArmControlMode::kKeepPose:
-            should_override = updateKeepPose(current_arm_pos, desire_q, desire_v);
-            break;
+    // 根据模式调用对应的更新函数（无过渡 或 过渡刚完成）
+    if (!mode_transitioning_) {
+        switch (mode_) {
+            case ArmControlMode::kKeepPose:
+                should_override = updateKeepPose(current_arm_pos, desire_q, desire_v);
+                break;
 
-        case ArmControlMode::kAuto:
-            should_override = updateAuto(cmd_stance, current_arm_pos, current_arm_vel,
-                                         desire_q, desire_v);
-            break;
-
-        case ArmControlMode::kExternal:
-            should_override = updateExternal(current_arm_pos, current_arm_vel,
+            case ArmControlMode::kAuto:
+                should_override = updateAuto(cmd_stance, current_arm_pos, current_arm_vel,
                                              desire_q, desire_v);
-            break;
+                break;
+
+            case ArmControlMode::kExternal:
+                should_override = updateExternal(current_arm_pos, current_arm_vel,
+                                                 desire_q, desire_v);
+                break;
+        }
     }
 
     if (should_override) {
@@ -336,8 +334,8 @@ bool MultiModeArmController::updateExternal(const Eigen::VectorXd& current_arm_p
                                             Eigen::VectorXd* desire_q,
                                             Eigen::VectorXd* desire_v) {
     if (!target_received_) {
-        // 未收到外部目标，保持当前位置
-        *desire_q = current_arm_pos;
+        // 锁住切换时快照；用 current_arm_pos 会让 kp 失效，重力补偿偏差会被阻尼成漂移
+        *desire_q = raw_target_q_;
         *desire_v = Eigen::VectorXd::Zero(arm_joint_count_);
         return true;
     }

@@ -374,28 +374,32 @@ bool ControlLogic::requestSwitch(ControllerManager& controller_manager,
 
 void ControlLogic::processExternalTargets(ControllerManager& controller_manager,
                                           const CommandBuffer::Snapshot& command_snapshot) {
-  // 处理手臂关节目标
-  if (command_snapshot.arm_target.has_value()) {
-    const auto& target = command_snapshot.arm_target.value();
+  // 处理手臂关节目标：仅在 seq 发生变化（即上游有新写入）时才推送，避免
+  // CommandBuffer 粘性缓存导致同一目标在模式切换后被反复重推。
+  if (command_snapshot.arm_target.isNewerThan(last_applied_arm_target_seq_)) {
+    const auto& target = command_snapshot.arm_target.getValue();
     if (!target.q.empty()) {
       controller_manager.setArmTarget(target);
     }
+    last_applied_arm_target_seq_ = command_snapshot.arm_target.seq;
   }
 
   // 处理腰部关节目标
-  if (command_snapshot.waist_target.has_value()) {
-    const auto& target = command_snapshot.waist_target.value();
+  if (command_snapshot.waist_target.isNewerThan(last_applied_waist_target_seq_)) {
+    const auto& target = command_snapshot.waist_target.getValue();
     if (!target.q.empty()) {
       controller_manager.setWaistTarget(target);
     }
+    last_applied_waist_target_seq_ = command_snapshot.waist_target.seq;
   }
 
   // 处理头部关节目标
-  if (command_snapshot.head_target.has_value()) {
-    const auto& target = command_snapshot.head_target.value();
+  if (command_snapshot.head_target.isNewerThan(last_applied_head_target_seq_)) {
+    const auto& target = command_snapshot.head_target.getValue();
     if (!target.q.empty()) {
       controller_manager.setHeadTarget(target);
     }
+    last_applied_head_target_seq_ = command_snapshot.head_target.seq;
   }
 }
 

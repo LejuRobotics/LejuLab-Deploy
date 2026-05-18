@@ -21,7 +21,8 @@ void CommandBuffer::writeArmTarget(const ExternalJointTarget& target) {
   size_t write_index = 1 - current;
 
   buffers_[write_index] = buffers_[current];
-  buffers_[write_index].arm_target = target;
+  buffers_[write_index].arm_target.value = target;
+  buffers_[write_index].arm_target.seq = buffers_[current].arm_target.seq + 1;
   active_index_.store(write_index, std::memory_order_release);
 }
 
@@ -30,7 +31,8 @@ void CommandBuffer::writeHeadTarget(const ExternalJointTarget& target) {
   size_t write_index = 1 - current;
 
   buffers_[write_index] = buffers_[current];
-  buffers_[write_index].head_target = target;
+  buffers_[write_index].head_target.value = target;
+  buffers_[write_index].head_target.seq = buffers_[current].head_target.seq + 1;
   active_index_.store(write_index, std::memory_order_release);
 }
 
@@ -39,7 +41,8 @@ void CommandBuffer::writeWaistTarget(const ExternalJointTarget& target) {
   size_t write_index = 1 - current;
 
   buffers_[write_index] = buffers_[current];
-  buffers_[write_index].waist_target = target;
+  buffers_[write_index].waist_target.value = target;
+  buffers_[write_index].waist_target.seq = buffers_[current].waist_target.seq + 1;
   active_index_.store(write_index, std::memory_order_release);
 }
 
