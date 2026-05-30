@@ -381,6 +381,80 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
 3. 按 `X+A` 切到 `External(2)`
 4. 按住单侧或双侧 `grip`，移动 Quest3 手柄开始控制手臂
 
+## Controller CLI 工具
+
+`controller_cli` 是一个命令行交互工具，可通过 DDS 接口在运行时查询状态、切换控制器、设置控制模式等，无需手柄或 VR 设备。
+
+### 启动方式
+
+**实机环境：** 本地主机新开一个终端 SSH 连接到机器人。
+
+```bash
+sudo su
+source installed/setup.bash
+controller_cli
+```
+
+**Docker 仿真环境：** 在主机上新开一个终端连接到正在运行的 Docker 容器。
+
+```bash
+docker ps                                    # 查看容器 ID
+docker exec -it <container_id> zsh
+source installed/setup.zsh
+controller_cli
+```
+
+### 命令说明
+
+使用 `help` 命令可查看完整命令列表：
+
+| 命令 | 说明 |
+|------|------|
+| `runtime [--json]` | 查看 runtime 原始状态 |
+| `controller [--json]` | 查看控制器状态 |
+| `list [--json]` | controller 别名 |
+| `motion [--json]` | 查看动作状态 |
+| `start [--json]` | 触发 start（等价 START 事件） |
+| `stop [--json]` | 触发 stop（等价 BACK/quit 事件） |
+| `motion start [name] [--json]` | 触发动作播放 |
+| `switch <name> [--json]` | 切换控制器 |
+| `mode <arm\|waist> <keep\|auto\|external> [--json]` | 设置控制模式 |
+| `walkcontrol` | 键盘速度控制 |
+| `clear` | 清屏 |
+| `help` | 帮助 |
+| `quit` / `exit` | 退出 |
+
+### 使用方法
+
+**动作模仿：**
+
+```bash
+# 触发运行
+start
+
+# 切换控制器
+switch <controller_name>
+
+# 查看动作列表
+motion
+
+# 触发动作播放
+motion start <motion_name>
+```
+
+**运动控制：**
+
+```bash
+# 触发运行
+start
+
+# 切换控制器
+switch <controller_name>
+
+# 键盘行走控制（w/s 前后、a/d 左右、q/e 转向、空格归零、x 退出）
+walkcontrol
+```
+
 ## 日志与录制数据
 
 运行时产生的日志和录制数据统一存放在 `~/.ros/lejulab/` 目录下：
