@@ -175,6 +175,9 @@ void ControlLogic::handleActionTriggers(const std::vector<ActionTrigger>& trigge
           }
         }
       }
+    } else if (trigger.type == ActionType::ToggleCmdStance) {
+      RL_LOGI("ControlLogic: Handling ToggleCmdStance trigger");
+      controller_manager.toggleCmdStance();
     }
   }
 
@@ -205,6 +208,7 @@ bool ControlLogic::isDuplicateSensitive(ActionType type) const {
     case ActionType::Start:
     case ActionType::Quit:
     case ActionType::MotionCommand:
+    case ActionType::ToggleCmdStance:
       return true;
     default:
       return false;

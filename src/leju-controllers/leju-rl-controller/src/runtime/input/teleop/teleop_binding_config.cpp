@@ -83,6 +83,9 @@ static ActionTrigger parseActionTrigger(const YAML::Node& node) {
       return MakeMotionCommandTrigger(op_result.value(), name_arg);
     }
 
+    case ActionType::ToggleCmdStance:
+      return MakeToggleCmdStanceTrigger();
+
     default:
       return ActionTrigger(action_type);
   }

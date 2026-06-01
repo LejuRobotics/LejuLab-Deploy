@@ -1,5 +1,5 @@
 loop_dt: 0.001
-default_controller: "mimic_dance"
+default_controller: "amp"
 
 # 控制器切换配置
 switch_interpolation:
@@ -11,20 +11,20 @@ controllers:
     config: "controllers/config_amp.yaml"
     enabled: true
 
-  - name: "mimic_dance"
-    type: "GenericRLController"
-    config: "controllers/config_mimic_dance.yaml"
-    enabled: true
+  # - name: "mimic_dance"
+  #   type: "GenericRLController"
+  #   config: "controllers/config_mimic_dance.yaml"
+  #   enabled: true
 
-  - name: "mimic_qqxinjiang"
-    type: "GenericRLController"
-    config: "controllers/config_mimic_qqxinjiang.yaml"
-    enabled: true
+  # - name: "mimic_qqxinjiang"
+  #   type: "GenericRLController"
+  #   config: "controllers/config_mimic_qqxinjiang.yaml"
+  #   enabled: true
 
-  - name: "mimic_balei"
-    type: "GenericRLController"
-    config: "controllers/config_mimic_balei.yaml"
-    enabled: true
+  # - name: "mimic_balei"
+  #   type: "GenericRLController"
+  #   config: "controllers/config_mimic_balei.yaml"
+  #   enabled: true
 
   # 实物未测试: 勿运行
   # - name: "mimic_yongchun"

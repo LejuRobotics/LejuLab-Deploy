@@ -24,6 +24,7 @@ enum class ActionType : uint8_t {
   SetArmMode,         ///< 设置手臂模式
   SetWaistMode,       ///< 设置腰部模式
   MotionCommand,      ///< 动作控制命令（Start）
+  ToggleCmdStance,    ///< 切换 cmd_stance：0 ↔ 1（与速度判断无关）
 };
 
 // ============================================================================
@@ -166,6 +167,8 @@ ActionTrigger MakeQuitTrigger();
  */
 ActionTrigger MakeMotionCommandTrigger(MotionCommandArgs::Operation op,
                                        const std::string& motion_name = "");
+
+ActionTrigger MakeToggleCmdStanceTrigger();
 
 }  // namespace runtime
 }  // namespace leju

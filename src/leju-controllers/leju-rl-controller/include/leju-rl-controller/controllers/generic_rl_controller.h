@@ -63,6 +63,15 @@ class GenericRLController : public ControllerBase {
   std::vector<std::string> getMotionNames() const;
   /// @brief 获取当前 motion 名称
   std::string getCurrentMotionName() const;
+
+  // ==================== cmd_stance 手动控制 ====================
+
+  /// @brief B 键触发，切换 cmd_stance: 0 ↔ 1
+  void toggleCmdStance();
+  /// @brief 切换控制器时重置 cmd_stance 为 0
+  void resetCmdStance();
+  /// @brief 返回与 AMP 模型观测一致的 cmd_stance_，供部位控制器使用
+  double cmdStance() const override { return static_cast<double>(cmd_stance_); }
   /// @brief 检查是否正在播放 motion
   bool isMotionPlaying() const { return motion_playing_; }
 
@@ -128,6 +137,9 @@ class GenericRLController : public ControllerBase {
   bool buildJointMapping();
   /// @brief 加载全部 motion 轨迹文件
   void loadMotionTrajectories(const std::string& config_dir);
+
+  // ==================== cmd_stance ====================
+  int cmd_stance_ = 0;  ///< 手动 cmd_stance（B 键切换）0=行走，1=站立
   /// @brief 获取策略关节位置（相对默认位置的偏移）
   array_t getPolicyJointPos() const;
   /// @brief 获取策略关节速度
@@ -209,11 +221,17 @@ class GenericRLController : public ControllerBase {
   std::map<std::string, std::unique_ptr<MotionTrajectory>> motions_;  ///< motion 实例
   std::string current_motion_name_;         ///< 当前选中的 motion
 
-  // ==================== 速度缩放 ====================
+  // ==================== 速度缩放（行走模式 cmd_stance=0）====================
   double velocity_scale_linear_x_ = 1.0;               ///< 前进速度缩放
   double velocity_scale_linear_x_negative_ = 1.0;      ///< 后退速度额外缩放
   double velocity_scale_linear_y_ = 1.0;               ///< 侧向速度缩放
   double velocity_scale_angular_z_ = 1.0;              ///< 偏航角速度缩放
+
+  // ==================== 速度缩放（站立模式 cmd_stance=1）====================
+  double velocity_scale_linear_x_standing_ = 1.0;          ///< 弯腰角度缩放
+  double velocity_scale_linear_x_negative_standing_ = 1.0; ///< 弯腰后仰额外缩放
+  double velocity_scale_linear_y_standing_ = 1.0;          ///< 站立侧移缩放
+  double velocity_scale_angular_z_standing_ = 1.0;         ///< 下蹲高度缩放
 
   // ==================== 运行时状态 ====================
   double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw

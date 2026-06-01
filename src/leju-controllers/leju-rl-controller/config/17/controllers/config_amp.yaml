@@ -3,7 +3,7 @@ HumanoidRobotCfg:
   inference_engine: "onnxruntime"
 
   loop_dt: 0.001
-  policy_path: "../policy/amp/2026-03-31_23-48-45-lyy10-168000.onnx"
+  policy_path: "../policy/amp/05-28_14-32-24_amp_agent_7200.onnx"
 
   env:
     policy_dt: 0.02
@@ -32,12 +32,18 @@ HumanoidRobotCfg:
          1.,1.,1.,1.,1.,1.,
          1.,1.,1.,1.,
          1.,1.,1.,1.]
+      # joint_default_pos:
+      #   [0.,
+      #    -0.05033, -0.0164, -0.0233, 0.155, -0.1, 0.,
+      #    0.05033, 0.0164, -0.0233, 0.155, -0.1, 0.,
+      #    0.2, 0.210, -0.4, -0.6,
+      #    0.2, -0.210, 0.4, -0.6,]
       joint_default_pos:
         [0.,
-         -0.05033, -0.0164, -0.0233, 0.155, -0.1, 0.,
-         0.05033, 0.0164, -0.0233, 0.155, -0.1, 0.,
-         0.2, 0.210, -0.4, -0.6,
-         0.2, -0.210, 0.4, -0.6,]
+         -0.285, -0.0194, -0.201, 0.404, -0.221, 0.,
+         0.285, 0.0194, 0.201, 0.404, -0.221, 0.,
+         0.0, 0.05, -0.0, -0.2,
+         0.0, -0.05, 0.0, -0.2,]
       joint_torque_limit:
         [80.,
          150., 150., 70., 150., 74., 74.,
@@ -96,10 +102,16 @@ HumanoidRobotCfg:
           clip: [-5000., 5000.]
 
     velocity_scale:
-      linear_x: 1.66
-      linear_x_negative_scale: 1.0
-      linear_y: 1.0
-      angular_z: 1.66
+      walking:                    # cmd_stance=0：行走模式（linear_x=前后速, angular_z=转身角速度）
+        linear_x: 1.0
+        linear_x_negative_scale: 1.0
+        linear_y: 1.0
+        angular_z: 1.0
+      standing:                   # cmd_stance=1：站立模式（linear_x=弯腰角度, angular_z=下蹲高度）
+        linear_x: 2.0
+        linear_x_negative_scale: 1.0
+        linear_y: 1.0
+        angular_z: 0.8
 
   velocity_input_manager:
     timeout_sec: 1.0

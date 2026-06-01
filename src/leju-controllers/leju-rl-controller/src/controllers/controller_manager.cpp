@@ -983,4 +983,13 @@ bool ControllerManager::startMotion(const std::string& name) {
   return success;
 }
 
+void ControllerManager::toggleCmdStance() {
+  auto* ctrl = dynamic_cast<GenericRLController*>(getCurrentController());
+  if (ctrl) {
+    ctrl->toggleCmdStance();
+  } else {
+    RL_LOGW("ControllerManager::toggleCmdStance: Current controller is not a GenericRLController");
+  }
+}
+
 }  // namespace leju

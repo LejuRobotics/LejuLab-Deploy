@@ -159,6 +159,14 @@ class ControllerBase {
   }
 
   /**
+   * @brief 获取当前站立/行走状态值，供部位控制器（手臂/腰部）使用。
+   *
+   * 默认实现：速度判断（速度接近零 → 1.0 站立，否则 0.0 行走）。
+   * GenericRLController 重写此方法，返回与 AMP 模型观测完全一致的 cmd_stance_。
+   */
+  virtual double cmdStance() const { return isStanding() ? 1.0 : 0.0; }
+
+  /**
    * @brief 开始播放 motion（用于舞蹈/动作播放控制器）
    * @return 成功返回 true，不支持则返回 false
    *

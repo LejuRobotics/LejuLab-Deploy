@@ -82,10 +82,8 @@ void ControllerBase::updateArmCommand(RobotCmd& cmd) {
     return;
   }
 
-  // 计算站立/行走状态：1=站立, 0=行走
-  double cmd_stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
-                       std::abs(velocity_cmd_.linear_y) < 0.01 &&
-                       std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
+  // 与 AMP 模型观测一致的 cmd_stance（GenericRLController 返回 B 键切换值，基类返回速度判断值）
+  double cmd_stance = cmdStance();
 
   // 提取当前手臂位置和速度
   Eigen::VectorXd current_arm_pos(arm_joint_names_.size());
@@ -123,10 +121,8 @@ void ControllerBase::updateWaistCommand(RobotCmd& cmd) {
     return;
   }
 
-  // 计算站立/行走状态
-  double cmd_stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
-                       std::abs(velocity_cmd_.linear_y) < 0.01 &&
-                       std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
+  // 与 AMP 模型观测一致的 cmd_stance（GenericRLController 返回 B 键切换值，基类返回速度判断值）
+  double cmd_stance = cmdStance();
 
   // 提取当前腰部位置和速度
   Eigen::VectorXd current_waist_pos(waist_joint_names_.size());

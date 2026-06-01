@@ -179,6 +179,21 @@ void GenericRLController::reset() {
     RL_LOG_INFO("Available motions: %zu. Press `guide` to start '%s'",
                 motions_.size(), current_motion_name_.c_str());
   }
+  cmd_stance_ = 0;
+}
+
+// ============================================================================
+// cmd_stance 手动控制（B 键触发）
+// ============================================================================
+
+void GenericRLController::toggleCmdStance() {
+  cmd_stance_ = 1 - cmd_stance_;
+  RL_LOGI("[cmd_stance] toggled to %d", cmd_stance_);
+}
+
+void GenericRLController::resetCmdStance() {
+  cmd_stance_ = 0;
+  RL_LOGI("[cmd_stance] reset to 0");
 }
 
 // ============================================================================
@@ -489,21 +504,54 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
       motion_residual_action_ = robot["residual_action"].as<bool>();
     }
 
-    // --- AMP 速度缩放（可选） ---
+    // --- AMP 速度缩放（可选）---
+    // 支持两种格式：
+    //   新格式：walking/standing 子段，分别对应 cmd_stance=0/1
+    //   旧格式：直接写 linear_x 等（两种模式共用同一组参数）
     YAML::Node velocity_scale = cfg["env"]["velocity_scale"];
     if (velocity_scale) {
-      if (!velocity_scale["linear_x"] || !velocity_scale["linear_x_negative_scale"] ||
-          !velocity_scale["linear_y"] || !velocity_scale["angular_z"]) {
-        RL_LOG_FAILURE("Incomplete 'HumanoidRobotCfg.env.velocity_scale' in: %s",
-                       config_path.c_str());
-        return false;
-      }
+      auto parseOneScale = [&](const YAML::Node& node, const std::string& ctx,
+                               double& lx, double& lx_neg, double& ly, double& az) -> bool {
+        if (!node["linear_x"] || !node["linear_x_negative_scale"] ||
+            !node["linear_y"] || !node["angular_z"]) {
+          RL_LOG_FAILURE("Incomplete velocity_scale '%s' in: %s", ctx.c_str(), config_path.c_str());
+          return false;
+        }
+        lx     = node["linear_x"].as<double>();
+        lx_neg = node["linear_x_negative_scale"].as<double>();
+        ly     = node["linear_y"].as<double>();
+        az     = node["angular_z"].as<double>();
+        return true;
+      };
 
-      velocity_scale_linear_x_ = velocity_scale["linear_x"].as<double>();
-      velocity_scale_linear_x_negative_ =
-          velocity_scale["linear_x_negative_scale"].as<double>();
-      velocity_scale_linear_y_ = velocity_scale["linear_y"].as<double>();
-      velocity_scale_angular_z_ = velocity_scale["angular_z"].as<double>();
+      if (velocity_scale["walking"] || velocity_scale["standing"]) {
+        // 新格式：walking / standing 子段
+        if (!velocity_scale["walking"] || !velocity_scale["standing"]) {
+          RL_LOG_FAILURE("velocity_scale must have both 'walking' and 'standing' in: %s",
+                         config_path.c_str());
+          return false;
+        }
+        if (!parseOneScale(velocity_scale["walking"], "walking",
+                           velocity_scale_linear_x_, velocity_scale_linear_x_negative_,
+                           velocity_scale_linear_y_, velocity_scale_angular_z_)) return false;
+        if (!parseOneScale(velocity_scale["standing"], "standing",
+                           velocity_scale_linear_x_standing_, velocity_scale_linear_x_negative_standing_,
+                           velocity_scale_linear_y_standing_, velocity_scale_angular_z_standing_)) return false;
+        RL_LOGI("velocity_scale: walking(lx=%.2f az=%.2f) standing(lx=%.2f az=%.2f)",
+                velocity_scale_linear_x_, velocity_scale_angular_z_,
+                velocity_scale_linear_x_standing_, velocity_scale_angular_z_standing_);
+      } else {
+        // 旧格式：平铺，两种模式共用
+        if (!parseOneScale(velocity_scale, "velocity_scale",
+                           velocity_scale_linear_x_, velocity_scale_linear_x_negative_,
+                           velocity_scale_linear_y_, velocity_scale_angular_z_)) return false;
+        velocity_scale_linear_x_standing_          = velocity_scale_linear_x_;
+        velocity_scale_linear_x_negative_standing_ = velocity_scale_linear_x_negative_;
+        velocity_scale_linear_y_standing_          = velocity_scale_linear_y_;
+        velocity_scale_angular_z_standing_         = velocity_scale_angular_z_;
+        RL_LOGI("velocity_scale: shared(lx=%.2f az=%.2f)",
+                velocity_scale_linear_x_, velocity_scale_angular_z_);
+      }
     }
 
     return true;
@@ -880,13 +928,19 @@ array_t GenericRLController::getPolicyJointVel() const {
 
 /// 获取缩放后的速度命令 [lin_vel_x, lin_vel_y, ang_vel_z]
 array_t GenericRLController::getVelocityCommands() const {
+  // 根据当前 cmd_stance_ 选择对应的速度缩放参数
+  const double scale_lx     = (cmd_stance_ == 1) ? velocity_scale_linear_x_standing_          : velocity_scale_linear_x_;
+  const double scale_lx_neg = (cmd_stance_ == 1) ? velocity_scale_linear_x_negative_standing_  : velocity_scale_linear_x_negative_;
+  const double scale_ly     = (cmd_stance_ == 1) ? velocity_scale_linear_y_standing_           : velocity_scale_linear_y_;
+  const double scale_az     = (cmd_stance_ == 1) ? velocity_scale_angular_z_standing_          : velocity_scale_angular_z_;
+
   array_t cmd(3);
-  cmd[0] = velocity_cmd_.linear_x * velocity_scale_linear_x_;
+  cmd[0] = velocity_cmd_.linear_x * scale_lx;
   if (velocity_cmd_.linear_x < 0.0) {
-    cmd[0] *= velocity_scale_linear_x_negative_;
+    cmd[0] *= scale_lx_neg;
   }
-  cmd[1] = velocity_cmd_.linear_y * velocity_scale_linear_y_;
-  cmd[2] = velocity_cmd_.angular_z * velocity_scale_angular_z_;
+  cmd[1] = velocity_cmd_.linear_y * scale_ly;
+  cmd[2] = velocity_cmd_.angular_z * scale_az;
   return cmd;
 }
 
@@ -961,11 +1015,17 @@ array_t GenericRLController::getObsTerm(const std::string& name) const {
   } else if (name == "motion_anchor_ori_b") {
     return getMotionAnchorOriB();
   } else if (name == "cmd_stance") {
-    // 站立/行走状态：1.0=站立, 0.0=行走
-    double stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
-                     std::abs(velocity_cmd_.linear_y) < 0.01 &&
-                     std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
-    return array_t::Constant(1, stance);
+    // 手动按键控制的 cmd_stance（模型用按键切换训练，非速度判断）
+    // 原速度判断逻辑（已注释）：
+    // double stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
+    //                  std::abs(velocity_cmd_.linear_y) < 0.01 &&
+    //                  std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
+    // return array_t::Constant(1, stance);
+    if (step_count_ % 100 == 0) {
+      RL_LOGI("[cmd_stance] val=%d  vx=%.3f vy=%.3f wz=%.3f",
+              cmd_stance_, velocity_cmd_.linear_x, velocity_cmd_.linear_y, velocity_cmd_.angular_z);
+    }
+    return array_t::Constant(1, static_cast<double>(cmd_stance_));
   }
 
   RL_LOG_WARNING("Unknown obs term: %s", name.c_str());

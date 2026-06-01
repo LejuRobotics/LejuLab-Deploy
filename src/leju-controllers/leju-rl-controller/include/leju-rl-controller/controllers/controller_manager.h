@@ -255,6 +255,11 @@ class ControllerManager {
   bool setArmMode(ArmControlMode mode, std::string& message);
 
   /**
+   * @brief 切换当前控制器的 cmd_stance（0 ↔ 1），由 B 键触发
+   */
+  void toggleCmdStance();
+
+  /**
    * @brief 设置腰部控制模式
    * @param mode 目标模式（内部枚举，非 vr::ControlMode）
    * @param message 返回消息

@@ -46,5 +46,9 @@ ActionTrigger MakeMotionCommandTrigger(MotionCommandArgs::Operation op,
                        std::make_shared<MotionCommandArgs>(op, motion_name));
 }
 
+ActionTrigger MakeToggleCmdStanceTrigger() {
+  return ActionTrigger(ActionType::ToggleCmdStance);
+}
+
 }  // namespace runtime
 }  // namespace leju
