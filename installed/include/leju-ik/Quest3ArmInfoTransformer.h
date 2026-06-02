@@ -25,6 +25,10 @@ class Quest3ArmInfoTransformer final {
 
   const ArmPose& getLeftHandPose() const { return leftHandPose_; }
   const ArmPose& getRightHandPose() const { return rightHandPose_; }
+  /// 原始（未缩放、世界系）手部位置。增量式工作流按其做位姿增量跟随；
+  /// getLeftHandPose()/getRightHandPose() 返回的是缩放到 base_link 系的 IK 目标，不可混用。
+  const Eigen::Vector3d& getLeftHandRawPosition() const { return leftHandRawPosition_; }
+  const Eigen::Vector3d& getRightHandRawPosition() const { return rightHandRawPosition_; }
   const ArmPose& getLeftElbowPose() const { return leftElbowPose_; }
   const ArmPose& getRightElbowPose() const { return rightElbowPose_; }
   const ArmPose& getLeftShoulderPose() const { return leftShoulderPose_; }
@@ -51,9 +55,12 @@ class Quest3ArmInfoTransformer final {
   double getAvgRightLowerArmLength() const { return armLengthMeasurement_.getAvgRightLowerArmLength(); }
 
   struct VisualizationData {
+    /// 缩放后（IK 输入，躯干/ base_link 约定系）
     Eigen::Vector3d leftHandPos, rightHandPos, leftElbowPos, rightElbowPos;
     Eigen::Vector3d leftShoulderPos, rightShoulderPos, chestPos;
     Eigen::Quaterniond leftHandQuat, rightHandQuat;
+    /// 胸减+yaw 去除+bias+肩宽后、缩放前（与 IK 目标同躯干系）
+    Eigen::Vector3d leftHandPreScale, rightHandPreScale, leftElbowPreScale, rightElbowPreScale;
     bool leftSideReady = false, rightSideReady = false, isValid = false;
   };
 
@@ -67,6 +74,9 @@ class Quest3ArmInfoTransformer final {
   bool isRunning() const { return isRunning_; }
   void setRunning(bool running) { isRunning_ = running; }
   void updateJoystickData(float leftTrigger, float leftGrip, float rightTrigger, float rightGrip);
+  /// 是否由摇杆手势（OK=双扳机、Shot=双握把）自动驱动 isRunning_。
+  /// 绝对/手势工作流需开启；增量工作流必须关闭，否则双手 grip 会被误判为 Shot 停止手势。
+  void setGestureRunningEnabled(bool enabled) { gestureRunningEnabled_ = enabled; }
 
  private:
   ArmPose leftHandPose_, rightHandPose_, leftElbowPose_, rightElbowPose_;
@@ -87,6 +97,9 @@ class Quest3ArmInfoTransformer final {
   VisualizationCallback visualizationCallback_;
   bool visPub_ = true;
   bool isRunning_ = false;
+  bool gestureRunningEnabled_ = false;
+  Eigen::Vector3d leftHandRawPosition_ = Eigen::Vector3d::Zero();
+  Eigen::Vector3d rightHandRawPosition_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d deltaScale_;
 
   struct JoystickState {
@@ -98,6 +111,7 @@ class Quest3ArmInfoTransformer final {
   bool computeHandPose(const PoseInfoList& input, const std::string& side);
   Eigen::Vector3d extractPosition(const PoseInfo& poseInfo) const;
   Eigen::Matrix3d poseInfo2Transform(const PoseInfo& poseInfo) const;
+  /// 与 quest3_utils.scale_arm_positions 一致：固定肩位，上臂/前臂按机器人与人体段长比例缩放
   std::pair<Eigen::Vector3d, Eigen::Vector3d> scaleArmPositions(
       const Eigen::Vector3d& shoulderAdaptivePos, const Eigen::Vector3d& elbowPos,
       const Eigen::Vector3d& handPos, const Eigen::Vector3d& humanShoulderOriginPos,
@@ -105,6 +119,7 @@ class Quest3ArmInfoTransformer final {
   bool validateInput(const PoseInfoList& input) const;
   Eigen::Quaterniond vrQuat2RobotQuat(const Eigen::Quaterniond& vrQuat, const std::string& side,
                                       double biasAngle = 0.0) const;
+  /// 与 motion_capture_ik / quest3_utils：肩宽自适应（含越过身体中线时的内收等）
   bool isOverChest(const Eigen::Vector3d& handPos, const std::string& side) const;
   void adaptShoulderWidthAdvanced(Eigen::Vector3d& shoulderPos, const Eigen::Vector3d& elbowPos,
                                   const Eigen::Vector3d& handPos,
@@ -123,6 +138,12 @@ class Quest3ArmInfoTransformer final {
                                       const Eigen::Vector3d& shoulderPos,
                                       const Eigen::Matrix3d& shoulderRot);
 
+  /// 与 motion_capture_ik/scripts/tools/quest3_utils.py 中手柄分支一致：
+  /// OK：双手扳机均 > 0.5，连续约 50 帧；停止(Shot)：双手扳机 < 0.5 且握把 > 0.8，连续约 50 帧。
+  void updateRunningGestureState();
+
+  int ok_gesture_counts_ = 0;
+  int shot_gesture_counts_ = 0;
 };
 
 }  // namespace ik

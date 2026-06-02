@@ -1021,10 +1021,10 @@ array_t GenericRLController::getObsTerm(const std::string& name) const {
     //                  std::abs(velocity_cmd_.linear_y) < 0.01 &&
     //                  std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
     // return array_t::Constant(1, stance);
-    if (step_count_ % 100 == 0) {
-      RL_LOGI("[cmd_stance] val=%d  vx=%.3f vy=%.3f wz=%.3f",
-              cmd_stance_, velocity_cmd_.linear_x, velocity_cmd_.linear_y, velocity_cmd_.angular_z);
-    }
+    // if (step_count_ % 100 == 0) {
+    //   RL_LOGI("[cmd_stance] val=%d  vx=%.3f vy=%.3f wz=%.3f",
+    //           cmd_stance_, velocity_cmd_.linear_x, velocity_cmd_.linear_y, velocity_cmd_.angular_z);
+    // }
     return array_t::Constant(1, static_cast<double>(cmd_stance_));
   }
 

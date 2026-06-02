@@ -297,7 +297,7 @@ bool Quest3IkIncrementalAPI::buildPlantAndIK(const std::string& urdf_path,
       drake::multibody::AddMultibodyPlantSceneGraph(diagramBuilder.get(), 0.0);
 
   drake::multibody::Parser parser(&plant);
-  parser.AddModelFromFile(urdf_path);
+  parser.AddModels(urdf_path);
 
   std::string base_frame_name = "base_link";
   try {
@@ -1302,8 +1302,10 @@ void Quest3IkIncrementalAPI::runOnce() {
 
   const auto& leftHandPose = transformer_->getLeftHandPose();
   const auto& rightHandPose = transformer_->getRightHandPose();
-  const ArmPose vrLeftPose(leftHandPose.position, leftHandPose.quaternion);
-  const ArmPose vrRightPose(rightHandPose.position, rightHandPose.quaternion);
+  // 增量跟随用原始（未缩放、世界系）手部位置 + 处理后的朝向四元数；
+  // getLeftHandPose().position 是缩放到 base_link 系的绝对式 IK 目标，不能用于增量 delta。
+  const ArmPose vrLeftPose(transformer_->getLeftHandRawPosition(), leftHandPose.quaternion);
+  const ArmPose vrRightPose(transformer_->getRightHandRawPosition(), rightHandPose.quaternion);
 
   Eigen::VectorXd qForFK;
   const bool hasValidFk = hasValidSensorJoints(qForFK);

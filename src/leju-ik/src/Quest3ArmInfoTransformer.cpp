@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <iostream>
 #include <map>
 #include <vector>
 
@@ -11,6 +10,8 @@ namespace leju {
 namespace ik {
 
 namespace {
+constexpr double kHumanSegmentEps = 1e-8;
+
 void setHandPoseInfo(PoseInfo& poseInfo, const ArmPose& armPose) {
   if (armPose.isValid()) {
     poseInfo.position = armPose.position;
@@ -56,6 +57,12 @@ bool Quest3ArmInfoTransformer::updateHandPoseAndElbowPosition(const PoseInfoList
   if (!computeHandPose(input, "Left")) return false;
   if (!computeHandPose(input, "Right")) return false;
   updateHandElbowPoseInfoList(output);
+  // 与 Python read_msg 中手势计数对齐：在骨骼处理成功后再根据摇杆更新 isRunning_。
+  // 仅在手势工作流（绝对式）下启用；增量式由 setRunning(mode==2) 驱动 isRunning_，
+  // 若在此处启用，双手同时按 grip（增量式合法的“双臂控制”动作）会被误判为 Shot 停止手势。
+  if (gestureRunningEnabled_) {
+    updateRunningGestureState();
+  }
   return true;
 }
 
@@ -76,7 +83,7 @@ bool Quest3ArmInfoTransformer::computeHandPose(const PoseInfoList& input, const 
 
   Eigen::Quaterniond vrQuat(handPose.orientation.w(), handPose.orientation.x(),
                             handPose.orientation.y(), handPose.orientation.z());
-  double biasAngle = 15.0 * M_PI / 180.0;
+  const double biasAngle = input.is_hand_tracking ? 0.0 : (15.0 * M_PI / 180.0);
   Eigen::Quaterniond handQuatInW = vrQuat2RobotQuat(vrQuat, side, biasAngle);
   armData.handQuatInW = handQuatInW;
 
@@ -131,8 +138,11 @@ bool Quest3ArmInfoTransformer::computeHandPose(const PoseInfoList& input, const 
   shoulderPos.z() = biasChestToBaseLink_.z();
   Eigen::Vector3d humanShoulderPos = shoulderPos;
 
-  bool overChest = isOverChest(handPos, side);
+  const bool overChest = isOverChest(handPos, side);
   adaptShoulderWidthAdvanced(shoulderPos, elbowPos, handPos, humanShoulderPos, side, overChest);
+
+  const Eigen::Vector3d handPreScale = handPos;
+  const Eigen::Vector3d elbowPreScale = elbowPos;
 
   auto scaledPositions = scaleArmPositions(shoulderPos, elbowPos, handPos, humanShoulderPos, side);
   elbowPos = scaledPositions.first;
@@ -155,14 +165,18 @@ bool Quest3ArmInfoTransformer::computeHandPose(const PoseInfoList& input, const 
 
   if (!armData.handPose.isValid() || !armData.elbowPose.isValid()) return false;
 
-  updateVisualizationDataForSide(input, side, handPos, handQuatInW, elbowPos, shoulderPos, R_wS);
-
   if (side == "Left") {
-    leftHandPose_.position = input.poses[armData.handIndex].position;
+    visualizationData_.leftHandPreScale = handPreScale;
+    visualizationData_.leftElbowPreScale = elbowPreScale;
+    // 增量式跟随用的原始（未缩放、世界系）手部位置；不覆盖 leftHandPose_（绝对式 IK 目标）。
+    leftHandRawPosition_ = input.poses[armData.handIndex].position;
+  } else if (side == "Right") {
+    visualizationData_.rightHandPreScale = handPreScale;
+    visualizationData_.rightElbowPreScale = elbowPreScale;
+    rightHandRawPosition_ = input.poses[armData.handIndex].position;
   }
-  if (side == "Right") {
-    rightHandPose_.position = input.poses[armData.handIndex].position;
-  }
+
+  updateVisualizationDataForSide(input, side, handPos, handQuatInW, elbowPos, shoulderPos, R_wS);
 
   return true;
 }
@@ -188,8 +202,8 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> Quest3ArmInfoTransformer::scaleArmPo
     const Eigen::Vector3d& shoulderAdaptivePos, const Eigen::Vector3d& elbowPos,
     const Eigen::Vector3d& handPos, const Eigen::Vector3d& humanShoulderOriginPos,
     const std::string& side) {
-  double humanUpperArmLength = (elbowPos - humanShoulderOriginPos).norm();
-  double humanLowerArmLength = (handPos - elbowPos).norm();
+  const double humanUpperArmLength = (elbowPos - humanShoulderOriginPos).norm();
+  const double humanLowerArmLength = (handPos - elbowPos).norm();
 
   if (armLengthMeasurement_.isMeasureArmLength()) {
     armLengthMeasurement_.updateMeasurement(humanUpperArmLength, humanLowerArmLength, side);
@@ -199,33 +213,41 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> Quest3ArmInfoTransformer::scaleArmPo
     }
   }
 
-  double radi1, radi2;
+  const double hu = std::max(humanUpperArmLength, kHumanSegmentEps);
+  const double hl = std::max(humanLowerArmLength, kHumanSegmentEps);
+
+  // 与 motion_capture_ik / quest3_utils：测量阶段 radi2 用整臂总长比；非测量阶段用分段比例
+  double radi1 = 0.0;
+  double radi2 = 0.0;
   if (armLengthMeasurement_.isMeasureArmLength()) {
-    radi1 = robotUpperArmLength_ / humanUpperArmLength;
-    radi2 = (robotLowerArmLength_ + robotUpperArmLength_) /
-            (humanLowerArmLength + humanUpperArmLength);
-  } else {
-    if (side == "Left") {
-      if (armLengthMeasurement_.getLeftDataCount() > 0) {
-        radi1 = robotUpperArmLength_ / armLengthMeasurement_.getAvgLeftUpperArmLength();
-        radi2 = robotLowerArmLength_ / armLengthMeasurement_.getAvgLeftLowerArmLength();
-      } else {
-        radi1 = robotUpperArmLength_ / humanUpperArmLength;
-        radi2 = robotLowerArmLength_ / humanLowerArmLength;
-      }
+    radi1 = robotUpperArmLength_ / hu;
+    radi2 = (robotLowerArmLength_ + robotUpperArmLength_) / (hl + hu);
+  } else if (side == "Left") {
+    if (armLengthMeasurement_.getLeftDataCount() > 0) {
+      const double avg_u = std::max(armLengthMeasurement_.getAvgLeftUpperArmLength(), kHumanSegmentEps);
+      const double avg_l = std::max(armLengthMeasurement_.getAvgLeftLowerArmLength(), kHumanSegmentEps);
+      radi1 = robotUpperArmLength_ / avg_u;
+      radi2 = robotLowerArmLength_ / avg_l;
     } else {
-      if (armLengthMeasurement_.getRightDataCount() > 0) {
-        radi1 = robotUpperArmLength_ / armLengthMeasurement_.getAvgRightUpperArmLength();
-        radi2 = robotLowerArmLength_ / armLengthMeasurement_.getAvgRightLowerArmLength();
-      } else {
-        radi1 = robotUpperArmLength_ / humanUpperArmLength;
-        radi2 = robotLowerArmLength_ / humanLowerArmLength;
-      }
+      radi1 = robotUpperArmLength_ / hu;
+      radi2 = robotLowerArmLength_ / hl;
+    }
+  } else {
+    if (armLengthMeasurement_.getRightDataCount() > 0) {
+      const double avg_u = std::max(armLengthMeasurement_.getAvgRightUpperArmLength(), kHumanSegmentEps);
+      const double avg_l = std::max(armLengthMeasurement_.getAvgRightLowerArmLength(), kHumanSegmentEps);
+      radi1 = robotUpperArmLength_ / avg_u;
+      radi2 = robotLowerArmLength_ / avg_l;
+    } else {
+      radi1 = robotUpperArmLength_ / hu;
+      radi2 = robotLowerArmLength_ / hl;
     }
   }
 
-  Eigen::Vector3d scaledElbowPos = shoulderAdaptivePos + radi1 * (elbowPos - humanShoulderOriginPos);
-  Eigen::Vector3d scaledHandPos = scaledElbowPos + radi2 * (handPos - elbowPos);
+  const Eigen::Vector3d upper_arm_vec = elbowPos - humanShoulderOriginPos;
+  const Eigen::Vector3d lower_arm_vec = handPos - elbowPos;
+  const Eigen::Vector3d scaledElbowPos = shoulderAdaptivePos + radi1 * upper_arm_vec;
+  const Eigen::Vector3d scaledHandPos = scaledElbowPos + radi2 * lower_arm_vec;
   return {scaledElbowPos, scaledHandPos};
 }
 
@@ -257,19 +279,18 @@ Eigen::Quaterniond Quest3ArmInfoTransformer::vrQuat2RobotQuat(const Eigen::Quate
 }
 
 bool Quest3ArmInfoTransformer::isOverChest(const Eigen::Vector3d& handPos,
-                                          const std::string& side) const {
+                                           const std::string& side) const {
   if (side == "Left" && handPos.y() < 0) return true;
   if (side == "Right" && handPos.y() > 0) return true;
   return false;
 }
 
 void Quest3ArmInfoTransformer::adaptShoulderWidthAdvanced(
-    Eigen::Vector3d& shoulderPos, const Eigen::Vector3d& elbowPos,
-    const Eigen::Vector3d& handPos, const Eigen::Vector3d& humanShoulderPos,
-    const std::string& side, bool overChest) const {
-  double yDistance = std::abs(handPos.y());
-  Eigen::Vector3d elbowRelativeToShoulder = elbowPos - humanShoulderPos;
-  double elbowAngleHorizontal = std::atan2(elbowRelativeToShoulder.y(), elbowRelativeToShoulder.x());
+    Eigen::Vector3d& shoulderPos, const Eigen::Vector3d& elbowPos, const Eigen::Vector3d& handPos,
+    const Eigen::Vector3d& humanShoulderPos, const std::string& side, bool overChest) const {
+  const double yDistance = std::abs(handPos.y());
+  const Eigen::Vector3d elbowRelativeToShoulder = elbowPos - humanShoulderPos;
+  const double elbowAngleHorizontal = std::atan2(elbowRelativeToShoulder.y(), elbowRelativeToShoulder.x());
 
   double shoulderRotationFactor = 0.0;
   if (side == "Right") {
@@ -283,8 +304,8 @@ void Quest3ArmInfoTransformer::adaptShoulderWidthAdvanced(
   }
   shoulderRotationFactor = std::clamp(shoulderRotationFactor, 0.0, 1.0);
 
-  double shoulderForwardOffset = shoulderRotationFactor * 0.08;
-  double shoulderInwardOffset = shoulderRotationFactor * 0.15;
+  const double shoulderForwardOffset = shoulderRotationFactor * 0.08;
+  const double shoulderInwardOffset = shoulderRotationFactor * 0.15;
   double crossBodyFactor = 0.0;
   if (overChest) {
     crossBodyFactor = std::min(yDistance / shoulderWidth_, 1.0) * 0.08;
@@ -299,15 +320,15 @@ void Quest3ArmInfoTransformer::adaptShoulderWidthAdvanced(
 }
 
 void Quest3ArmInfoTransformer::applyLateralPositionAdjustment(Eigen::Vector3d& handPos,
-                                                             const std::string& side) const {
-  double handToCenterline = std::abs(handPos.y());
+                                                              const std::string& side) const {
+  const double handToCenterline = std::abs(handPos.y());
   if (handPos.x() > 0.15 && handToCenterline < 0.2) {
-    double pullToCenterFactor = (0.2 - handToCenterline) / 0.2;
-    double pullAmount = pullToCenterFactor * 0.05;
+    const double pullToCenterFactor = (0.2 - handToCenterline) / 0.2;
+    const double pullAmount = pullToCenterFactor * 0.05;
     if (side == "Right") {
-      handPos.y() = handPos.y() + pullAmount;
+      handPos.y() += pullAmount;
     } else {
-      handPos.y() = handPos.y() - pullAmount;
+      handPos.y() -= pullAmount;
     }
   }
 }
@@ -443,6 +464,34 @@ void Quest3ArmInfoTransformer::updateJoystickData(float leftTrigger, float leftG
   leftJoystick_.grip = leftGrip;
   rightJoystick_.trigger = rightTrigger;
   rightJoystick_.grip = rightGrip;
+}
+
+void Quest3ArmInfoTransformer::updateRunningGestureState() {
+  // quest3_utils.py: joy_ok_gesture_check — 单侧 [trigger,grip]，OK 要求 trigger>0.5
+  // is_runing_gesture: 左右手 joy_ok 同时成立；max_counts=50
+  constexpr int kMaxCounts = 50;
+  constexpr float kOkTrigger = 0.5f;
+  constexpr float kShotTriggerMax = 0.5f;
+  constexpr float kShotGripMin = 0.8f;
+
+  const bool joy_ok = (leftJoystick_.trigger > kOkTrigger && rightJoystick_.trigger > kOkTrigger);
+  const bool joy_shot = (leftJoystick_.trigger < kShotTriggerMax &&
+                         leftJoystick_.grip > kShotGripMin && rightJoystick_.trigger < kShotTriggerMax &&
+                         rightJoystick_.grip > kShotGripMin);
+
+  if (joy_ok) {
+    ok_gesture_counts_++;
+    shot_gesture_counts_ = 0;
+    if (ok_gesture_counts_ >= kMaxCounts) {
+      isRunning_ = true;
+    }
+  } else if (joy_shot) {
+    shot_gesture_counts_++;
+    ok_gesture_counts_ = 0;
+    if (shot_gesture_counts_ >= kMaxCounts) {
+      isRunning_ = false;
+    }
+  }
 }
 
 Eigen::Matrix3d Quest3ArmInfoTransformer::axisAngleToMatrix(const Eigen::Vector3d& axisAngle) const {

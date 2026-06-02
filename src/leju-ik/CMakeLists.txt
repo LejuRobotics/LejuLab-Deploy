@@ -9,6 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS lejusdk-utils)
+
 find_package(drake CONFIG REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -29,6 +30,7 @@ include_directories(
 
 set(SOURCES
   src/Quest3ArmInfoTransformer.cpp
+  src/QuestArmRobotMapper.cpp
   src/TwoStageTorsoIK.cpp
   src/ArmLengthMeasurement.cpp
   src/Quest3IkAPI.cpp
@@ -37,6 +39,7 @@ set(SOURCES
   src/HandSmoother.cpp
   src/IncrementalControlModule.cpp
   src/Quest3IkIncrementalAPI.cpp
+  src/ArmAbsoluteIK.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
@@ -54,13 +57,24 @@ target_link_libraries(${PROJECT_NAME}
   yaml-cpp
 )
 
+
+# 设置 RPATH 确保运行时能找到 libdrake.so
+get_target_property(_drake_lib drake::drake IMPORTED_LOCATION)
+if(_drake_lib)
+    get_filename_component(_drake_lib_dir "${_drake_lib}" DIRECTORY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        INSTALL_RPATH "${_drake_lib_dir}"
+        BUILD_RPATH   "${_drake_lib_dir}"
+    )
+endif()
+
 #############
 ## Install ##
 #############
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
@@ -73,12 +87,12 @@ install(DIRECTORY config/
   FILES_MATCHING PATTERN "*.yaml"
 )
 install(DIRECTORY include/nlohmann/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}/nlohmann
   FILES_MATCHING PATTERN "*.hpp"
 )
 
 # Tests (Drake 编译较重，默认关闭以加速日常构建)
-option(BUILD_TESTS "Build leju-ik tests" OFF)
-if(BUILD_TESTS)
+option(BUILD_LEJU_IK_TESTS "Build leju-ik tests" OFF)
+if(BUILD_LEJU_IK_TESTS)
   add_subdirectory(test)
 endif()

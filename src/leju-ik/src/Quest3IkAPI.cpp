@@ -59,7 +59,7 @@ bool Quest3IkAPI::buildPlantAndIK(const std::string& urdf_path, const nlohmann::
       drake::multibody::AddMultibodyPlantSceneGraph(diagramBuilder.get(), 0.0);
 
   drake::multibody::Parser parser(&plant);
-  parser.AddModelFromFile(urdf_path);
+  parser.AddModels(urdf_path);
 
   const auto& baseFrame = plant.GetFrameByName("base_link");
   plant.WeldFrames(plant.world_frame(), baseFrame);

@@ -18,7 +18,7 @@ enum ItemMassForceOperation {
 // 物品质量与力请求
 message ItemMassForceRequest {
   ItemMassForceOperation operation = 1; // 操作类型: 获取或设置
-  optional ItemMassForce data = 2;      // 物品质量与力，当操作类型为`Set`时才会设置
+  ItemMassForce data = 2;      // 物品质量与力，当操作类型为`Set`时才会设置
 }
 
 // 物品质量与力响应

@@ -25,9 +25,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/protos_c
 )
 
-# Pre-generated protobuf C++ sources (copied from kuavo-ros-control noitom_hi5_hand_udp_python/protos_c)
+# Pre-generated protobuf C++ sources
 set(PROTO_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/protos_c/hand_pose.pb.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/protos_c/hand_wrench_srv.pb.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/protos_c/robot_info.pb.cc
 )
 
@@ -39,6 +40,7 @@ add_executable(quest_udp_to_dds_node
 add_dependencies(quest_udp_to_dds_node
   ${catkin_EXPORTED_TARGETS}
 )
+
 
 target_link_libraries(quest_udp_to_dds_node
   ${catkin_LIBRARIES}

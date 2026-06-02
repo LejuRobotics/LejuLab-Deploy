@@ -10,14 +10,6 @@
 namespace leju {
 namespace vr_control {
 
-bool QuestVrFSM::isXAPressed(const QuestJoystickData& joy) const {
-  return joy.left_first_button_pressed && joy.right_first_button_pressed;
-}
-
-bool QuestVrFSM::isXBPressed(const QuestJoystickData& joy) const {
-  return joy.left_first_button_pressed && joy.right_second_button_pressed;
-}
-
 QuestVrFSMAction QuestVrFSM::update(const QuestJoystickData& joy, int dt_ms) {
   (void)dt_ms;
   QuestVrFSMAction action;

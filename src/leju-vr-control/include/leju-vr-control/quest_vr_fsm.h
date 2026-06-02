@@ -9,6 +9,8 @@
 #include <lejusdk-vr/data_types.h>
 #include <cstdint>
 
+#include "leju-vr-control/quest_combo.h"
+
 namespace leju {
 namespace vr_control {
 
@@ -45,9 +47,6 @@ class QuestVrFSM {
   QuestVrFSMAction update(const QuestJoystickData& joy, int dt_ms);
 
  private:
-  bool isXAPressed(const QuestJoystickData& joy) const;
-  bool isXBPressed(const QuestJoystickData& joy) const;
-
   int arm_mode_ = 1;  // 站立默认 1（自动摆臂），X+A 一次切到 2（外部控制）
   bool xa_prev_ = false;
   bool xb_prev_ = false;

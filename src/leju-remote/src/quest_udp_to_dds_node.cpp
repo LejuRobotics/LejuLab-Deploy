@@ -1,8 +1,16 @@
 // Quest3 UDP to DDS bridge
 // Receives LejuHandPoseEvent protobuf from Quest3 via UDP, publishes QuestBonePoses and QuestJoysticks via lejusdk-vr
+//
+// 与 motion_capture_ik / ik_ros_uni.py 对齐说明：
+// - ik_ros_uni 里 Quest3ArmInfoTransformer 从 PoseInfoList 按 bone 名取 Chest / *ArmUpper / *ArmLower / *HandPalm（见 quest3_utils.py bone_names）。
+// - 本节点将 protobuf 中第 i 个 pose 按 initBoneNames() 顺序填入 DDS（与 Python bone_names 前 24 项一致；本节点多含 Neck、Head，Chest 仍为索引 23）。
+// - 默认对每帧位置/四元数做「Quest 左手系 → 右手系」重映射（见 processPoseData 内 rx=-lz 等）。若与旧 ROS 桥（未做重映射、由下游解释）不一致，会导致与 ik_ros_uni 行为不同。
+// - 环境变量 QUEST_POSE_COORD_MODE=passthrough 时跳过该重映射，直接使用 protobuf 的 x,y,z 与 qx,qy,qz,qw（用于与 ROS 侧逐帧对比调试）。
 
 #include <hand_pose.pb.h>
 #include <robot_info.pb.h>
+
+using namespace protos;
 
 #include <lejusdk-vr/lejusdk_vr.h>
 
@@ -18,6 +26,7 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
+#include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <iostream>
@@ -83,6 +92,13 @@ class QuestUdpToDdsNode {
       : data_socket_(-1),
         listening_udp_ports_cnt_(0),
         exit_listen_thread_(false) {
+    const char* coord = std::getenv("QUEST_POSE_COORD_MODE");
+    if (coord && std::strcmp(coord, "passthrough") == 0) {
+      pose_coord_passthrough_ = true;
+      std::cout << "[quest_udp_to_dds] QUEST_POSE_COORD_MODE=passthrough — 不重映射骨骼位姿，与默认 remux 二选一用于对齐 ik_ros_uni/ROS 桥\n";
+    } else {
+      std::cout << "[quest_udp_to_dds] QUEST_POSE_COORD_MODE=remux (default) — Quest 左手系→右手系 rx=-lz,ry=-lx,rz=ly\n";
+    }
     initBoneNames();
     if (!vr_api_.initialize()) {
       std::cerr << "Failed to initialize lejusdk-vr" << std::endl;
@@ -342,20 +358,31 @@ class QuestUdpToDdsNode {
       double ly = pose.position().y();
       double lz = pose.position().z();
 
-      // Convert from Quest3 left-handed to right-handed frame
-      double rx = -lz;
-      double ry = -lx;
-      double rz = ly;
-
+      double rx, ry, rz;
       double qx = pose.quaternion().x();
       double qy = pose.quaternion().y();
       double qz = pose.quaternion().z();
       double qw = pose.quaternion().w();
+      double rqx, rqy, rqz, rqw;
 
-      double rqx = -qz;
-      double rqy = -qx;
-      double rqz = qy;
-      double rqw = qw;
+      if (pose_coord_passthrough_) {
+        rx = lx;
+        ry = ly;
+        rz = lz;
+        rqx = qx;
+        rqy = qy;
+        rqz = qz;
+        rqw = qw;
+      } else {
+        // Convert from Quest3 left-handed to right-handed frame（与历史 UDP 桥一致）
+        rx = -lz;
+        ry = -lx;
+        rz = ly;
+        rqx = -qz;
+        rqy = -qx;
+        rqz = qy;
+        rqw = qw;
+      }
 
       leju::vr::Pose p;
       p.x = static_cast<float>(rx);
@@ -486,6 +513,9 @@ class QuestUdpToDdsNode {
   std::vector<std::string> broadcast_ips_;
   std::atomic<int> listening_udp_ports_cnt_;
   std::atomic<bool> exit_listen_thread_;
+
+  /// false：默认 remux；true：QUEST_POSE_COORD_MODE=passthrough，与 ik_ros_uni 若使用「未重映射」的 Pose 时对齐
+  bool pose_coord_passthrough_{false};
 };
 
 int main(int argc, char** argv) {
