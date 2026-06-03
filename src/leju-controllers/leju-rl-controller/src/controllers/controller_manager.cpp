@@ -441,12 +441,6 @@ RobotCmd ControllerManager::update(const RobotState& state,
   vel_cmd.linear_y = command.cmd_vel.linear_y;
   vel_cmd.angular_z = command.cmd_vel.angular_z;
 
-  // 外部控制模式不响应速度
-  auto* arm_ctrl = controller->getArmController();
-  if (arm_ctrl && arm_ctrl->getMode() != ArmControlMode::kAuto) {
-    vel_cmd.setZero();
-  }
-
   // 控制器切换过渡期间不响应速度指令，保持站立状态确保切换安全
   if (transition_.state == SwitchState::kTransitioning) {
     vel_cmd.setZero();

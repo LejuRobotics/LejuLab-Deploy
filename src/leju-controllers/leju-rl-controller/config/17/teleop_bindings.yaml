@@ -79,3 +79,11 @@ quest_bindings:
   #       type: SetArmMode
   #       args:
   #         name: keep_pose
+
+  # -------------------------------------------------------------------------
+  # cmd_stance 手动切换（B 键：0=行走/下蹲 ↔ 1=站立/俯仰）
+  # 与 Joy 手柄 B 键行为一致；B = 右手次按钮(right_second / RIGHT_SECOND)
+  # -------------------------------------------------------------------------
+  - buttons: ["RIGHT_SECOND"]
+    action:
+      type: ToggleCmdStance
