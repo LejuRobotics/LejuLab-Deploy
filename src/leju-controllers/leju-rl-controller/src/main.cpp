@@ -1,6 +1,7 @@
 #include "leju-rl-controller/controllers/controller_manager.h"
 #include "leju-rl-controller/joy_handler.h"
 #include "leju-rl-controller/rl_log.h"
+#include "leju-rl-controller/velocity_manager.h"
 #include "lejusdk-lowlevel/leju_sdk.h"
 
 #include <chrono>
@@ -8,11 +9,12 @@
 #include <string>
 
 void printUsage(const char* program_name) {
-  std::cerr << "Usage: " << program_name << " <config_file>" << std::endl;
+  std::cerr << "Usage: " << program_name << " <config_file> [urdf_path]" << std::endl;
   std::cerr << "  config_file: Path to controller_manager.yaml" << std::endl;
+  std::cerr << "  urdf_path:   Path to robot URDF (for arm gravity compensation)" << std::endl;
   std::cerr << std::endl;
   std::cerr << "Example:" << std::endl;
-  std::cerr << "  " << program_name << " config/46/controller_manager.yaml" << std::endl;
+  std::cerr << "  " << program_name << " config/17/controller_manager.yaml /path/to/biped_s17.urdf" << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -21,6 +23,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::string config_file = argv[1];
+  std::string urdf_path = (argc >= 3) ? argv[2] : "";
 
   try {
     // 1. SDK 初始化
@@ -33,7 +36,13 @@ int main(int argc, char** argv) {
 
     // 2. 控制器管理器初始化
     leju::ControllerManager manager;
-    if (!manager.initialize(config_file)) {
+    leju::VelocityManager velocity_manager;
+    if (!velocity_manager.initializeFromControllerManagerConfig(config_file)) {
+      RL_LOGE("Failed to initialize VelocityManager");
+      return 1;
+    }
+    manager.setVelocityManager(&velocity_manager);
+    if (!manager.initialize(config_file, urdf_path)) {
       RL_LOGE("Failed to initialize ControllerManager");
       return 1;
     }
@@ -42,6 +51,7 @@ int main(int argc, char** argv) {
     // 3. 手柄输入
     leju::JoyHandler joy;
     joy.setCallback([&](const leju::JoyData& data, const leju::JoyData::Buttons& prev) {
+      velocity_manager.onJoyData(data);
       manager.dispatchJoyInput(data, prev);
     });
     joy.start();
@@ -52,6 +62,7 @@ int main(int argc, char** argv) {
     // 5. 主控制循环
     while (manager.isRunning()) {
       auto t = std::chrono::steady_clock::now();
+      velocity_manager.publishResolvedCmdVel();
       manager.update();
       manager.waitNextCycle(t);
     }

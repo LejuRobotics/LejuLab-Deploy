@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>快速入门 &mdash; LejuSDK dbf55ca 文档</title>
+  <title>快速入门 &mdash; LejuSDK 3179b434a0 文档</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                dbf55ca
+                3179b434a0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -53,6 +53,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#id2">环境要求</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id3">依赖安装</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#docker">Docker 运行</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id5">基本使用</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id6">1. 设置机器人版本（必选）</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#mujoco">4. 启动仿真（MuJoCo）</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#quest3-vr">Quest3 VR 控制快速上手</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id9">遥控器操作</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id10">键盘映射（无手柄时）</a></li>
 </ul>
@@ -123,6 +125,37 @@
 <li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-highlevel/index.html#id1">示例</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/lejusdk-vr/index.html">lejusdk-vr</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/api.html">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/api.html#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/lejusdk-vr/examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/lejusdk-vr/examples.html#id6">交互式控制器命令行工具</a></li>
 </ul>
 </li>
 </ul>
@@ -214,7 +247,6 @@
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">快速入门</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/getting_started.rst.txt" rel="nofollow"> 查看页面源码</a>
       </li>
   </ul>
   <hr/>
@@ -234,11 +266,12 @@
 </section>
 <section id="id3">
 <h2>依赖安装<a class="headerlink" href="#id3" title="此标题的永久链接"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>build-essential<span class="w"> </span>cmake<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>libacl1-dev<span class="w"> </span>libncurses5-dev
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./scripts/install_third_party.sh
 </pre></div>
 </div>
+<p>该脚本会统一安装当前仓库通依赖的第三方库，包括 <code class="docutils literal notranslate"><span class="pre">OpenVINO</span></code>、<code class="docutils literal notranslate"><span class="pre">Drake</span></code>、
+<code class="docutils literal notranslate"><span class="pre">Eigen3</span></code>、<code class="docutils literal notranslate"><span class="pre">yaml-cpp</span></code>、<code class="docutils literal notranslate"><span class="pre">Protobuf</span></code>、<code class="docutils literal notranslate"><span class="pre">GLFW</span></code>、<code class="docutils literal notranslate"><span class="pre">LCM</span></code>、<code class="docutils literal notranslate"><span class="pre">gflags</span></code>、
+<code class="docutils literal notranslate"><span class="pre">libusb</span></code>、<code class="docutils literal notranslate"><span class="pre">modbus</span></code> 等，并自动写入 <code class="docutils literal notranslate"><span class="pre">Drake</span></code> / <code class="docutils literal notranslate"><span class="pre">OpenVINO</span></code> 所需环境变量。</p>
 </section>
 <section id="id4">
 <h2>编译<a class="headerlink" href="#id4" title="此标题的永久链接"></a></h2>
@@ -250,6 +283,42 @@ git<span class="w"> </span>clone<span class="w"> </span>https://gitee.com/leju-r
 catkin<span class="w"> </span>build
 </pre></div>
 </div>
+</section>
+<section id="docker">
+<h2>Docker 运行<a class="headerlink" href="#docker" title="此标题的永久链接"></a></h2>
+<p>如果希望直接在容器中运行仿真，可以使用仓库自带的 Docker 脚本。普通模式和 GPU 模式二选一使用：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 普通模式</span>
+./docker/run.sh
+
+<span class="c1"># GPU 模式</span>
+./docker/run_with_gpu.sh
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>首次运行时，脚本会自动下载基础镜像并构建本地 <code class="docutils literal notranslate"><span class="pre">lejulab</span></code> 镜像</p></li>
+<li><p>在普通模式和 GPU 模式之间切换时，按提示删除旧容器后再启动另一种模式</p></li>
+<li><p>如果主机还没有配置好 NVIDIA Docker 环境，<code class="docutils literal notranslate"><span class="pre">./docker/run_with_gpu.sh</span></code> 会给出提示并协助完成配置</p></li>
+</ul>
+<p>使用两个终端启动仿真：</p>
+<p>终端 1：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./docker/run.sh
+<span class="c1"># 或 ./docker/run_with_gpu.sh</span>
+
+<span class="c1"># 使用共享内存版 CycloneDDS 配置</span>
+./src/leju_launch/scripts/start_roudi.sh
+</pre></div>
+</div>
+<p>终端 2：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./docker/run.sh
+<span class="c1"># 或 ./docker/run_with_gpu.sh</span>
+
+catkin<span class="w"> </span>build
+<span class="c1"># Docker 中默认配置 zsh</span>
+<span class="nb">source</span><span class="w"> </span>devel/setup.zsh
+roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>load_mujoco_sim.launch
+</pre></div>
+</div>
+<p>在 Docker 中运行时，不需要执行 <code class="docutils literal notranslate"><span class="pre">./src/leju_launch/scripts/setup_cyclonedds_config.sh</span></code>。</p>
 </section>
 <section id="iceoryx">
 <h2>部署 iceoryx 共享内存（首次使用需执行）<a class="headerlink" href="#iceoryx" title="此标题的永久链接"></a></h2>
@@ -305,6 +374,115 @@ catkin<span class="w"> </span>build
 </pre></div>
 </div>
 </section>
+</section>
+<section id="quest3-vr">
+<h2>Quest3 VR 控制快速上手<a class="headerlink" href="#quest3-vr" title="此标题的永久链接"></a></h2>
+<p>Quest3 VR 控制面向 <code class="docutils literal notranslate"><span class="pre">Kuavo4Pro(46)</span></code> 与 <code class="docutils literal notranslate"><span class="pre">Kuavo5(52)</span></code>。当前 <code class="docutils literal notranslate"><span class="pre">Roban(14)</span></code> 不开放
+<code class="docutils literal notranslate"><span class="pre">leju-vr-control</span></code> 节点。</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 30.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>机型</p></th>
+<th class="head"><p>手臂控制</p></th>
+<th class="head"><p>头部控制</p></th>
+<th class="head"><p>速度控制</p></th>
+<th class="head"><p>腰部控制</p></th>
+<th class="head"><p>备注</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Kuavo4Pro(46)</span></code></p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>不支持</p></td>
+<td><p>无腰部自由度</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Kuavo5(52)</span></code></p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>支持</p></td>
+<td><p>左手 <code class="docutils literal notranslate"><span class="pre">Y</span></code> 触摸时可控腰</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Roban(14)</span></code></p></td>
+<td><p>不开放</p></td>
+<td><p>不开放</p></td>
+<td><p>不开放</p></td>
+<td><p>不开放</p></td>
+<td><p>当前节点启动即退出</p></td>
+</tr>
+</tbody>
+</table>
+<p>启动方式：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>su<span class="w">  </span><span class="c1"># 实物需要 root 权限</span>
+<span class="nb">source</span><span class="w"> </span>devel/setup.bash
+
+<span class="c1"># kuavo5</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">52</span>
+roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>vr_teleop.launch
+
+<span class="c1"># kuavo4pro</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">ROBOT_VERSION</span><span class="o">=</span><span class="m">46</span>
+roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>vr_teleop.launch
+</pre></div>
+</div>
+<p>如需手动指定 Quest3 的 IP，可追加：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>roslaunch<span class="w"> </span>leju_launch<span class="w"> </span>vr_teleop.launch<span class="w"> </span>quest_ip:<span class="o">=</span><span class="m">192</span>.168.1.100
+</pre></div>
+</div>
+<p>手臂模式切换：</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 10.0%" />
+<col style="width: 68.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>模式</p></th>
+<th class="head"><p>值</p></th>
+<th class="head"><p>效果</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">KeepPose</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0</span></code></p></td>
+<td><p>保持当前手臂姿态，适合临时停在当前位置</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Auto</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>交还给默认自动行为，手臂不再接受当前 VR 增量控制</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">External</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">2</span></code></p></td>
+<td><p>进入 VR 外部控制模式，按住对应 <code class="docutils literal notranslate"><span class="pre">grip</span></code> 后可进行增量控制</p></td>
+</tr>
+</tbody>
+</table>
+<p>常用操作：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">X+A</span></code>：在 <code class="docutils literal notranslate"><span class="pre">Auto(1)</span></code> 与 <code class="docutils literal notranslate"><span class="pre">External(2)</span></code> 之间切换</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X+B</span></code>：在 <code class="docutils literal notranslate"><span class="pre">KeepPose(0)</span></code> 与 <code class="docutils literal notranslate"><span class="pre">External(2)</span></code> 之间切换</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X+Y</span></code>：进入安全停机/关节松弛状态</p></li>
+<li><p>左/右 <code class="docutils literal notranslate"><span class="pre">grip</span></code>：对应手臂进入增量控制</p></li>
+<li><p>头部：由头显姿态驱动</p></li>
+<li><p>左摇杆：发布原始范围 <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code> 的平移速度指令，上推前进、下拉后退、左推左移、右推右移</p></li>
+<li><p>右摇杆：发布原始范围 <code class="docutils literal notranslate"><span class="pre">[-1,</span> <span class="pre">1]</span></code> 的旋转速度指令，左推左转、右推右转</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">Kuavo5(52)</span></code> 额外支持腰部手柄控制：</p>
+<ul class="simple">
+<li><p>左手只触摸 <code class="docutils literal notranslate"><span class="pre">Y</span></code></p></li>
+<li><p>右摇杆左右绝对控制腰部 yaw</p></li>
+<li><p>触摸 <code class="docutils literal notranslate"><span class="pre">Y</span></code> 时 walking 被禁用</p></li>
+<li><p>松开 <code class="docutils literal notranslate"><span class="pre">Y</span></code> 后腰部回零</p></li>
+</ul>
 </section>
 <section id="id9">
 <h2>遥控器操作<a class="headerlink" href="#id9" title="此标题的永久链接"></a></h2>

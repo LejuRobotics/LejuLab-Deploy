@@ -89,8 +89,8 @@ CSP 模式
       q_target  : Target position (rad)
       v_target  : Target velocity (rad/s)
       tau_ff    : Feedforward torque (N.m)
-      Kp        : Position gain, Simulation: N.m/rad, Real robot: driver internal unit
-      Kd        : Velocity gain, Simulation: N.m.s/rad, Real robot: driver internal unit
+      Kp        : Position gain (N.m/rad)
+      Kd        : Velocity gain (N.m.s/rad)
 
 参数对应关系：
 
@@ -112,10 +112,10 @@ CSP 模式
      - 前馈力矩 (N·m)
    * - Kp
      - ``cmd.kp``
-     - 位置增益，仿真: N·m/rad，实物: 驱动器内部单位，CST 模式下必须为 0
+     - 位置增益 (N·m/rad)，CST 模式下必须为 0
    * - Kd
      - ``cmd.kd``
-     - 速度增益，仿真: N·m·s/rad，实物: 驱动器内部单位，CST 模式下必须为 0
+     - 速度增益 (N·m·s/rad)，CST 模式下必须为 0
 
 使用方法
 ^^^^^^^^
@@ -136,8 +136,8 @@ CSP 模式
        cmd.q[i] = target_position[i];  // 目标位置 (rad)
        cmd.v[i] = 0.0;                 // 目标速度 (rad/s)
        cmd.tau[i] = 0.0;               // 前馈力矩 (N·m)
-       cmd.kp[i] = 100.0;              // 位置增益，仿真: N·m/rad，实物: 驱动器内部单位
-       cmd.kd[i] = 10.0;               // 速度增益，仿真: N·m·s/rad，实物: 驱动器内部单位
+       cmd.kp[i] = 100.0;              // 位置增益 (N·m/rad)
+       cmd.kd[i] = 10.0;               // 速度增益 (N·m·s/rad)
        cmd.modes[i] = static_cast<uint8_t>(MotorControlMode::CSP);
    }
 
@@ -145,18 +145,14 @@ CSP 模式
 
 .. warning::
 
-   实物运行时，CSP 模式的 Kp/Kd 参数需要设置成驱动器的 Kp/Kd 参数，非国际单位。
+   CSP 模式下，用户层的 Kp/Kd 参数需要设置成国际单位的值 (N·m/rad, N·m·s/rad)
 
 .. warning::
+   .. note:: 已实现
+   .. raw:: html
 
-   我们会在下一个版本补充用户层 Kp/Kd 到内部转换，届时用户只需要关心用户层的 Kp/Kd 即可。
+      <del>我们会在下一个版本补充用户层 Kp/Kd 到内部转换，届时用户只需要关心用户层的 Kp/Kd 即可。</del>
 
-.. warning::
-
-   由于上述因素，仿真和实物上的 CSP 运行使用 Kp/Kd 会有所差异：
-
-   - **仿真时**：使用用户层国际单位的 Kp/Kd (N·m/rad, N·m·s/rad)
-   - **实物时**：使用驱动器内部的 Kp/Kd
 
 CST 模式
 --------

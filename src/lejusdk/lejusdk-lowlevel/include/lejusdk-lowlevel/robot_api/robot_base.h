@@ -49,6 +49,18 @@ public:
   /// @brief 获取所有关节名称
   virtual std::vector<std::string> getMotorNames() const = 0;
 
+  /// @brief 获取手臂关节名称（左右臂）
+  virtual std::vector<std::string> getArmJointNames() const = 0;
+
+  /// @brief 获取腰部关节名称
+  virtual std::vector<std::string> getWaistJointNames() const = 0;
+
+  /// @brief 获取头部关节名称
+  virtual std::vector<std::string> getHeadJointNames() const = 0;
+
+  /// @brief 获取腿部关节名称（左右腿）
+  virtual std::vector<std::string> getLegJointNames() const = 0;
+
   /// @brief 获取机器人版本信息
   const RobotVersion& getRobotVersion() const { return robot_version_; }
 
@@ -95,6 +107,9 @@ public:
   /// @brief 底层驱动或仿真程序使用：发布传感器数据，订阅控制指令
   /// @{
 
+  /// @brief 订阅停止指令
+  virtual void subscribeStopRobot(const StringDataCallback& callback);
+
   /// @brief 订阅控制指令
   virtual void subscribeRobotCmd(const RobotCmdCallback& callback);
 
@@ -125,6 +140,7 @@ protected:
   internal::CallbackVector<JoyDataCallback>* joy_data_callbacks_;
   internal::CallbackVector<HwStateCallback>* hw_state_callbacks_;
   internal::CallbackVector<RobotCmdCallback>* robot_cmd_callbacks_;
+  internal::CallbackVector<StringDataCallback>* stop_robot_callbacks_;
 
   ///////////////////////////////////////////////////////////////////////////
   // 机器人版本信息

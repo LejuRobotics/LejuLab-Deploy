@@ -15,11 +15,25 @@ dds:
     - "/rt/joy"
     - "/rt/hardware/state"
     - "/rt/hardware/stop"
+    # VR 外部控制指令
+    - "/rt/arm_trajectory"
+    - "/rt/head_trajectory"
+    - "/rt/waist_trajectory"
+    - "/rt/cmd_vel"
+    # VR RPC 服务 (Request/Reply)
+    - "rq/ControllerService/.*/Request"
+    - "rr/ControllerService/.*/Reply"
+    # Quest VR 遥操作
+    - "/rt/quest/bone_poses"
+    - "/rt/quest/joysticks"
     # 控制器观测数据（匹配所有控制器名称）
     - "/.*/obs/.*"
     - "/.*/observations"
     - "/.*/q_target"
     - "/.*/motion_frame"
+    # 部位控制器模式
+    - "/.*/arm_mode"
+    - "/.*/waist_mode"
 
 # Output Configuration
 output:

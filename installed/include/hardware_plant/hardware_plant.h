@@ -313,6 +313,21 @@ private:
     
     /* only used in half-up body mode */
     std::unique_ptr<std::array<double, 12>> stance_leg_joint_pos_ = nullptr;
+
+    /**
+     * @brief 用户层 Kp/Kd 转换为电机层 Kp/Kd
+     * 
+     * @param joint_index 关节索引
+     * @param kp_user     用户层 Kp，单位：N·m/rad
+     * @param kd_user     用户层 Kd，单位：N·m·s/rad
+     * @param kp_motor    输出: 电机层 Kp
+     * @param kd_motor    输出: 电机层 Kd
+     */
+    void convertUserKpKdToMotorGain(int joint_index,
+                                    double kp_user,
+                                    double kd_user,
+                                    double &kp_motor,
+                                    double &kd_motor) const;
 };
 
   void Invt_imudate(SensorData_t &sensor_data);

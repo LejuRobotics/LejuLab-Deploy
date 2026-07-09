@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>leju-vr-control</name>
+  <version>0.1.0</version>
+  <description>Unified VR control node - subscribes Quest data via lejusdk-vr, runs head/waist/arm solvers, publishes via lejusdk-vr</description>
+
+  <maintainer email="lab@todo.todo">lab</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>yaml-cpp</build_depend>
+  <exec_depend>yaml-cpp</exec_depend>
+  <depend>lejusdk-lowlevel</depend>
+  <depend>lejusdk-vr</depend>
+  <depend>leju-ik</depend>
+  <depend>lejusdk-utils</depend>
+
+  <export>
+  </export>
+</package>

@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="zh-CN" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lejusdk-vr API &mdash; LejuSDK 3179b434a0 文档</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/translations.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="搜索" href="../../search.html" />
+    <link rel="next" title="lejusdk-vr 示例" href="examples.html" />
+    <link rel="prev" title="lejusdk-vr 数据类型" href="datatypes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            LejuSDK
+          </a>
+              <div class="version">
+                3179b434a0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="搜索文档" aria-label="搜索文档" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="导航菜单">
+              <p class="caption" role="heading"><span class="caption-text">目录</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">快速入门</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id2">环境要求</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id3">依赖安装</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id4">编译</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#docker">Docker 运行</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#iceoryx">部署 iceoryx 共享内存（首次使用需执行）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id5">基本使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id6">1. 设置机器人版本（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id7">2. 加载工作空间（必选）</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id8">3. 启动实物</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#mujoco">4. 启动仿真（MuJoCo）</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#quest3-vr">Quest3 VR 控制快速上手</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../getting_started.html#id9">遥控器操作</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../getting_started.html#id10">键盘映射（无手柄时）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">模块列表</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-utils/index.html">lejusdk-utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-utils/api.html">lejusdk-utils API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversion">RobotVersion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#robotversions">RobotVersions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#kuavo">Kuavo 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#roban">Roban 系列</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id1">Kuavo 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id2">Roban 足式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id3">Kuavo 轮式机器人检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id4">产品系列检测宏</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id5">时间工具函数</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#loop">Loop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-utils/api.html#id6">日志宏</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-lowlevel/index.html">lejusdk-lowlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html">lejusdk-lowlevel 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#motorcontrolmode">MotorControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#hardwarestate">HardwareState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#robotstate">RobotState</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#robotcmd">RobotCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#imudata">ImuData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#joydata">JoyData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/datatypes.html#stringdata">StringData</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html">电机控制模式 (CSP/CST)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#id1">概述</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#csp">CSP 模式</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/control_modes.html#cst">CST 模式</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/api.html">lejusdk-lowlevel API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#globalrobot">GlobalRobot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#robotbaseapi">RobotBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#kuavohumanoid">KuavoHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#robanhumanoid">RobanHumanoid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/api.html#topiclogger">TopicLogger</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-lowlevel/examples.html">lejusdk-lowlevel 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#imu">IMU 数据订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id1">关节状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id2">硬件状态订阅</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id3">控制指令发布</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-lowlevel/examples.html#id4">综合控制示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../lejusdk-highlevel/index.html">lejusdk-highlevel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../lejusdk-highlevel/index.html#id1">示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../lejusdk-highlevel/examples.html">lejusdk-highlevel 示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">lejusdk-vr</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="datatypes.html">lejusdk-vr 数据类型</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#pose">Pose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#questboneposesdata">QuestBonePosesData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#questjoystickdata">QuestJoystickData</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#jointtrajectorypoint">JointTrajectoryPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#velocitycmd">VelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#vrvelocitycmd">VrVelocityCmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#controlmode">ControlMode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="datatypes.html#controllerstate">ControllerState</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">lejusdk-vr API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#vrbaseapi">VRBaseAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kuavovrapi">KuavoVRAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#robanvrapi">RobanVRAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">lejusdk-vr 示例</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id1">初始化与关闭</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#kuavo">Kuavo 手臂关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id2">速度指令</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id3">查询控制器状态</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id4">头部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id5">腰部关节控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#roban">Roban 机器人手臂控制</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.html#id6">交互式控制器命令行工具</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../logging-and-debugging/index.html">日志与调试数据分析</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html">日志数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#stdout">stdout 日志</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/stdout_log.html#mcap">MCAP 录制数据</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/recorder.html">录制工具使用</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id2">命令行用法</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id3">基本录制（默认域 0）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id">指定域 ID 与录制时长（秒）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id4">使用配置文件（可配置话题白名单/黑名单等）</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id5">详细日志输出</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id6">命令行参数</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id7">配置文件</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id8">配置文件结构</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id9">配置项说明</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id10">使用示例</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../logging-and-debugging/recorder.html#id11">配置文件路径</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html">Foxglove 分析数据</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id1">可视化数据</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id2">使用预定义布局</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id3">数据分析</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/foxglove_usage.html#id4">参考</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html">MCAP 数据格式</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id1">文件结构</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id2">编码格式</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../writing_controllers.html">控制器实践</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id2">概述</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id3">快速开始</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id4">控制器架构</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id5">关键设计要点</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id6">配置文件参数说明</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id7">基础配置</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-robot">机器人参数 (env.robot)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#env-observations">观测配置 (env.observations)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#command-range">命令范围 (command_range)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#arm-controller">手臂控制器 (arm_controller)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#cmd-stance">cmd_stance 配置</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../writing_controllers.html#id8">控制器实践</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id9">线程安全</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id10">硬件状态检查</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id11">控制频率管理</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../writing_controllers.html#id12">配置加载示例</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="移动版导航菜单" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">LejuSDK</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="页面导航">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">模块列表</a></li>
+          <li class="breadcrumb-item"><a href="index.html">lejusdk-vr</a></li>
+      <li class="breadcrumb-item active">lejusdk-vr API</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lejusdk-vr-api">
+<h1>lejusdk-vr API<a class="headerlink" href="#lejusdk-vr-api" title="此标题的永久链接"></a></h1>
+<p>VR 控制 API 参考，提供关节指令发布、速度指令发布、控制模式切换等接口。</p>
+<section id="vrbaseapi">
+<h2>VRBaseAPI<a class="headerlink" href="#vrbaseapi" title="此标题的永久链接"></a></h2>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPIE">
+<span id="_CPPv3N4leju2vr9VRBaseAPIE"></span><span id="_CPPv2N4leju2vr9VRBaseAPIE"></span><span id="leju::vr::VRBaseAPI"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VRBaseAPI</span></span></span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPIE" title="永久链接至目标"></a><br /></dt>
+<dd><p>VR 控制 API 基类 </p>
+<p>提供 VR 控制的通用接口实现，通过 VRCommunication 单例与机器人通信。 主要功能包括：<ul class="simple">
+<li><p>关节指令发布/订阅（手臂、头部、腰部）</p></li>
+<li><p>速度指令发布</p></li>
+<li><p>控制器切换与模式设置</p></li>
+</ul>
+</p>
+<p>子类（KuavoVRAPI、RobanVRAPI）通过指定 <a class="reference internal" href="../lejusdk-utils/api.html#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 来区分机器人类型。 </p>
+<p>Subclassed by <a class="reference internal" href="#classleju_1_1vr_1_1KuavoVRAPI"><span class="std std-ref">leju::vr::KuavoVRAPI</span></a>, <a class="reference internal" href="#classleju_1_1vr_1_1RobanVRAPI"><span class="std std-ref">leju::vr::RobanVRAPI</span></a></p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK12RobotVersion">
+<span id="_CPPv3N4leju2vr9VRBaseAPI9VRBaseAPIERK12RobotVersion"></span><span id="_CPPv2N4leju2vr9VRBaseAPI9VRBaseAPIERK12RobotVersion"></span><span id="leju::vr::VRBaseAPI::VRBaseAPI__RobotVersionCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1afea25dd6bcd11720020ecefee6f6f7fc"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">VRBaseAPI</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../lejusdk-utils/api.html#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">version</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>构造函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>version</strong> – 机器人版本 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK9VRBaseAPI">
+<span id="_CPPv3N4leju2vr9VRBaseAPI9VRBaseAPIERK9VRBaseAPI"></span><span id="_CPPv2N4leju2vr9VRBaseAPI9VRBaseAPIERK9VRBaseAPI"></span><span id="leju::vr::VRBaseAPI::VRBaseAPI__VRBaseAPICR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a1020413401f5cc1d6273ec49c5cf85c4"></span><span class="sig-name descname"><span class="n"><span class="pre">VRBaseAPI</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK9VRBaseAPI" title="leju::vr::VRBaseAPI::VRBaseAPI"><span class="n"><span class="pre">VRBaseAPI</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI9VRBaseAPIERK9VRBaseAPI" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁用拷贝 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI10initializeEv">
+<span id="_CPPv3N4leju2vr9VRBaseAPI10initializeEv"></span><span id="_CPPv2N4leju2vr9VRBaseAPI10initializeEv"></span><span id="leju::vr::VRBaseAPI::initialize"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a658728bfe324822c68c5a743c0b85d20"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">initialize</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI10initializeEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>初始化 VR API </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI8shutdownEv">
+<span id="_CPPv3N4leju2vr9VRBaseAPI8shutdownEv"></span><span id="_CPPv2N4leju2vr9VRBaseAPI8shutdownEv"></span><span id="leju::vr::VRBaseAPI::shutdown"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ab24061a256b1662326272405147bdf50"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shutdown</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI8shutdownEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>关闭 VR API，释放资源 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju2vr9VRBaseAPI13isInitializedEv">
+<span id="_CPPv3NK4leju2vr9VRBaseAPI13isInitializedEv"></span><span id="_CPPv2NK4leju2vr9VRBaseAPI13isInitializedEv"></span><span id="leju::vr::VRBaseAPI::isInitializedC"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a548a40887951938c6a9590191cdd3f60"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isInitialized</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju2vr9VRBaseAPI13isInitializedEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>检查是否已初始化 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>true 已初始化，false 未初始化 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI18publishArmJointCmdERK20JointTrajectoryPoint">
+<span id="_CPPv3N4leju2vr9VRBaseAPI18publishArmJointCmdERK20JointTrajectoryPoint"></span><span id="_CPPv2N4leju2vr9VRBaseAPI18publishArmJointCmdERK20JointTrajectoryPoint"></span><span id="leju::vr::VRBaseAPI::publishArmJointCmd__JointTrajectoryPointCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a2af0f6b75176f3cc732443857d88277b"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishArmJointCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPointE" title="leju::vr::JointTrajectoryPoint"><span class="n"><span class="pre">JointTrajectoryPoint</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI18publishArmJointCmdERK20JointTrajectoryPoint" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布手臂关节指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cmd</strong> – 关节指令（位置、速度、加速度） </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI19publishHeadJointCmdERK20JointTrajectoryPoint">
+<span id="_CPPv3N4leju2vr9VRBaseAPI19publishHeadJointCmdERK20JointTrajectoryPoint"></span><span id="_CPPv2N4leju2vr9VRBaseAPI19publishHeadJointCmdERK20JointTrajectoryPoint"></span><span id="leju::vr::VRBaseAPI::publishHeadJointCmd__JointTrajectoryPointCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1adcec8610c664ed0c46e19fe2ea550e77"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishHeadJointCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPointE" title="leju::vr::JointTrajectoryPoint"><span class="n"><span class="pre">JointTrajectoryPoint</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI19publishHeadJointCmdERK20JointTrajectoryPoint" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布头部关节指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cmd</strong> – 关节指令（位置、速度、加速度） </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI20publishWaistJointCmdERK20JointTrajectoryPoint">
+<span id="_CPPv3N4leju2vr9VRBaseAPI20publishWaistJointCmdERK20JointTrajectoryPoint"></span><span id="_CPPv2N4leju2vr9VRBaseAPI20publishWaistJointCmdERK20JointTrajectoryPoint"></span><span id="leju::vr::VRBaseAPI::publishWaistJointCmd__JointTrajectoryPointCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ac24cfbe725368847c0520944454919f4"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishWaistJointCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr20JointTrajectoryPointE" title="leju::vr::JointTrajectoryPoint"><span class="n"><span class="pre">JointTrajectoryPoint</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI20publishWaistJointCmdERK20JointTrajectoryPoint" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布腰部关节指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cmd</strong> – 关节指令（位置、速度、加速度） </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI18publishVelocityCmdERK11VelocityCmd">
+<span id="_CPPv3N4leju2vr9VRBaseAPI18publishVelocityCmdERK11VelocityCmd"></span><span id="_CPPv2N4leju2vr9VRBaseAPI18publishVelocityCmdERK11VelocityCmd"></span><span id="leju::vr::VRBaseAPI::publishVelocityCmd__VelocityCmdCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a10a26ac0d7a385ae576ac994ac57c129"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishVelocityCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr11VelocityCmdE" title="leju::vr::VelocityCmd"><span class="n"><span class="pre">VelocityCmd</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI18publishVelocityCmdERK11VelocityCmd" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布底盘速度指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cmd</strong> – 控制器最终速度指令（线速度、角速度） </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI20publishVrVelocityCmdERK13VrVelocityCmd">
+<span id="_CPPv3N4leju2vr9VRBaseAPI20publishVrVelocityCmdERK13VrVelocityCmd"></span><span id="_CPPv2N4leju2vr9VRBaseAPI20publishVrVelocityCmdERK13VrVelocityCmd"></span><span id="leju::vr::VRBaseAPI::publishVrVelocityCmd__VrVelocityCmdCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a42ed544d7c7030e2a95c3fd90579e6bc"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishVrVelocityCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr13VrVelocityCmdE" title="leju::vr::VrVelocityCmd"><span class="n"><span class="pre">VrVelocityCmd</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI20publishVrVelocityCmdERK13VrVelocityCmd" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布 VR 速度输入 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cmd</strong> – VR 输入速度指令（线速度、角速度） </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI21publishQuestBonePosesERK18QuestBonePosesData">
+<span id="_CPPv3N4leju2vr9VRBaseAPI21publishQuestBonePosesERK18QuestBonePosesData"></span><span id="_CPPv2N4leju2vr9VRBaseAPI21publishQuestBonePosesERK18QuestBonePosesData"></span><span id="leju::vr::VRBaseAPI::publishQuestBonePoses__QuestBonePosesDataCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ab86b3c7a1b9babd9fc5c983a40567f2d"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishQuestBonePoses</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr18QuestBonePosesDataE" title="leju::vr::QuestBonePosesData"><span class="n"><span class="pre">QuestBonePosesData</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">data</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI21publishQuestBonePosesERK18QuestBonePosesData" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布 Quest3 骨骼位姿数据 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – Quest 骨骼位姿 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI24publishQuestJoystickDataERK17QuestJoystickData">
+<span id="_CPPv3N4leju2vr9VRBaseAPI24publishQuestJoystickDataERK17QuestJoystickData"></span><span id="_CPPv2N4leju2vr9VRBaseAPI24publishQuestJoystickDataERK17QuestJoystickData"></span><span id="leju::vr::VRBaseAPI::publishQuestJoystickData__QuestJoystickDataCR"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a3bb332f03d536a704fe9eeac9778e39f"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishQuestJoystickData</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr17QuestJoystickDataE" title="leju::vr::QuestJoystickData"><span class="n"><span class="pre">QuestJoystickData</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">data</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI24publishQuestJoystickDataERK17QuestJoystickData" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布 Quest3 手柄数据 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – Quest 手柄数据 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI20subscribeArmJointCmdE21ArmTrajectoryCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI20subscribeArmJointCmdE21ArmTrajectoryCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI20subscribeArmJointCmdE21ArmTrajectoryCallback"></span><span id="leju::vr::VRBaseAPI::subscribeArmJointCmd__ArmTrajectoryCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a3b29142b462421dc76282d7a66f7f116"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeArmJointCmd</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">ArmTrajectoryCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI20subscribeArmJointCmdE21ArmTrajectoryCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅手臂关节指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到指令时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI21subscribeHeadJointCmdE22HeadTrajectoryCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI21subscribeHeadJointCmdE22HeadTrajectoryCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI21subscribeHeadJointCmdE22HeadTrajectoryCallback"></span><span id="leju::vr::VRBaseAPI::subscribeHeadJointCmd__HeadTrajectoryCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1aa13928e7b46f5b14f8437788dc19c8b5"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeHeadJointCmd</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">HeadTrajectoryCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI21subscribeHeadJointCmdE22HeadTrajectoryCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅头部关节指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到指令时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI22subscribeWaistJointCmdE23WaistTrajectoryCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI22subscribeWaistJointCmdE23WaistTrajectoryCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI22subscribeWaistJointCmdE23WaistTrajectoryCallback"></span><span id="leju::vr::VRBaseAPI::subscribeWaistJointCmd__WaistTrajectoryCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a5eaa0bbea19446acf6cf2964e092d36c"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeWaistJointCmd</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">WaistTrajectoryCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI22subscribeWaistJointCmdE23WaistTrajectoryCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅腰部关节指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到指令时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI20subscribeVelocityCmdE19VelocityCmdCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI20subscribeVelocityCmdE19VelocityCmdCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI20subscribeVelocityCmdE19VelocityCmdCallback"></span><span id="leju::vr::VRBaseAPI::subscribeVelocityCmd__VelocityCmdCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ac5aa68c6580ad6dc1240367bb177b34a"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeVelocityCmd</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">VelocityCmdCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI20subscribeVelocityCmdE19VelocityCmdCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅速度指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到指令时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI22subscribeVrVelocityCmdE21VrVelocityCmdCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI22subscribeVrVelocityCmdE21VrVelocityCmdCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI22subscribeVrVelocityCmdE21VrVelocityCmdCallback"></span><span id="leju::vr::VRBaseAPI::subscribeVrVelocityCmd__VrVelocityCmdCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ae959d50227f99e9baf933fd7a51f8654"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeVrVelocityCmd</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">VrVelocityCmdCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI22subscribeVrVelocityCmdE21VrVelocityCmdCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅 VR 速度指令 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到指令时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI23subscribeQuestBonePosesE22QuestBonePosesCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI23subscribeQuestBonePosesE22QuestBonePosesCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI23subscribeQuestBonePosesE22QuestBonePosesCallback"></span><span id="leju::vr::VRBaseAPI::subscribeQuestBonePoses__QuestBonePosesCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a90cc91cdf70fed9ecfcd825855a63f9e"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeQuestBonePoses</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">QuestBonePosesCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI23subscribeQuestBonePosesE22QuestBonePosesCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅 Quest3 骨骼位姿数据 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到数据时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI26subscribeQuestJoystickDataE25QuestJoystickDataCallback">
+<span id="_CPPv3N4leju2vr9VRBaseAPI26subscribeQuestJoystickDataE25QuestJoystickDataCallback"></span><span id="_CPPv2N4leju2vr9VRBaseAPI26subscribeQuestJoystickDataE25QuestJoystickDataCallback"></span><span id="leju::vr::VRBaseAPI::subscribeQuestJoystickData__QuestJoystickDataCallback"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a98826c43530dd1049e3e2f679a203133"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeQuestJoystickData</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">QuestJoystickDataCallback</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI26subscribeQuestJoystickDataE25QuestJoystickDataCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅 Quest3 手柄数据 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 接收到数据时的回调函数 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI16switchControllerERKNSt6stringEi">
+<span id="_CPPv3N4leju2vr9VRBaseAPI16switchControllerERKNSt6stringEi"></span><span id="_CPPv2N4leju2vr9VRBaseAPI16switchControllerERKNSt6stringEi"></span><span id="leju::vr::VRBaseAPI::switchController__ssCR.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1af61955bc7d5fc7ff570a6a03351acbec"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">switchController</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">controller_name</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI16switchControllerERKNSt6stringEi" title="永久链接至目标"></a><br /></dt>
+<dd><p>切换控制器 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>controller_name</strong> – 目标控制器名称 </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI10setArmModeE11ControlModei">
+<span id="_CPPv3N4leju2vr9VRBaseAPI10setArmModeE11ControlModei"></span><span id="_CPPv2N4leju2vr9VRBaseAPI10setArmModeE11ControlModei"></span><span id="leju::vr::VRBaseAPI::setArmMode__ControlMode.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1ac9deb9d716f99ac34010982f5291e66e"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setArmMode</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">mode</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI10setArmModeE11ControlModei" title="永久链接至目标"></a><br /></dt>
+<dd><p>设置手臂控制模式 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> – 控制模式（kKeepPose/kAuto/kExternal） </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI11setHeadModeE11ControlModei">
+<span id="_CPPv3N4leju2vr9VRBaseAPI11setHeadModeE11ControlModei"></span><span id="_CPPv2N4leju2vr9VRBaseAPI11setHeadModeE11ControlModei"></span><span id="leju::vr::VRBaseAPI::setHeadMode__ControlMode.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1aa20ebcdee7875464f212baf8b67568fc"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setHeadMode</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">mode</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI11setHeadModeE11ControlModei" title="永久链接至目标"></a><br /></dt>
+<dd><p>设置头部控制模式 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> – 控制模式（kKeepPose/kAuto/kExternal） </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI12setWaistModeE11ControlModei">
+<span id="_CPPv3N4leju2vr9VRBaseAPI12setWaistModeE11ControlModei"></span><span id="_CPPv2N4leju2vr9VRBaseAPI12setWaistModeE11ControlModei"></span><span id="leju::vr::VRBaseAPI::setWaistMode__ControlMode.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1acf7e1bb48ea143491004b922219fd53b"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setWaistMode</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr11ControlModeE" title="leju::vr::ControlMode"><span class="n"><span class="pre">ControlMode</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">mode</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI12setWaistModeE11ControlModei" title="永久链接至目标"></a><br /></dt>
+<dd><p>设置腰部控制模式 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> – 控制模式（kKeepPose/kAuto/kExternal） </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI18getControllerStateER15ControllerStatei">
+<span id="_CPPv3N4leju2vr9VRBaseAPI18getControllerStateER15ControllerStatei"></span><span id="_CPPv2N4leju2vr9VRBaseAPI18getControllerStateER15ControllerStatei"></span><span id="leju::vr::VRBaseAPI::getControllerState__ControllerStateR.i"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a532f12467f92dec2031a4f2a114622ef"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getControllerState</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="datatypes.html#_CPPv4N4leju2vr15ControllerStateE" title="leju::vr::ControllerState"><span class="n"><span class="pre">ControllerState</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">state</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout_ms</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">3000</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI18getControllerStateER15ControllerStatei" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取控制器状态 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – <strong>[out]</strong> 返回的控制器状态 </p></li>
+<li><p><strong>timeout_ms</strong> – RPC 超时时间（毫秒），默认 3000ms </p></li>
+</ul>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>true 成功，false 失败 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler"></span><span id="leju::vr::VRBaseAPI::registerSwitchControllerHandler__SwitchControllerHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1aabc7475ee04219f127ff0350de5e18d5"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerSwitchControllerHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SwitchControllerHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI31registerSwitchControllerHandlerE23SwitchControllerHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册切换控制器的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回是否成功及消息 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI25registerSetArmModeHandlerE14SetModeHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI25registerSetArmModeHandlerE14SetModeHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI25registerSetArmModeHandlerE14SetModeHandler"></span><span id="leju::vr::VRBaseAPI::registerSetArmModeHandler__SetModeHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1afe06d2a2b6e8f30029a1188a7faa1b1f"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerSetArmModeHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SetModeHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI25registerSetArmModeHandlerE14SetModeHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册设置手臂模式的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回是否成功及消息 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI26registerSetHeadModeHandlerE14SetModeHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI26registerSetHeadModeHandlerE14SetModeHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI26registerSetHeadModeHandlerE14SetModeHandler"></span><span id="leju::vr::VRBaseAPI::registerSetHeadModeHandler__SetModeHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a43f8200afbe14e57707f180f0f3682c3"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerSetHeadModeHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SetModeHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI26registerSetHeadModeHandlerE14SetModeHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册设置头部模式的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回是否成功及消息 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI27registerSetWaistModeHandlerE14SetModeHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI27registerSetWaistModeHandlerE14SetModeHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI27registerSetWaistModeHandlerE14SetModeHandler"></span><span id="leju::vr::VRBaseAPI::registerSetWaistModeHandler__SetModeHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1af472cb4b47cff7f2d33597359d914bc2"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerSetWaistModeHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SetModeHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI27registerSetWaistModeHandlerE14SetModeHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册设置腰部模式的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回是否成功及消息 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler">
+<span id="_CPPv3N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler"></span><span id="_CPPv2N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler"></span><span id="leju::vr::VRBaseAPI::registerGetStateHandler__GetStateHandler"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1adc99200b990b7fd2782023edb500c722"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">registerGetStateHandler</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">GetStateHandler</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">handler</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr9VRBaseAPI23registerGetStateHandlerE15GetStateHandler" title="永久链接至目标"></a><br /></dt>
+<dd><p>注册获取控制器状态的处理函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handler</strong> – 处理函数，返回控制器状态 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4leju2vr9VRBaseAPI15getRobotVersionEv">
+<span id="_CPPv3NK4leju2vr9VRBaseAPI15getRobotVersionEv"></span><span id="_CPPv2NK4leju2vr9VRBaseAPI15getRobotVersionEv"></span><span id="leju::vr::VRBaseAPI::getRobotVersionC"></span><span class="target" id="classleju_1_1vr_1_1VRBaseAPI_1a75fef7f73175ee8c4396b8af350dadb5"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../lejusdk-utils/api.html#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">getRobotVersion</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4leju2vr9VRBaseAPI15getRobotVersionEv" title="永久链接至目标"></a><br /></dt>
+<dd><p>获取机器人版本 </p>
+<dl class="field-list simple">
+<dt class="field-odd">返回<span class="colon">:</span></dt>
+<dd class="field-odd"><p>机器人版本 </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<p>VR 控制 API 基类，提供通用接口实现。主要功能包括：</p>
+<ul class="simple">
+<li><p><strong>生命周期管理</strong> - <code class="docutils literal notranslate"><span class="pre">initialize()</span></code>, <code class="docutils literal notranslate"><span class="pre">shutdown()</span></code>, <code class="docutils literal notranslate"><span class="pre">isInitialized()</span></code></p></li>
+<li><p><strong>关节指令发布</strong> - <code class="docutils literal notranslate"><span class="pre">publishArmJointCmd()</span></code>, <code class="docutils literal notranslate"><span class="pre">publishHeadJointCmd()</span></code>, <code class="docutils literal notranslate"><span class="pre">publishWaistJointCmd()</span></code></p></li>
+<li><p><strong>速度指令发布</strong> - <code class="docutils literal notranslate"><span class="pre">publishVelocityCmd()</span></code>, <code class="docutils literal notranslate"><span class="pre">publishVrVelocityCmd()</span></code></p></li>
+<li><p><strong>指令订阅</strong> - <code class="docutils literal notranslate"><span class="pre">subscribeArmJointCmd()</span></code>, <code class="docutils literal notranslate"><span class="pre">subscribeVelocityCmd()</span></code>, <code class="docutils literal notranslate"><span class="pre">subscribeVrVelocityCmd()</span></code> 等</p></li>
+<li><p><strong>控制器服务</strong> - <code class="docutils literal notranslate"><span class="pre">switchController()</span></code>, <code class="docutils literal notranslate"><span class="pre">setArmMode()</span></code>, <code class="docutils literal notranslate"><span class="pre">getControllerState()</span></code></p></li>
+<li><p><strong>RPC 服务端</strong> - <code class="docutils literal notranslate"><span class="pre">registerSwitchControllerHandler()</span></code> 等（控制器端使用）</p></li>
+</ul>
+</section>
+<section id="kuavovrapi">
+<h2>KuavoVRAPI<a class="headerlink" href="#kuavovrapi" title="此标题的永久链接"></a></h2>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr10KuavoVRAPIE">
+<span id="_CPPv3N4leju2vr10KuavoVRAPIE"></span><span id="_CPPv2N4leju2vr10KuavoVRAPIE"></span><span id="leju::vr::KuavoVRAPI"></span><span class="target" id="classleju_1_1vr_1_1KuavoVRAPI"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KuavoVRAPI</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vr</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4leju2vr9VRBaseAPIE" title="leju::vr::VRBaseAPI"><span class="n"><span class="pre">VRBaseAPI</span></span></a><a class="headerlink" href="#_CPPv4N4leju2vr10KuavoVRAPIE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Kuavo 机器人 VR 控制 API </p>
+<p>提供与 Kuavo 机器人的 VR 控制通信接口。 继承自 VRBaseAPI，通过指定 <a class="reference internal" href="../lejusdk-utils/api.html#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 标识机器人类型。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK12RobotVersion">
+<span id="_CPPv3N4leju2vr10KuavoVRAPI10KuavoVRAPIERK12RobotVersion"></span><span id="_CPPv2N4leju2vr10KuavoVRAPI10KuavoVRAPIERK12RobotVersion"></span><span id="leju::vr::KuavoVRAPI::KuavoVRAPI__RobotVersionCR"></span><span class="target" id="classleju_1_1vr_1_1KuavoVRAPI_1ade24ce2752d327995f8a014ea6599c60"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">KuavoVRAPI</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../lejusdk-utils/api.html#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">version</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersions</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">KUAVO5_BASE</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>构造函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>version</strong> – 机器人版本，默认为 KUAVO5_BASE </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK10KuavoVRAPI">
+<span id="_CPPv3N4leju2vr10KuavoVRAPI10KuavoVRAPIERK10KuavoVRAPI"></span><span id="_CPPv2N4leju2vr10KuavoVRAPI10KuavoVRAPIERK10KuavoVRAPI"></span><span id="leju::vr::KuavoVRAPI::KuavoVRAPI__KuavoVRAPICR"></span><span class="target" id="classleju_1_1vr_1_1KuavoVRAPI_1a7a037cc2de79992712c8b753eead9444"></span><span class="sig-name descname"><span class="n"><span class="pre">KuavoVRAPI</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK10KuavoVRAPI" title="leju::vr::KuavoVRAPI::KuavoVRAPI"><span class="n"><span class="pre">KuavoVRAPI</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju2vr10KuavoVRAPI10KuavoVRAPIERK10KuavoVRAPI" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁用拷贝 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<p>Kuavo 机器人 VR 控制 API，继承自 VRBaseAPI。</p>
+<p><strong>使用示例：</strong></p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;lejusdk-vr/lejusdk_vr.h&gt;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="o">::</span><span class="nn">vr</span><span class="p">;</span>
+
+<span class="n">KuavoVRAPI</span><span class="w"> </span><span class="n">vr</span><span class="p">;</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">vr</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 设置手臂为外部控制模式</span>
+<span class="n">vr</span><span class="p">.</span><span class="n">setArmMode</span><span class="p">(</span><span class="n">ControlMode</span><span class="o">::</span><span class="n">kExternal</span><span class="p">);</span>
+
+<span class="c1">// 发布关节指令</span>
+<span class="n">JointTrajectoryPoint</span><span class="w"> </span><span class="n">cmd</span><span class="p">;</span>
+<span class="c1">// 关节数量取决于机器人版本</span>
+<span class="n">cmd</span><span class="p">.</span><span class="n">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">   </span><span class="c1">// 左臂</span>
+<span class="w">         </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">-0.5</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">};</span><span class="w">  </span><span class="c1">// 右臂</span>
+<span class="n">vr</span><span class="p">.</span><span class="n">publishArmJointCmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">);</span>
+
+<span class="n">vr</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+<section id="robanvrapi">
+<h2>RobanVRAPI<a class="headerlink" href="#robanvrapi" title="此标题的永久链接"></a></h2>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr10RobanVRAPIE">
+<span id="_CPPv3N4leju2vr10RobanVRAPIE"></span><span id="_CPPv2N4leju2vr10RobanVRAPIE"></span><span id="leju::vr::RobanVRAPI"></span><span class="target" id="classleju_1_1vr_1_1RobanVRAPI"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobanVRAPI</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">leju</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vr</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4leju2vr9VRBaseAPIE" title="leju::vr::VRBaseAPI"><span class="n"><span class="pre">VRBaseAPI</span></span></a><a class="headerlink" href="#_CPPv4N4leju2vr10RobanVRAPIE" title="永久链接至目标"></a><br /></dt>
+<dd><p>Roban 机器人 VR 控制 API </p>
+<p>提供与 Roban 机器人的 VR 控制通信接口。 继承自 VRBaseAPI，通过指定 <a class="reference internal" href="../lejusdk-utils/api.html#classleju_1_1RobotVersion"><span class="std std-ref">RobotVersion</span></a> 标识机器人类型。 </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK12RobotVersion">
+<span id="_CPPv3N4leju2vr10RobanVRAPI10RobanVRAPIERK12RobotVersion"></span><span id="_CPPv2N4leju2vr10RobanVRAPI10RobanVRAPIERK12RobotVersion"></span><span id="leju::vr::RobanVRAPI::RobanVRAPI__RobotVersionCR"></span><span class="target" id="classleju_1_1vr_1_1RobanVRAPI_1a849d81a7983fb8c0c4c7db19294db781"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RobanVRAPI</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="../lejusdk-utils/api.html#_CPPv4N4leju12RobotVersionE" title="leju::RobotVersion"><span class="n"><span class="pre">RobotVersion</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">version</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">RobotVersions</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ROBAN2_BASE</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK12RobotVersion" title="永久链接至目标"></a><br /></dt>
+<dd><p>构造函数 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>version</strong> – 机器人版本，默认为 ROBAN2_BASE </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK10RobanVRAPI">
+<span id="_CPPv3N4leju2vr10RobanVRAPI10RobanVRAPIERK10RobanVRAPI"></span><span id="_CPPv2N4leju2vr10RobanVRAPI10RobanVRAPIERK10RobanVRAPI"></span><span id="leju::vr::RobanVRAPI::RobanVRAPI__RobanVRAPICR"></span><span class="target" id="classleju_1_1vr_1_1RobanVRAPI_1a23fb343018bcf4d8c856940db76473a8"></span><span class="sig-name descname"><span class="n"><span class="pre">RobanVRAPI</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK10RobanVRAPI" title="leju::vr::RobanVRAPI::RobanVRAPI"><span class="n"><span class="pre">RobanVRAPI</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">delete</span></span><a class="headerlink" href="#_CPPv4N4leju2vr10RobanVRAPI10RobanVRAPIERK10RobanVRAPI" title="永久链接至目标"></a><br /></dt>
+<dd><p>禁用拷贝 </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<p>Roban 机器人 VR 控制 API，继承自 VRBaseAPI。</p>
+<p><strong>使用示例：</strong></p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;lejusdk-vr/lejusdk_vr.h&gt;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">leju</span><span class="o">::</span><span class="nn">vr</span><span class="p">;</span>
+
+<span class="n">RobanVRAPI</span><span class="w"> </span><span class="n">vr</span><span class="p">;</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">vr</span><span class="p">.</span><span class="n">initialize</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 使用方式与 KuavoVRAPI 相同</span>
+<span class="n">vr</span><span class="p">.</span><span class="n">setArmMode</span><span class="p">(</span><span class="n">ControlMode</span><span class="o">::</span><span class="n">kExternal</span><span class="p">);</span>
+
+<span class="n">vr</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="页脚">
+        <a href="datatypes.html" class="btn btn-neutral float-left" title="lejusdk-vr 数据类型" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> 上一页</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="lejusdk-vr 示例" accesskey="n" rel="next">下一页 <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; 版权所有 2025, Leju Robotics.</p>
+  </div>
+
+  利用 <a href="https://www.sphinx-doc.org/">Sphinx</a> 构建，使用的 
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">主题</a>
+    由 <a href="https://readthedocs.org">Read the Docs</a> 开发.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

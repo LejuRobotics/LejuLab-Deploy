@@ -1,20 +1,32 @@
 loop_dt: 0.001
-default_controller: "mimic"
+default_controller: "mimic_hpny"
 
 controllers:
   - name: "amp"
     type: "GenericRLController"
-    config: "config_amp.yaml"
+    config: "controllers/config_amp.yaml"
     enabled: true
 
   # 贺年舞蹈
-  - name: "mimic"
+  - name: "mimic_hpny"
     type: "GenericRLController"
-    config: "config_mimic_HPNY_dance.yaml"
+    config: "controllers/config_mimic_HPNY_dance.yaml"
+    enabled: true
+
+
+  - name: "sim45"
+    type: "GenericRLController"
+    config: "config_sim45.yaml"
     enabled: true
 
   # 查尔斯舞蹈
-  # - name: "mimic"
+  # - name: "mimic_charleston"
   #   type: "GenericRLController"
-  #   config: "config_mimic_charleston_dance.yaml"
+  #   config: "controllers/config_mimic_charleston_dance.yaml"
   #   enabled: true
+
+  # 后倒地起身（俯卧，面朝下）
+  - name: "mimic_prone"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_prone.yaml"
+    enabled: true

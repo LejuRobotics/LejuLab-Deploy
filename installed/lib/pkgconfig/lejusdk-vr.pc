@@ -1,0 +1,8 @@
+prefix=/media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: lejusdk-vr
+Description: Description of lejusdk-vr
+Version: 0.1.0
+Cflags: -I${prefix}/include -I/usr/include/eigen3
+Libs: -L${prefix}/lib -llejusdk-vr
+Requires: lejusdk-dds-idl lejusdk-topic-pubsub lejusdk-dds-rpc lejusdk-utils

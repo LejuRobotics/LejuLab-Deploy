@@ -27,7 +27,7 @@
 
   <!-- Load RL controller (controller_manager 模式) -->
   <node name="leju_rl_controller" pkg="leju-rl-controller" type="run_rl_controller" output="screen"
-        args="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml"
+        args="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml $(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/urdf/biped_s$(optenv ROBOT_VERSION 46).urdf"
         launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
         required="true"/>
 

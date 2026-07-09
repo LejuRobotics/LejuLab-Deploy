@@ -79,7 +79,7 @@ add_library(hardware_plant::mathtools_hw SHARED IMPORTED)
 
 set_target_properties(hardware_plant::mathtools_hw PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/Math;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "drake::drake"
+  INTERFACE_LINK_LIBRARIES "Eigen3::Eigen"
 )
 
 # Create imported target hardware_plant::lejuclaw

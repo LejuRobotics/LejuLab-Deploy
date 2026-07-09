@@ -13,9 +13,11 @@
 
 .. code-block:: bash
 
-   sudo apt-get update && sudo apt-get install -y \
-       build-essential cmake \
-       libacl1-dev libncurses5-dev
+   bash ./scripts/install_third_party.sh
+
+该脚本会统一安装当前仓库通依赖的第三方库，包括 ``OpenVINO``、``Drake``、
+``Eigen3``、``yaml-cpp``、``Protobuf``、``GLFW``、``LCM``、``gflags``、
+``libusb``、``modbus`` 等，并自动写入 ``Drake`` / ``OpenVINO`` 所需环境变量。
 
 编译
 ----
@@ -28,6 +30,50 @@
    # 编译
    cd lejulab
    catkin build
+
+Docker 运行
+-----------
+
+如果希望直接在容器中运行仿真，可以使用仓库自带的 Docker 脚本。普通模式和 GPU 模式二选一使用：
+
+.. code-block:: bash
+
+   # 普通模式
+   ./docker/run.sh
+
+   # GPU 模式
+   ./docker/run_with_gpu.sh
+
+- 首次运行时，脚本会自动下载基础镜像并构建本地 ``lejulab`` 镜像
+- 在普通模式和 GPU 模式之间切换时，按提示删除旧容器后再启动另一种模式
+- 如果主机还没有配置好 NVIDIA Docker 环境，``./docker/run_with_gpu.sh`` 会给出提示并协助完成配置
+
+使用两个终端启动仿真：
+
+终端 1：
+
+.. code-block:: bash
+
+   ./docker/run.sh
+   # 或 ./docker/run_with_gpu.sh
+
+   # 使用共享内存版 CycloneDDS 配置
+   ./src/leju_launch/scripts/start_roudi.sh
+
+
+终端 2：
+
+.. code-block:: bash
+
+   ./docker/run.sh
+   # 或 ./docker/run_with_gpu.sh
+
+   catkin build
+   # Docker 中默认配置 zsh
+   source devel/setup.zsh
+   roslaunch leju_launch load_mujoco_sim.launch
+
+在 Docker 中运行时，不需要执行 ``./src/leju_launch/scripts/setup_cyclonedds_config.sh``。
 
 部署 iceoryx 共享内存（首次使用需执行）
 ----------------------------------------
@@ -92,6 +138,98 @@
 .. code-block:: bash
 
    roslaunch leju_launch load_mujoco_sim.launch
+
+Quest3 VR 控制快速上手
+----------------------
+
+Quest3 VR 控制面向 ``Kuavo4Pro(46)`` 与 ``Kuavo5(52)``。当前 ``Roban(14)`` 不开放
+``leju-vr-control`` 节点。
+
+.. list-table::
+   :widths: 22 12 12 12 12 30
+   :header-rows: 1
+
+   * - 机型
+     - 手臂控制
+     - 头部控制
+     - 速度控制
+     - 腰部控制
+     - 备注
+   * - ``Kuavo4Pro(46)``
+     - 支持
+     - 支持
+     - 支持
+     - 不支持
+     - 无腰部自由度
+   * - ``Kuavo5(52)``
+     - 支持
+     - 支持
+     - 支持
+     - 支持
+     - 左手 ``Y`` 触摸时可控腰
+   * - ``Roban(14)``
+     - 不开放
+     - 不开放
+     - 不开放
+     - 不开放
+     - 当前节点启动即退出
+
+启动方式：
+
+.. code-block:: bash
+
+   sudo su  # 实物需要 root 权限
+   source devel/setup.bash
+
+   # kuavo5
+   export ROBOT_VERSION=52
+   roslaunch leju_launch vr_teleop.launch
+
+   # kuavo4pro
+   export ROBOT_VERSION=46
+   roslaunch leju_launch vr_teleop.launch
+
+如需手动指定 Quest3 的 IP，可追加：
+
+.. code-block:: bash
+
+   roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
+
+手臂模式切换：
+
+.. list-table::
+   :widths: 22 10 68
+   :header-rows: 1
+
+   * - 模式
+     - 值
+     - 效果
+   * - ``KeepPose``
+     - ``0``
+     - 保持当前手臂姿态，适合临时停在当前位置
+   * - ``Auto``
+     - ``1``
+     - 交还给默认自动行为，手臂不再接受当前 VR 增量控制
+   * - ``External``
+     - ``2``
+     - 进入 VR 外部控制模式，按住对应 ``grip`` 后可进行增量控制
+
+常用操作：
+
+- ``X+A``：在 ``Auto(1)`` 与 ``External(2)`` 之间切换
+- ``X+B``：在 ``KeepPose(0)`` 与 ``External(2)`` 之间切换
+- ``X+Y``：进入安全停机/关节松弛状态
+- 左/右 ``grip``：对应手臂进入增量控制
+- 头部：由头显姿态驱动
+- 左摇杆：发布原始范围 ``[-1, 1]`` 的平移速度指令，上推前进、下拉后退、左推左移、右推右移
+- 右摇杆：发布原始范围 ``[-1, 1]`` 的旋转速度指令，左推左转、右推右转
+
+``Kuavo5(52)`` 额外支持腰部手柄控制：
+
+- 左手只触摸 ``Y``
+- 右摇杆左右绝对控制腰部 yaw
+- 触摸 ``Y`` 时 walking 被禁用
+- 松开 ``Y`` 后腰部回零
 
 遥控器操作
 ----------

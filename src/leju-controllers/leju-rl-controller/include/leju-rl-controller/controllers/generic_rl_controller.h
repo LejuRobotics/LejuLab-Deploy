@@ -34,11 +34,6 @@ class GenericRLController : public ControllerBase {
   bool initialize() override;
   /// @brief 重置内部状态
   void reset() override;
-  /// @brief 执行一次控制更新
-  bool update(double time, const RobotState& state, const ImuData& imu,
-              RobotCmd& cmd) override;
-  /// @brief 设置速度指令
-  void setVelocityCommand(const VelocityCommand& cmd) override { velocity_cmd_ = cmd; }
   /// @brief 接收手柄输入
   void onJoyInput(const JoyData& joy, const JoyData::Buttons& prev) override;
   /// @brief 移动到默认关节位置
@@ -48,6 +43,9 @@ class GenericRLController : public ControllerBase {
 
   /// @brief 设置配置文件路径，必须在 initialize() 前调用
   void setConfigPath(const std::string& config_path) { config_path_ = config_path; }
+
+  /// @brief 设置 URDF 路径（用于手臂重力补偿），必须在 initialize() 前调用
+  void setUrdfPath(const std::string& urdf_path) { urdf_path_ = urdf_path; }
 
   // ==================== Motion 播放 ====================
 
@@ -63,6 +61,12 @@ class GenericRLController : public ControllerBase {
   std::string getCurrentMotionName() const;
 
  protected:
+  // ==================== 模板方法实现 ====================
+
+  /// @brief 执行 RL 推理更新（由 ControllerBase::update() 调用）
+  bool updateImpl(double time, const RobotState& state, const ImuData& imu,
+                  RobotCmd& cmd) override;
+
   // ==================== 可重写方法 ====================
 
   /// @brief 加载 YAML 配置文件
@@ -75,6 +79,12 @@ class GenericRLController : public ControllerBase {
   void computeActions() override;
   /// @brief 将动作转换为机器人控制指令
   void updateRobotCmd(RobotCmd& cmd) override;
+
+  /// @brief 更新手臂控制指令（重写以发布 arm_mode 话题）
+  void updateArmCommand(RobotCmd& cmd) override;
+
+  /// @brief 更新腰部控制指令（重写以发布 waist_mode 话题）
+  void updateWaistCommand(RobotCmd& cmd) override;
 
  private:
   // ==================== 内部方法 ====================
@@ -113,20 +123,14 @@ class GenericRLController : public ControllerBase {
   int motor_count_ = 0;                     ///< SDK 电机总数
   std::vector<std::string> motor_names_;    ///< SDK 电机名称列表
   std::string config_path_;                 ///< 配置文件路径
+  std::string urdf_path_;                   ///< URDF 路径（手臂重力补偿用）
 
   // ==================== 控制时序 ====================
-  double loop_dt_ = 0.001;                  ///< 控制周期 [s]
   double policy_dt_ = 0.02;                 ///< 策略推理周期 [s]
   std::string policy_path_;                 ///< ONNX 模型路径
-
-  // ==================== 关节配置 ====================
-  // 注：joint_kp_、joint_kd_、joint_action_scale_、joint_torque_limit_、
-  //     joint_control_mode_、default_joint_pos_ 继承自 ControllerBase
-  std::vector<std::string> joint_names_;    ///< 策略关节名称（按策略顺序）
-  array_t joint_direction_;                 ///< 关节方向系数
+  std::string inference_engine_ = "openvino"; ///< 推理引擎 (openvino, onnxruntime)
 
   // ==================== 关节映射 ====================
-  std::vector<int> policy_joint_ids_;       ///< 策略关节对应的 SDK 电机索引
   int policy_joint_count_ = 0;              ///< 策略控制的关节数
 
   // ==================== 观测配置 ====================
@@ -151,10 +155,6 @@ class GenericRLController : public ControllerBase {
   Bounds cmd_ang_vel_z_ = {-0.3, 0.3};     ///< 偏航角速度范围 [rad/s]
 
   // ==================== 运行时状态 ====================
-  RobotState current_state_;                ///< 缓存的关节状态
-  ImuData current_imu_;                     ///< 缓存的 IMU 数据
-  VelocityCommand velocity_cmd_;            ///< 当前速度指令
-  uint64_t step_count_ = 0;                 ///< 策略步数计数
   double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw
   bool motion_playing_ = false;             ///< motion 是否正在播放
 

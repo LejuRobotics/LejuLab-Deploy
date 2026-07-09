@@ -1,5 +1,17 @@
 # LejuLab
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![ROS](https://img.shields.io/badge/ROS-Noetic-blue.svg)](http://wiki.ros.org/noetic) [![Platform](https://img.shields.io/badge/Platform-Ubuntu%2020.04-orange.svg)](https://ubuntu.com/) [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/) [![Roban2.1](https://img.shields.io/badge/Robot-Roban2.1-green.svg)]() [![Kuavo4pro](https://img.shields.io/badge/Robot-Kuavo4pro-green.svg)]() [![Kuavo5](https://img.shields.io/badge/Robot-Kuavo5-green.svg)]()
+
+乐聚人形机器人强化学习部署开发平台，提供 Roban 和 Kuavo 系列机器人的仿真与实物控制支持。
+
+## 功能特性
+
+- **多机器人支持**：支持 Roban 2 代、Kuavo 4 代、Kuavo 5 代等多款人形机器人
+- **Mujoco 仿真**：基于 Mujoco 物理引擎的高精度仿真环境
+- **实物控制**：提供底层电机控制、IMU 传感器读取等硬件接口
+- **强化学习控制器**：内置 AMP 行走、Mimic 舞蹈等控制算法
+- **手柄遥控**：支持游戏手柄进行机器人遥控操作
+- **高性能通信**：基于 CycloneDDS + iceoryx 共享内存的低延迟进程间通信
 
 ## 系统架构
 
@@ -95,6 +107,7 @@ src
 │   ├── leju-dummy-controller
 │   └── leju-rl-controller
 ├── leju_launch       # 提供一键启动所有必要的功能模块
+│   ├── config
 │   ├── launch
 │   └── scripts
 └── lejusdk           # Leju SDK，自动同步，不要编辑
@@ -127,7 +140,7 @@ catkin build
 sudo su # 实物需要在root用户下运行
 ```
 
-## 部署 iceoryx 共享内存（首次使用需执行）
+## 部署 iceoryx 共享内存（首次使用需执行，Docker中则跳过此步骤）
 
 项目支持通过 iceoryx 共享内存加速进程间通信，建议部署以获得更优的实时性能：
 
@@ -148,6 +161,46 @@ sudo su # 实物需要在root用户下运行
 ./src/leju_launch/scripts/setup_cyclonedds_config.sh --remove
 ```
 
+## Docker 运行
+
+如果希望直接在容器中运行仿真，可以使用仓库自带的 Docker 脚本。普通模式和 GPU 模式二选一使用：
+
+```bash
+# 普通模式
+./docker/run.sh
+
+# GPU 模式
+./docker/run_with_gpu.sh
+```
+
+- 首次运行时，脚本会自动下载基础镜像并构建本地 `lejulab` 镜像
+- 在普通模式和 GPU 模式之间切换时，按提示删除旧容器后再启动另一种模式
+- 如果主机还没有配置好 NVIDIA Docker 环境，`./docker/run_with_gpu.sh` 会给出提示并协助完成配置
+
+使用两个终端启动仿真：
+
+终端 1：
+
+```bash
+./docker/run.sh
+# 或 ./docker/run_with_gpu.sh
+
+# 使用共享内存版 CycloneDDS 配置
+./src/leju_launch/scripts/start_roudi.sh
+```
+
+终端 2：
+
+```bash
+./docker/run.sh
+# 或 ./docker/run_with_gpu.sh
+
+catkin build
+# Docker 中默认配置 zsh
+source devel/setup.zsh
+roslaunch leju_launch load_mujoco_sim.launch
+```
+
 ## 运行
 
 ### 通用说明
@@ -165,22 +218,41 @@ sudo su # 实物需要在root用户下运行
 
 ```bash
 source devel/setup.bash
+
+# Roban2
 export ROBOT_VERSION=14
+roslaunch leju_launch load_mujoco_sim.launch
+
+# Kuavo4pro
+export ROBOT_VERSION=46
+roslaunch leju_launch load_mujoco_sim.launch
+
+# Kuavo5
+export ROBOT_VERSION=52
 roslaunch leju_launch load_mujoco_sim.launch
 ```
 
-- 通过如下命令启动控制器、Mujoco 仿真器和手柄控制等功能包
+- 通过如上命令启动控制器、Mujoco 仿真器和手柄控制等功能包
 - 根据终端提示，按下`start`按键
 - 点击 Mujoco 仿真中的 `Run` 运行按钮
 - tips: 如果开始时机器人倒地，可以先`Pause`和`Reset`仿真，然后再`Run`
-- **warnings: 由于用户层混用电机 kp/kd，故使用 Kuavo 4 代 UAE 版本和Kuavo 5 代基础版的仿真时需要将  `src/leju-controllers/leju-rl-controller/config/52/config_amp.yaml` 和 `src/leju-controllers/leju-rl-controller/config/46/config_amp.yaml` 中 `hardware_override_kp_kd` 字段注释。**
 
 ### 实物机器人
 
 ```bash
 sudo su  # 需要 root 权限
 source devel/setup.bash
+
+# Roban2
 export ROBOT_VERSION=14
+roslaunch leju_launch load_real.launch
+
+# Kuavo4pro
+export ROBOT_VERSION=46
+roslaunch leju_launch load_real.launch
+
+# Kuavo5
+export ROBOT_VERSION=52
 roslaunch leju_launch load_real.launch
 ```
 
@@ -194,86 +266,25 @@ roslaunch leju_launch load_real.launch
 - 使用手柄 `start` 按键使机器人站立
 - **结束使用机器人请按手柄 `back` 按键**
 
-### Roban2.1 运行示例
+### 控制器配置
 
-#### Mimic 舞蹈
+控制器配置文件位于 `src/leju-controllers/leju-rl-controller/config/<ROBOT_VERSION>/controller_manager.yaml`，通过修改 `default_controller` 字段切换控制模式：
 
-需要将`src/leju-controllers/leju-rl-controller/config/14/controller_manager.yaml`中的配置改为:
-```bash
-default_controller: "mimic"  
+#### Mimic 舞蹈（仅 Roban2）
+
+```yaml
+default_controller: "mimic"
 ```
 
-待机器人站立之后，按下西瓜键，即可播放舞蹈，播放结束后再次按西瓜键可重复播放。
+待机器人站立之后，按下西瓜键即可播放舞蹈，播放结束后再次按西瓜键可重复播放。
 
 #### AMP 行走
 
-需要将`src/leju-controllers/leju-rl-controller/config/14/controller_manager.yaml`中的配置改为:
-```bash
+```yaml
 default_controller: "amp"
 ```
 
 待机器人站立之后，左摇杆控制前后左右，右摇杆控制左右转向。
-
-#### 运行
-
-运行命令:
-```bash
-# 仿真
-source devel/setup.bash
-export ROBOT_VERSION=14
-roslaunch leju_launch load_mujoco_sim.launch
-
-# 实物机器人
-sudo su  # 需要 root 权限
-source devel/setup.bash
-export ROBOT_VERSION=14
-roslaunch leju_launch load_real.launch
-```
-
-### Kuavo4pro/Kuavo5 AMP 运行示例
-
-#### 仿真运行
-
-```bash
-source devel/setup.bash
-
-# kuavo5
-export ROBOT_VERSION=52
-roslaunch leju_launch load_mujoco_sim_rl_demo.launch
-
-# kauvo4pro
-export ROBOT_VERSION=46
-roslaunch leju_launch load_mujoco_sim_rl_demo.launch
-```
-
-- **注意: 仿真运行需要将 `src/leju-controllers/leju-rl-controller/config/52/config_amp.yaml` 和 `src/leju-controllers/leju-rl-controller/config/46/config_amp.yaml` 中 `hardware_override_kp_kd` 字段注释。**
-- 根据终端提示，按下 `start`按键
-- 点击 Mujoco 仿真中的 `Run` 运行按钮
-- 手柄左摇杆控制前后左右，右摇杆控制左右转向
-- **结束使用机器人请按手柄 `back` 按键**
-
-#### 实物运行
-
-```bash
-sudo su  # 需要 root 权限
-source devel/setup.bash
-# export ROBOT_VERSION=46
-
-# kuavo5
-export ROBOT_VERSION=52
-roslaunch leju_launch load_real_rl_demo.launch
-
-# kuavo4pro
-export ROBOT_VERSION=46
-roslaunch leju_launch load_real_rl_demo.launch
-
-```
-- 拉起机器人背后的急停按钮，执行上述命令
-- 将移位架升起，等待机器人进入膝盖微曲状态
-- 降低移位架，让机器人脚掌刚刚好接触地面
-- 使用手柄 `start` 按键使机器人站立
-- 手柄左摇杆控制前后左右，右摇杆控制左右转向
-- **结束使用机器人请按手柄 `back` 按键**
 
 
 ## 输入控制设备
@@ -282,11 +293,110 @@ roslaunch leju_launch load_real_rl_demo.launch
 
 ![](./docs/images/joystick.png)
 
+### Quest3 VR 控制
+
+#### 启动方式
+
+```bash
+sudo su  # 需要 root 权限
+source devel/setup.bash
+
+# kuavo5
+export ROBOT_VERSION=52
+roslaunch leju_launch vr_teleop.launch
+
+# kuavo4pro
+export ROBOT_VERSION=46
+roslaunch leju_launch vr_teleop.launch
+```
+
+如果需要手动指定 Quest3 的 IP，可以追加参数：
+
+```bash
+roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
+```
+
+#### 适用机型与限制
+
+| 机型              | 手臂控制 | 头部控制 | 速度控制 | 腰部控制 | 备注                    |
+| ----------------- | -------- | -------- | -------- | -------- | ----------------------- |
+| `Kuavo4Pro(46)` | 支持     | 支持     | 支持     | 不支持   | 无腰部自由度            |
+| `Kuavo5(52)`    | 支持     | 支持     | 支持     | 支持     | 左手 `Y` 触摸时可控腰 |
+| `Roban(14)`     | 不开放   | 不开放   | 不开放   | 不开放   | 当前节点启动即退出      |
+
+#### 操作方式
+
+- `X+A`
+  - 在 `Auto(1)` 和 `External(2)` 之间切换
+- `X+B`
+  - 在 `KeepPose(0)` 和 `External(2)` 之间切换
+- `X+Y`
+  - 进入安全停机/关节松弛状态
+- 左/右 `grip`
+  - 对应手臂进入增量控制
+- 头部
+  - 由头显姿态驱动
+- 左摇杆
+  - 发布原始范围 `[-1, 1]` 的平移速度指令
+  - 上推前进、下拉后退、左推左移、右推右移
+- 右摇杆
+  - 发布原始范围 `[-1, 1]` 的旋转速度指令
+  - 左推左转、右推右转
+
+三个手臂模式的效果如下：
+
+| 模式         | 值    | 效果                                                           |
+| ------------ | ----- | -------------------------------------------------------------- |
+| `KeepPose` | `0` | 保持当前手臂姿态，适合临时停在当前位置                         |
+| `Auto`     | `1` | 交还给默认自动行为（行走时摆臂），手臂不再接受当前 VR 增量控制 |
+| `External` | `2` | 进入 VR 外部控制模式，按住对应 `grip` 后可进行增量控制       |
+
+`Kuavo5(52)` 额外支持腰部控制：
+
+- 左手只触摸 `Y`
+- 右摇杆左右绝对控制腰部 yaw
+- 触摸 `Y` 时 walking 被禁用
+- 松开 `Y` 后腰部回零
+
+#### 使用示例
+
+1. 启动 `vr_teleop.launch`
+2. 大臂垂直于地面，小臂水平于地面，长按 meta 键标定骨骼点
+3. 按 `X+A` 切到 `External(2)`
+4. 按住单侧或双侧 `grip`，移动 Quest3 手柄开始控制手臂
+5. 若机器人为 `Kuavo5(52)`，可在需要时左手触摸 `Y`，再用右摇杆 x 轴调节腰部
+
+## 数据可视化
+
+### Foxglove Studio
+
+[Foxglove Studio](https://foxglove.dev/) 是支持 MCAP 格式的可视化工具，可用于查看录制的机器人数据（关节状态、IMU 数据等）。
+
+- 网页版：https://studio.foxglove.dev/
+- 桌面版：https://foxglove.dev/download
+
+### 使用布局文件
+
+项目提供了预定义的布局文件，位于 `config/` 目录：
+
+| 文件 | 适用机器人 |
+|------|-----------|
+| `foxglove-roban2-1-layout.json` | Roban 2.1 |
+| `foxglove-kuavo4pro-layout.json` | Kuavo 4 Pro |
+| `foxglove-kuavo5-layout.json` | Kuavo 5 |
+
+**导入布局：**
+
+1. 在 Foxglove Studio 中打开 `.mcap` 数据文件
+2. 点击右上角 **Layout** 菜单
+3. 选择 **Import layout**，导入对应机器人的布局文件
+
+布局文件包含常用的面板配置（关节位置、速度、力矩、IMU 数据等），避免每次重复设置。
+
 
 ## 已知问题
-- 用户层和电机层的 kp/kd 混用：在实物上，CSP 模式当前在用户层下发的 joint_cmd 中 kp/kd，实际是电机的 kp/kd，其包含腿部和腰部关节
-  - 即将修复: 全部统一为控制器即用户层的 kp/kd
-- CST/CSP 不纯粹：用户层 CSP 下发的 joint_cmd 中 joint_q 是关节当前位置而非目标位置。未修改前，用户层 CST 的 kp/kd 下发非 0 数据，导致硬件又计算一次 PD
+- Roban 2 代基础版的扭矩常数不准确：导致 CST 模式下的 AMP 步态会出现剧烈振动，目前正在重新测试扭矩常数。
+- CSP 不纯粹：用户层 CSP 下发的 joint_cmd 中 joint_q 是关节当前位置而非目标位置。
 
 ## 故障排除
 

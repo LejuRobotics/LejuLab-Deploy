@@ -168,14 +168,21 @@ public:
      * @param positions 目标位置（角度）
      * @param torque 力矩值
      * @param velocity 速度值（角度/秒）
+     * @param kp_pos 可选，本次下发使用的 kp（motor-level，直接透传）。空=沿用 set_joint_gains 设置的缓存值
+     * @param kd_pos 可选，本次下发使用的 kd（motor-level，直接透传）。空=沿用 set_joint_gains 设置的缓存值
      */
     virtual void set_positions(const std::vector<uint8_t> &index,
                              const std::vector<double> &positions,
                              const std::vector<double> &torque,
-                             const std::vector<double> &velocity) = 0;
+                             const std::vector<double> &velocity,
+                             const std::vector<double> &kp_pos = {},
+                             const std::vector<double> &kd_pos = {}) = 0;
 
     /**
-     * @brief 设置多个关节力矩
+     * @brief 设置多个关节力矩（CST 模式）
+     *
+     * 基于 MIT/PTM 模式实现：内部将 kp 和 kd 设置为 0，仅下发前馈力矩，
+     * 即电机控制律退化为 tau_out = torque_ff（无位置/速度反馈）。
      *
      * @param index 关节索引 [0,1,2,3,...]
      * @param torque 力矩值

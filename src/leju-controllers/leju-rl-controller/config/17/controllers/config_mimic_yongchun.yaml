@@ -1,0 +1,92 @@
+HumanoidRobotCfg:
+  inference_engine: "openvino"
+  loop_dt: 0.001
+  policy_path: "../policy/dance/cyh20_yongchun_0407_1014_146500.onnx"
+
+  motion:
+    default_motion: "yongchun"
+    motions:
+      - name: "yongchun"
+        file: "../motion_data/yongchun_007_deploy.csv"
+
+  env:
+    policy_dt: 0.02
+    robot:
+      residual_action: true
+      joint_names:
+        ["waist_yaw_joint",
+         "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint",
+         "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint",
+         "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
+         "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
+      joint_direction:
+        [-1.,
+         1., 1., 1., 1., 1., 1.,
+         1., 1., 1., 1., 1., 1.,
+         1., 1., 1., 1.,
+         1., 1., 1., 1.]
+      joint_default_pos:
+        [0.,
+         0., 0., 0., 0., 0., 0.,
+         0., 0., 0., 0., 0., 0.,
+         0., 0., 0., 0.,
+         0., 0., 0., 0.]
+      joint_torque_limit:
+        [64.,
+         120., 120., 56., 120., 59.2, 59.2,
+         120., 120., 56., 120., 59.2, 59.2,
+         11.28, 29.6, 29.6, 29.6,
+         11.28, 29.6, 29.6, 29.6]
+      actuator_kp:
+        [40.1792,
+         90.1792, 120.0984, 40.1792, 150.0984, 24.2506, 24.2506,
+         90.1792, 120.0984, 40.1792, 150.0984, 24.2506, 24.2506,
+         14.25, 14.25, 14.25, 14.25,
+         14.25, 14.25, 14.25, 14.25]
+      actuator_kd:
+        [3.5579,
+         3.5579, 8.3088, 3.5579, 8.3088, 2.9072, 2.9072,
+         3.5579, 8.3088, 3.5579, 8.3088, 2.9072, 2.9072,
+         1.9072, 1.9072, 1.9072, 1.9072,
+         1.9072, 1.9072, 1.9072, 1.9072]
+      actuator_control_mode:
+        [0,
+         0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0,
+         0, 0, 0, 0]
+      action_scale:
+        [0.13066462249123925,
+         0.08483109187040914, 0.06369776783037909, 0.1269313475629181, 0.05096656593274811, 0.2288603168581396, 0.2288603168581396,
+         0.08483109187040914, 0.06369776783037909, 0.1269313475629181, 0.05096656593274811, 0.2288603168581396, 0.2288603168581396,
+         0.06420782282851248, 0.11578459854321922, 0.11578459854321922, 0.11578459854321922,
+         0.06420782282851248, 0.11578459854321922, 0.11578459854321922, 0.11578459854321922]
+
+    observations:
+      history_length: 1
+      stack_order: "classic"
+      terms:
+        motion_command:
+          scale: 1.
+          clip: [-5000., 5000.]
+        motion_target_height:
+          scale: 1.
+          clip: [-5000., 5000.]
+        motion_anchor_ori_b:
+          scale: 1.
+          clip: [-5000., 5000.]
+        projected_gravity:
+          scale: 1.
+          clip: [-5000., 5000.]
+        base_ang_vel:
+          scale: 1.
+          clip: [-5000., 5000.]
+        joint_pos:
+          scale: 1.
+          clip: [-5000., 5000.]
+        joint_vel:
+          scale: 1.
+          clip: [-5000., 5000.]
+        actions:
+          scale: 1.
+          clip: [-5000., 5000.]

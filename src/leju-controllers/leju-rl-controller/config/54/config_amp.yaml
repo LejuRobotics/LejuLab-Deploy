@@ -1,0 +1,134 @@
+HumanoidRobotCfg:
+  # 推理引擎选择 (可选: openvino, onnxruntime)
+  inference_engine: "openvino"
+
+  loop_dt: 0.001
+  policy_path: "policy/ampjzx250207_3_22.onnx"
+
+  env:
+    policy_dt: 0.02   # 推理频率 50Hz
+    robot:
+      enable_arm_controller: true
+      # 运行时关节映射按 lejusdk 的 Kuavo5 motor names 匹配，
+      # 这里需要使用 SDK 命名而不是 URDF 中的 leg_l1_joint / zarm_l1_joint。
+      arm_joint_names:
+        ["l_arm_pitch", "l_arm_roll", "l_arm_yaw", "l_forearm", "l_hand_yaw", "l_hand_roll", "l_hand_pitch",
+         "r_arm_pitch", "r_arm_roll", "r_arm_yaw", "r_forearm", "r_hand_yaw", "r_hand_roll", "r_hand_pitch"]
+
+      enable_waist_controller: true
+      waist_joint_names: ["waist_yaw"]
+
+      # 27 joints: 12 legs + 1 waist + 7 left arm + 7 right arm
+      # 顺序仍按 v54 策略物理关节顺序，仅名称切换为 SDK 可识别的 Kuavo5 命名。
+      joint_names:
+        ["l_leg_roll", "l_leg_yaw", "l_leg_pitch", "l_knee", "l_foot_pitch", "l_foot_roll",
+         "r_leg_roll", "r_leg_yaw", "r_leg_pitch", "r_knee", "r_foot_pitch", "r_foot_roll",
+         "waist_yaw",
+         "l_arm_pitch", "l_arm_roll", "l_arm_yaw", "l_forearm", "l_hand_yaw", "l_hand_roll", "l_hand_pitch",
+         "r_arm_pitch", "r_arm_roll", "r_arm_yaw", "r_forearm", "r_hand_yaw", "r_hand_roll", "r_hand_pitch"]
+      joint_direction:
+        [1., 1., 1., 1., 1., 1.,
+         1., 1., 1., 1., 1., 1.,
+         1.,
+         1., 1., 1., 1., 1., 1., 1.,
+         1., 1., 1., 1., 1., 1., 1.]
+      # defaultJointState from skw_rl_param.info
+      joint_default_pos:
+        [ 0.,    0.,   -0.08,  0.21, -0.15,  0.,
+          0.,    0.,   -0.08,  0.21, -0.15,  0.,
+          0.,
+          0.,    0.,    0.,    0.,    0.,    0.,    0.,
+          0.,    0.,    0.,    0.,    0.,    0.,    0.]
+      # torqueLimits from skw_rl_param.info
+      joint_torque_limit:
+        [127.,  71., 132., 280.,  57.,  57.,
+         127.,  71., 132., 280.,  57.,  57.,
+         102.,
+          66.,  75.,  57.,  75.,  14.1, 14.1, 14.1,
+          66.,  75.,  57.,  75.,  14.1, 14.1, 14.1]
+      # jointKp from skw_rl_param.info
+      actuator_kp:
+        [100., 100.,  80.,  80.,  30.,  50.,
+         100., 100.,  80.,  80.,  30.,  50.,
+          30.,
+          15.,  30.,  15.,  20.,  15.,  15.,  15.,
+          15.,  30.,  15.,  20.,  15.,  15.,  15.]
+      # jointKd from skw_rl_param.info
+      actuator_kd:
+        [5.,   5.,   5.,   6.,   7.5,  7.5,
+         5.,   5.,   5.,   6.,   7.5,  7.5,
+         7.,
+         6.,   3.,   3.,   6.,   3.,   3.,   3.,
+         6.,   3.,   3.,   6.,   3.,   3.,   3.]
+      # all joints in CSP position mode
+      actuator_control_mode:
+        [2, 2, 2, 2, 2, 2,
+         2, 2, 2, 2, 2, 2,
+         2,
+         2, 2, 2, 2, 2, 2, 2,
+         2, 2, 2, 2, 2, 2, 2]
+      # actionScale=0.25 for all joints from skw_rl_param.info
+      action_scale:
+        [0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+         0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+
+    observations:
+      history_length: 1   # frameStack=1
+      stack_order: "classic"
+      terms:
+        base_ang_vel:        # bodyAngVel, 3D
+          scale: 1.
+          clip: [-9999., 9999.]
+        projected_gravity:   # gravity_body, 3D
+          scale: 1.
+          clip: [-9999., 9999.]
+        velocity_commands:   # command lin_vel_x/y + ang_vel_z, 3D
+          scale: 1.
+          clip: [-9999., 9999.]
+        cmd_stance:          # command cmd_stance, 1D
+          scale: 1.
+          clip: [0., 1.]
+        joint_pos:           # jointPos, 27D
+          scale: 1.
+          clip: [-9999., 9999.]
+        joint_vel:           # jointVel, 27D
+          scale: 1.
+          clip: [-9999., 9999.]
+        actions:             # action, 27D  -> total obs = 3+3+3+1+27+27+27 = 91
+          scale: 1.
+          clip: [-18., 18.]
+
+    # velocityLimits × scale from skw_rl_param.info:
+    #   lin_vel_x: positive = 0.5×1.6=0.8, negative = 0.5×1.6×0.5=0.4
+    #   lin_vel_y: ±0.3×1.06≈0.318
+    #   ang_vel_z: ±0.25×2=0.5
+    command_range:
+      lin_vel_x: [-0.4, 0.8]
+      lin_vel_y: [-0.318, 0.318]
+      ang_vel_z: [-0.5, 0.5]
+
+  # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态
+  arm_controller:
+    enabled: true
+    leg_joint_count: 12
+    waist_joint_count: 1
+    interpolation_velocity: 1.0       # rad/s
+    min_duration: 0.2                 # 最小过渡时长 (秒)
+    max_duration: 2.0                 # 最大过渡时长 (秒)
+
+  # cmd_stance 计算参数
+  cmd_stance:
+    smart_stop:
+      enabled: true
+      torso_velocity_threshold: 0.05  # m/s
+      feet_alignment_threshold: 0.08  # m
+    velocity_magnitude_threshold: 0.01
+
+  velocity_input_manager:
+    timeout_sec: 1.0
+    priorities:
+      vr_cmd_vel: 0
+      xbox_joy: 1

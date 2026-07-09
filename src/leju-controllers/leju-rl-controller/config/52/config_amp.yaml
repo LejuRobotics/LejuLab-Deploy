@@ -1,10 +1,22 @@
 HumanoidRobotCfg:
+  # 推理引擎选择 (可选: openvino, onnxruntime)
+  inference_engine: "openvino"
+
   loop_dt: 0.001
   policy_path: "policy/ampjzx250126_27.onnx"
 
   env:
     policy_dt: 0.02
     robot:
+      enable_arm_controller: true
+      # TODO: 找到更好方法替代此部分
+      arm_joint_names:
+        ["l_arm_pitch", "l_arm_roll", "l_arm_yaw", "l_forearm", "l_hand_yaw", "l_hand_roll", "l_hand_pitch",
+         "r_arm_pitch", "r_arm_roll", "r_arm_yaw", "r_forearm", "r_hand_yaw", "r_hand_roll", "r_hand_pitch"]
+
+      enable_waist_controller: true
+      waist_joint_names: ["waist_yaw"]
+
       joint_names: 
         ["l_leg_roll", "l_leg_yaw", "l_leg_pitch", "l_knee", "l_foot_pitch", "l_foot_roll", 
          "r_leg_roll", "r_leg_yaw", "r_leg_pitch", "r_knee", "r_foot_pitch", "r_foot_roll", 
@@ -85,14 +97,14 @@ HumanoidRobotCfg:
       lin_vel_y: [-0.6, 0.6]
       ang_vel_z: [-0.3, 0.3]
 
-  # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态
+  # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态 (用于 RLDemoController)
   arm_controller:
     enabled: true
     leg_joint_count: 12
     waist_joint_count: 1
-    interpolation_velocity: 1.0   # rad/s
-    min_duration: 0.2
-    max_duration: 2.0
+    interpolation_velocity: 1.0       # rad/s
+    min_duration: 0.2                 # 最小过渡时长 (秒)
+    max_duration: 2.0                 # 最大过渡时长 (秒)
 
   # cmd_stance 计算参数（velocity_commands 来自 JoyData 轴缩放，无 cmd_vel DDS）
   cmd_stance:
@@ -102,8 +114,8 @@ HumanoidRobotCfg:
       feet_alignment_threshold: 0.08  # m
     velocity_magnitude_threshold: 0.01  # 速度低于此值视为"小"
 
-  # 下发电机使用的 kp 和 kd。顺序：左腿6 + 右腿6 + 腰1 + 左臂第1 + 右臂第1；其余关节仍用 cmd 内原有 kp/kd
-  hardware_override_kp_kd:
-    kp: [220, 100, 224, 224, 58, 58, 220, 100, 224, 224, 58, 58, 250, 586, 586]
-    kd: [1506, 516, 1506, 881, 2260, 2260, 1506, 516, 1506, 881, 2260, 2260, 929, 1627, 1627]
-
+  velocity_input_manager:
+    timeout_sec: 1.0
+    priorities:
+      vr_cmd_vel: 0
+      xbox_joy: 1

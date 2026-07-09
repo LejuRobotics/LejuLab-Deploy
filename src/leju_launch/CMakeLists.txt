@@ -187,6 +187,10 @@ install(DIRECTORY launch/
   PATTERN "*.launch"
 )
 
+install(DIRECTORY config/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
+)
+
 #############
 ## Testing ##
 #############

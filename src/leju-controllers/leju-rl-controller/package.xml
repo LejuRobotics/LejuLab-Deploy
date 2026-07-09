@@ -51,7 +51,9 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>lejusdk-lowlevel</depend>
   <depend>lejusdk-utils</depend>
-  
+  <depend>lejusdk-vr</depend>
+  <depend>pinocchio</depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
