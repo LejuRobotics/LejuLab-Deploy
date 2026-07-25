@@ -21,6 +21,15 @@
   <!-- quest3_incremental_ik.yaml 路径，默认 leju-ik 包内 -->
   <arg name="quest3_ik_yaml_path" default="$(find leju-ik)/config/quest3_incremental_ik.yaml"/>
 
+  <!-- 人体下蹲控制（仅绝对IK模式/Roban，通过骨骼Root Z映射为下蹲速度指令） -->
+  <arg name="squat_enabled" default="false"/>
+  <arg name="squat_scale" default="1.5"/>
+  <arg name="squat_deadzone" default="0.03"/>
+  <arg name="squat_max" default="0.2"/>
+  <arg name="squat_filter_alpha_down" default="0.15"/>
+  <arg name="squat_filter_alpha_up" default="0.08"/>
+  <arg name="squat_output_deadzone" default="0.02"/>
+
   <!-- 前半段路径由 launch 传入，代码中拼接 /models/biped_s{version}/... 与 /config/kuavo_v{version}/... -->
   <env name="LEJU_ASSETS_PATH" value="$(arg models_path)"/>
   <env name="KUAVO_MODELS_PATH" value="$(arg models_path)"/>
@@ -28,6 +37,13 @@
   <env name="ROBOT_VERSION" value="$(arg robot_version)"/>
   <env name="USE_INCREMENTAL_IK" value="$(arg use_incremental_ik)"/>
   <env name="QUEST3_IK_YAML_PATH" value="$(arg quest3_ik_yaml_path)"/>
+  <env name="VR_SQUAT_ENABLED" value="$(arg squat_enabled)" unless="$(arg use_incremental_ik)"/>
+  <env name="VR_SQUAT_SCALE" value="$(arg squat_scale)" unless="$(arg use_incremental_ik)"/>
+  <env name="VR_SQUAT_DEADZONE" value="$(arg squat_deadzone)" unless="$(arg use_incremental_ik)"/>
+  <env name="VR_SQUAT_MAX" value="$(arg squat_max)" unless="$(arg use_incremental_ik)"/>
+  <env name="VR_SQUAT_FILTER_ALPHA_DOWN" value="$(arg squat_filter_alpha_down)" unless="$(arg use_incremental_ik)"/>
+  <env name="VR_SQUAT_FILTER_ALPHA_UP" value="$(arg squat_filter_alpha_up)" unless="$(arg use_incremental_ik)"/>
+  <env name="VR_SQUAT_OUTPUT_DEADZONE" value="$(arg squat_output_deadzone)" unless="$(arg use_incremental_ik)"/>
 
   <!-- leju-remote: Quest UDP to DDS bridge (quest_ip 为空时等待 Quest 广播发现) -->
   <node name="leju_remote" pkg="leju-remote" type="quest_udp_to_dds_node" output="screen"

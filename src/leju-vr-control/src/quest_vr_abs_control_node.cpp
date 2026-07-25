@@ -23,6 +23,13 @@
  *   VR_SKIP_OK_GESTURE 设为 1 时跳过「等待 OK」阶段（联调 DDS / 无手柄时用）
  *   VR_DEBUG_JOYSTICK  设为 1 时在等待 OK 阶段周期性打印扳机/握把数值
  *
+ * 人体下蹲控制（通过骨骼 Root Z 映射为 angular_z 速度指令）：
+ *   VR_SQUAT_ENABLED=1     启用人体下蹲控制
+ *   VR_SQUAT_SCALE=3.0     下蹲量(米)→angular_z 缩放系数
+ *   VR_SQUAT_DEADZONE=0.05 下蹲死区（米），小于此值不触发
+ *   VR_SQUAT_MAX=0.4       最大下蹲量限制（米）
+ *   VR_SQUAT_CALIB_FRAMES=100  标定帧数，前 N 帧取平均作为站立基准高度
+ *
  * 启动遥操作（与 motion_capture_ik quest3_utils 手柄分支一致）：
  *   双手扳机同时按住（值 > 0.5）并保持约 50 帧骨骼处理周期（约 1～2 秒）。
  */
@@ -41,8 +48,10 @@
 #include "leju-vr-control/head_solver.h"
 
 #include <Eigen/Dense>
+#include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <csignal>
 #include <cstdlib>
 #include <fstream>
@@ -294,6 +303,30 @@ int main(int argc, char** argv) {
 
   const bool skip_ok = (getEnv("VR_SKIP_OK_GESTURE") == "1");
   const bool dbg_joy = (getEnv("VR_DEBUG_JOYSTICK") == "1");
+
+  // ------- 人体下蹲控制参数 -------
+  // 通过骨骼 Root 节点 Z 坐标变化映射为 angular_z 速度指令（站立模式下控制下蹲高度）
+  const std::string squat_enabled_str = getEnv("VR_SQUAT_ENABLED");
+  const bool squat_enabled = (squat_enabled_str == "1" || squat_enabled_str == "true");
+  const double squat_scale = getEnvDouble("VR_SQUAT_SCALE", 1.5);        // 下蹲量→angular_z 缩放
+  const double squat_deadzone = getEnvDouble("VR_SQUAT_DEADZONE", 0.03); // 下蹲死区（米）
+  const double squat_max = getEnvDouble("VR_SQUAT_MAX", 0.2);            // 最大下蹲量限制（米）
+  const int squat_calib_frames = static_cast<int>(getEnvDouble("VR_SQUAT_CALIB_FRAMES", 100));
+  // 非对称低通滤波：下蹲时快速跟随，站起时缓慢回零（防止摔倒）
+  const double squat_filter_alpha_down = getEnvDouble("VR_SQUAT_FILTER_ALPHA_DOWN", 0.15);
+  const double squat_filter_alpha_up = getEnvDouble("VR_SQUAT_FILTER_ALPHA_UP", 0.08);
+  // 输出死区：截断滤波残余小值
+  const double squat_output_deadzone = getEnvDouble("VR_SQUAT_OUTPUT_DEADZONE", 0.02);
+  double squat_baseline_z = 0.0;  // 站立基准高度（标定后填充）
+  int squat_calib_count = 0;
+  double squat_depth_filtered = 0.0;  // 滤波后的下蹲量
+  if (squat_enabled) {
+    std::cout << "[VrAbsCtrl] 人体下蹲控制已启用 (scale=" << squat_scale
+              << " deadzone=" << squat_deadzone << " max=" << squat_max
+              << " filter_alpha_down=" << squat_filter_alpha_down
+              << " filter_alpha_up=" << squat_filter_alpha_up << ")" << std::endl;
+  }
+
   if (skip_ok) {
     std::cout << "[VrAbsCtrl] VR_SKIP_OK_GESTURE=1 — 跳过 OK 手势，直接进入外部控制。"
               << std::endl;
@@ -332,6 +365,58 @@ int main(int argc, char** argv) {
         head_cmd.v.resize(head_q.size(), 0.0);
         head_cmd.acc.resize(head_q.size(), 0.0);
         vr_api.publishHeadJointCmd(head_cmd);
+      }
+    }
+
+    // 1c. 人体下蹲 → 速度指令（通过 /rt/cmd_vel 发布，ExternalInterface 订阅）
+    //     利用骨骼 Root/Chest 节点 Z 坐标变化映射为 angular_z
+    //     站立模式(cmd_stance=1)下 angular_z 控制下蹲高度
+    //     行走模式(cmd_stance=0)下不干预，由手柄摇杆控制
+    if (squat_enabled && bones_copy.is_high_confidence &&
+        bones_copy.poses.size() > 23) {
+      // Root=22, Chest=23, Neck=24, Head=25
+      const double chest_z = static_cast<double>(bones_copy.poses[23].z);
+
+      // 标定阶段：前 N 帧取平均作为站立基准高度
+      if (squat_calib_count < squat_calib_frames) {
+        squat_baseline_z += chest_z;
+        squat_calib_count++;
+        if (squat_calib_count == squat_calib_frames) {
+          squat_baseline_z /= squat_calib_frames;
+          std::cout << "[VrAbsCtrl] 下蹲基准高度标定完成: baseline_z="
+                    << squat_baseline_z << std::endl;
+        }
+      } else {
+        // 标定完成，用 Chest 的 Z 坐标计算下蹲量
+        double squat_depth = squat_baseline_z - chest_z;  // 正值=下蹲
+        // 死区过滤
+        if (std::abs(squat_depth) < squat_deadzone) {
+          squat_depth = 0.0;
+        }
+        // 限幅
+        squat_depth = std::clamp(squat_depth, -squat_max, squat_max);
+        // 非对称低通滤波：下蹲时快速跟随，站起时缓慢回零（防止摔倒）
+        const double alpha = (squat_depth > squat_depth_filtered) ? squat_filter_alpha_down
+                                                                   : squat_filter_alpha_up;
+        squat_depth_filtered += alpha * (squat_depth - squat_depth_filtered);
+        // 映射为 angular_z（范围 [-1, 1]，ExternalInterface 会再乘 velocity_limits）
+        double angular_z = std::clamp(squat_depth_filtered * squat_scale, -1.0, 1.0);
+        // 输出死区：截断滤波残余小值，防止人站直后机器人缓慢漂移
+        if (std::abs(angular_z) < squat_output_deadzone) {
+          angular_z = 0.0;
+        }
+
+        leju::vr::VelocityCmd vel;
+        vel.linear_x = 0.0;
+        vel.linear_y = 0.0;
+        vel.angular_z = angular_z;
+        vr_api.publishVelocityCmd(vel);
+
+        static int squat_dbg_count = 0;
+        if (angular_z != 0.0 && ++squat_dbg_count % 500 == 0) {
+          std::cout << "[VrAbsCtrl] squat: depth=" << squat_depth
+                    << " angular_z=" << angular_z << std::endl;
+        }
       }
     }
 
