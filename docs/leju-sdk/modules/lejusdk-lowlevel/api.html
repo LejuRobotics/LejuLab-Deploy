@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lejusdk-lowlevel API &mdash; LejuSDK 3179b434a0 文档</title>
+  <title>lejusdk-lowlevel API &mdash; LejuSDK 1.5.1a10 文档</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -37,7 +37,7 @@
             LejuSDK
           </a>
               <div class="version">
-                3179b434a0
+                1.5.1a10
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -199,7 +199,8 @@
 <li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id3">时间戳</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id4">文件大小与压缩</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id5">兼容性</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id6">参考</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#mcap-cli">附: 官方 <code class="docutils literal notranslate"><span class="pre">mcap</span></code> CLI 安装</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logging-and-debugging/mcap_format.html#id8">参考</a></li>
 </ul>
 </li>
 </ul>
@@ -378,6 +379,30 @@
 </dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI27subscribeReloadTeleopConfigERK18StringDataCallback">
+<span id="_CPPv3N4leju12RobotBaseAPI27subscribeReloadTeleopConfigERK18StringDataCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI27subscribeReloadTeleopConfigERK18StringDataCallback"></span><span id="leju::RobotBaseAPI::subscribeReloadTeleopConfig__StringDataCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a9de3884fee0b0a2a8ee6b3bc85ffaea9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeReloadTeleopConfig</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">StringDataCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI27subscribeReloadTeleopConfigERK18StringDataCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅遥控器绑定配置热重载信号 </p>
+<p>上位机修改 teleop_bindings.yaml 后, 通过该 topic 通知运行中的控制器重新加载配置. 收到的 <a class="reference internal" href="datatypes.html#structleju_1_1StringData_1a0565c347d4e7a664436006ef110197b9"><span class="std std-ref">StringData.data</span></a> 可选携带配置文件路径; 为空时由订阅方重读已加载的路径.</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 回调函数, 当收到重载信号时被调用 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI31subscribeReloadControllerConfigERK18StringDataCallback">
+<span id="_CPPv3N4leju12RobotBaseAPI31subscribeReloadControllerConfigERK18StringDataCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI31subscribeReloadControllerConfigERK18StringDataCallback"></span><span id="leju::RobotBaseAPI::subscribeReloadControllerConfig__StringDataCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a189fda6ff9ffa4ecf92164c37c5ffbb0"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeReloadControllerConfig</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">StringDataCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI31subscribeReloadControllerConfigERK18StringDataCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅控制器列表配置热重载信号 </p>
+<p>上位机修改 controller_manager.yaml 后, 通过该 topic 通知运行中的控制器重新加载配置. 收到的 <a class="reference internal" href="datatypes.html#structleju_1_1StringData_1a0565c347d4e7a664436006ef110197b9"><span class="std std-ref">StringData.data</span></a> 可选携带配置文件路径; 为空时由订阅方重读已加载的路径.</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> – 回调函数, 当收到重载信号时被调用 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI15publishRobotCmdERK8RobotCmd">
 <span id="_CPPv3N4leju12RobotBaseAPI15publishRobotCmdERK8RobotCmd"></span><span id="_CPPv2N4leju12RobotBaseAPI15publishRobotCmdERK8RobotCmd"></span><span id="leju::RobotBaseAPI::publishRobotCmd__RobotCmdCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a6657fa1f49605c6ef7746685de8993b7"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishRobotCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju8RobotCmdE" title="leju::RobotCmd"><span class="n"><span class="pre">RobotCmd</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI15publishRobotCmdERK8RobotCmd" title="永久链接至目标"></a><br /></dt>
 <dd><p>发布机器人控制指令 </p>
@@ -396,9 +421,36 @@
 </dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI14publishHandCmdERK7HandCmd">
+<span id="_CPPv3N4leju12RobotBaseAPI14publishHandCmdERK7HandCmd"></span><span id="_CPPv2N4leju12RobotBaseAPI14publishHandCmdERK7HandCmd"></span><span id="leju::RobotBaseAPI::publishHandCmd__HandCmdCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1ad0c1ab75a4c8a34809c45740899c7f8e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishHandCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">HandCmd</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI14publishHandCmdERK7HandCmd" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布手部控制指令 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI18subscribeHandStateERK17HandStateCallback">
+<span id="_CPPv3N4leju12RobotBaseAPI18subscribeHandStateERK17HandStateCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI18subscribeHandStateERK17HandStateCallback"></span><span id="leju::RobotBaseAPI::subscribeHandState__HandStateCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a016ff5dae0f9d31853ca21e61c7f59f6"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeHandState</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">HandStateCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI18subscribeHandStateERK17HandStateCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅双手状态反馈 </p>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI16publishStopRobotEv">
 <span id="_CPPv3N4leju12RobotBaseAPI16publishStopRobotEv"></span><span id="_CPPv2N4leju12RobotBaseAPI16publishStopRobotEv"></span><span id="leju::RobotBaseAPI::publishStopRobot"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a35e69ca34bb333f4677759b76293269d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishStopRobot</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI16publishStopRobotEv" title="永久链接至目标"></a><br /></dt>
 <dd><p>发布停止指令 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI23publishPostureHeightCmdEd">
+<span id="_CPPv3N4leju12RobotBaseAPI23publishPostureHeightCmdEd"></span><span id="_CPPv2N4leju12RobotBaseAPI23publishPostureHeightCmdEd"></span><span id="leju::RobotBaseAPI::publishPostureHeightCmd__double"></span><span class="target" id="classleju_1_1RobotBaseAPI_1ae30a09aa37cbaed4c20e45ed2bca7ffa"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishPostureHeightCmd</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">height_m</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI23publishPostureHeightCmdEd" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布姿态高度指令（通过 /rt/posture_height_cmd 话题） </p>
+<p>发给 ExternalInterface 的 posture controller。 设定 cmd_stance=1 并调整身体高度，对标遥控器右摇杆 Y 轴下蹲控制。</p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>height_m</strong> – 目标站立高度（米），e.g. 0.77 全站立，0.56 深蹲 </p>
+</dd>
+<dt class="field-even">返回<span class="colon">:</span></dt>
+<dd class="field-even"><p>发布成功返回 true </p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -406,15 +458,21 @@
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-驱动端接口">驱动端接口</p>
 <p>底层驱动或仿真程序使用：发布传感器数据，订阅控制指令 </p>
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback">
-<span id="_CPPv3N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback"></span><span id="leju::RobotBaseAPI::subscribeStopRobot__StringDataCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a09e328c65934dc25653359370c9afbbc"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeStopRobot</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">StringDataCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback" title="永久链接至目标"></a><br /></dt>
-<dd><p>订阅停止指令 </p>
-</dd></dl>
-
-<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback">
 <span id="_CPPv3N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback"></span><span id="leju::RobotBaseAPI::subscribeRobotCmd__RobotCmdCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1ab7a4f4b0e2d8ca8599f7398f6d90a40a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeRobotCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">RobotCmdCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI17subscribeRobotCmdERK16RobotCmdCallback" title="永久链接至目标"></a><br /></dt>
 <dd><p>订阅控制指令 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI16subscribeHandCmdERK15HandCmdCallback">
+<span id="_CPPv3N4leju12RobotBaseAPI16subscribeHandCmdERK15HandCmdCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI16subscribeHandCmdERK15HandCmdCallback"></span><span id="leju::RobotBaseAPI::subscribeHandCmd__HandCmdCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1ab50befe422d7fc34c7f0b6b3de37db3d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeHandCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">HandCmdCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI16subscribeHandCmdERK15HandCmdCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅手部控制指令 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback">
+<span id="_CPPv3N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback"></span><span id="_CPPv2N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback"></span><span id="leju::RobotBaseAPI::subscribeStopRobot__StringDataCallbackCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a09e328c65934dc25653359370c9afbbc"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">subscribeStopRobot</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">StringDataCallback</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">callback</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI18subscribeStopRobotERK18StringDataCallback" title="永久链接至目标"></a><br /></dt>
+<dd><p>订阅停止命令 </p>
 </dd></dl>
 
 <dl class="cpp function">
@@ -436,9 +494,38 @@
 </dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI17publishMotorStateERK10RobotState">
+<span id="_CPPv3N4leju12RobotBaseAPI17publishMotorStateERK10RobotState"></span><span id="_CPPv2N4leju12RobotBaseAPI17publishMotorStateERK10RobotState"></span><span id="leju::RobotBaseAPI::publishMotorState__RobotStateCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a1a62d39da476bd7102e79982d38e6299"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishMotorState</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju10RobotStateE" title="leju::RobotState"><span class="n"><span class="pre">RobotState</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">motor_state</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI17publishMotorStateERK10RobotState" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布电机层原始状态（pre-c2t, pre-ankle-inv） </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI16publishHandStateERK9HandState">
+<span id="_CPPv3N4leju12RobotBaseAPI16publishHandStateERK9HandState"></span><span id="_CPPv2N4leju12RobotBaseAPI16publishHandStateERK9HandState"></span><span id="leju::RobotBaseAPI::publishHandState__HandStateCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1aa153775feaff1a1a1d7dca2474f96ae8"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishHandState</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">HandState</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">state</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI16publishHandStateERK9HandState" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布双手状态反馈 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI15publishMotorCmdERK8RobotCmd">
+<span id="_CPPv3N4leju12RobotBaseAPI15publishMotorCmdERK8RobotCmd"></span><span id="_CPPv2N4leju12RobotBaseAPI15publishMotorCmdERK8RobotCmd"></span><span id="leju::RobotBaseAPI::publishMotorCmd__RobotCmdCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1aba886ecf10cb4945caed96c142ee0810"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishMotorCmd</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju8RobotCmdE" title="leju::RobotCmd"><span class="n"><span class="pre">RobotCmd</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">motor_cmd</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI15publishMotorCmdERK8RobotCmd" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布写电机前最终命令（post-ankle-fwd, post-c2t） </p>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI14publishJoyDataERK7JoyData">
 <span id="_CPPv3N4leju12RobotBaseAPI14publishJoyDataERK7JoyData"></span><span id="_CPPv2N4leju12RobotBaseAPI14publishJoyDataERK7JoyData"></span><span id="leju::RobotBaseAPI::publishJoyData__JoyDataCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1aaac8ee773c73ab5bab0a68c118be1bb1"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishJoyData</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="datatypes.html#_CPPv4N4leju7JoyDataE" title="leju::JoyData"><span class="n"><span class="pre">JoyData</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">joy</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI14publishJoyDataERK7JoyData" title="永久链接至目标"></a><br /></dt>
 <dd><p>发布手柄数据 </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4leju12RobotBaseAPI25publishReloadTeleopConfigERKNSt6stringE">
+<span id="_CPPv3N4leju12RobotBaseAPI25publishReloadTeleopConfigERKNSt6stringE"></span><span id="_CPPv2N4leju12RobotBaseAPI25publishReloadTeleopConfigERKNSt6stringE"></span><span id="leju::RobotBaseAPI::publishReloadTeleopConfig__ssCR"></span><span class="target" id="classleju_1_1RobotBaseAPI_1a4e9905ed75e29e464b87f9e421e0994a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">publishReloadTeleopConfig</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">config_path</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="s"><span class="pre">&quot;&quot;</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4leju12RobotBaseAPI25publishReloadTeleopConfigERKNSt6stringE" title="永久链接至目标"></a><br /></dt>
+<dd><p>发布遥控器绑定配置热重载信号 </p>
+<dl class="field-list simple">
+<dt class="field-odd">参数<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_path</strong> – 可选, 携带配置文件路径; 为空表示让订阅方重读已加载路径 </p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

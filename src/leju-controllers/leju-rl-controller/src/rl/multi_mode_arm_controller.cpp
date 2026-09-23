@@ -3,8 +3,10 @@
  * @brief 多模式手臂控制器实现：三种控制模式与平滑过渡
  */
 
+#ifdef USE_PINOCCHIO
 // pinocchio forward declarations must come before Eigen
 #include <pinocchio/fwd.hpp>
+#endif  // USE_PINOCCHIO
 
 #include "leju-rl-controller/rl/multi_mode_arm_controller.h"
 #include "leju-rl-controller/rl/arm_torque_controller.h"
@@ -12,8 +14,23 @@
 
 #include <algorithm>
 #include <cmath>
+#include <sstream>
 
 namespace leju {
+
+namespace {
+// 调试用：Eigen 向量 → "[q0 q1 ...]" 字符串（配合 RL_LOG_* printf 风格日志）
+std::string vecToStr(const Eigen::VectorXd& v) {
+  std::ostringstream oss;
+  oss << "[";
+  for (Eigen::Index i = 0; i < v.size(); ++i) {
+    if (i) oss << " ";
+    oss << v[i];
+  }
+  oss << "]";
+  return oss.str();
+}
+}  // namespace
 
 MultiModeArmController::~MultiModeArmController() = default;
 
@@ -97,30 +114,31 @@ void MultiModeArmController::setMode(ArmControlMode mode) {
         return;
     }
 
-    // 计算模式切换的目标位置
-    Eigen::VectorXd target_q;
+    // 仅 kAuto 需要 transition 走到 default_arm_pos_，其余模式跳过让 update 直接接管
+    bool needs_transition = false;
+    Eigen::VectorXd transition_target;
     switch (mode) {
         case ArmControlMode::kKeepPose:
-            // 切换到 KEEP_POSE: 目标是当前位置
-            keep_pose_q_ = current_arm_pos_;
-            target_q = current_arm_pos_;
+            keep_pose_q_ = desire_arm_q_;  // 用指令位姿而非反馈位姿，避免马达滞后导致"回弹"
             break;
 
         case ArmControlMode::kAuto:
-            // 切换到 AUTO: 目标是默认姿态
-            target_q = default_arm_pos_;
             is_interpolating_to_default_ = false;
+            transition_target = default_arm_pos_;
+            needs_transition = true;
             break;
 
         case ArmControlMode::kExternal: {
             // 重置轨迹生成器状态，避免残留旧状态导致手臂先完成旧动作
             external_generator_.reset();
+            // 模式切换后旧定时移动目标已失效，重置防止残留状态干扰新模式
+            timed_move_active_ = false;
 
             // 重置目标接收标志，避免使用上一次程序残留的旧目标
             target_received_ = false;
+            has_external_velocity_ = false;  // 重置高频轨迹标志
 
             // 切换到 EXTERNAL: 从当前位置开始，等待新的外部命令
-            target_q = current_arm_pos_;
             raw_target_q_ = current_arm_pos_;
             filtered_target_q_ = current_arm_pos_;
             target_filter_.reset(current_arm_pos_);
@@ -135,16 +153,20 @@ void MultiModeArmController::setMode(ArmControlMode mode) {
         }
     }
 
-    // 启动平滑过渡
-    Eigen::VectorXd from_q = desire_arm_q_.size() > 0 ? desire_arm_q_ : current_arm_pos_;
-    startModeTransition(from_q, target_q);
-
     pending_mode_ = mode;
+    if (needs_transition) {
+        // from_q 用 desire_arm_q_（= 上一帧实际 cmd.q）保证 cmd.q 不跳变
+        startModeTransition(desire_arm_q_, transition_target);
+    } else {
+        mode_ = mode;
+        mode_transitioning_ = false;
+    }
 }
 
 void MultiModeArmController::setExternalTarget(const Eigen::VectorXd& q,
                                                const Eigen::VectorXd& v) {
     if (!initialized_) {
+        RL_LOG_WARNING("setExternalTarget: not initialized");
         return;
     }
     if (q.size() != arm_joint_count_) {
@@ -156,8 +178,90 @@ void MultiModeArmController::setExternalTarget(const Eigen::VectorXd& q,
     raw_target_q_ = q;
     target_received_ = true;
 
-    // 更新滤波器
-    filtered_target_q_ = target_filter_.update(q);
+    // 是否有真实速度前馈（tact 播放等提供非零 v）——VR 节点下发全零 v，视为无速度前馈。
+    const bool has_ff_vel = (v.size() == arm_joint_count_ && !v.isZero(1e-9));
+    // 接入阶段（is_approaching_，刚进入 External）且无速度前馈：
+    // 用 5 阶多项式（min-jerk）从当前指令位姿平滑过渡到初始外部目标，避免启动瞬间
+    if (is_approaching_ && !has_ff_vel) {
+        if (timed_move_active_) {
+            const double target_delta =
+                (q - timed_move_target_q_).lpNorm<Eigen::Infinity>();
+            if (target_delta > config_.approach_threshold) {
+                Eigen::VectorXd cur_pos, cur_vel;
+                timed_move_interpolator_.evaluate(timed_move_time_, cur_pos, cur_vel);
+                desire_arm_q_ = cur_pos;  // 同步实时指令位姿作为新插值起点
+                const double max_dist = (q - desire_arm_q_).lpNorm<Eigen::Infinity>();
+                double duration = 0.68 * max_dist / config_.mode_interpolation_velocity;
+                duration = std::max(config_.min_duration,
+                                    std::min(config_.max_duration, duration));
+                timed_move_interpolator_.setup(desire_arm_q_, cur_vel, q,
+                                               Eigen::VectorXd::Zero(q.size()), duration);
+                timed_move_target_q_ = q;
+                timed_move_time_ = 0.0;
+                RL_LOG_INFO("[ArmCtrl] 插值目标实时更新(delta=%.3f>%.3f): 重新插值到新目标, "
+                            "duration=%.3fs, from=%s vel=%.3f to=%s",
+                            target_delta, config_.approach_threshold, duration,
+                            vecToStr(desire_arm_q_).c_str(), cur_vel.lpNorm<Eigen::Infinity>(),
+                            vecToStr(q).c_str());
+            }
+            return;
+        }
+        const double max_dist = (q - desire_arm_q_).lpNorm<Eigen::Infinity>();
+        double duration = 0.68 * max_dist / config_.mode_interpolation_velocity;
+        duration = std::max(config_.min_duration, std::min(config_.max_duration, duration));
+        timed_move_interpolator_.setup(desire_arm_q_, q, duration);
+        timed_move_target_q_ = q;  // 记录插值目标，供实时更新判定
+        timed_move_time_ = 0.0;
+        timed_move_active_ = true;
+        has_external_velocity_ = false;
+        RL_LOG_INFO("[ArmCtrl] 使用滤波(进入External接入插值): max_dist=%.3f rad, duration=%.3fs, "
+                    "from=%s to=%s",
+                    max_dist, duration, vecToStr(desire_arm_q_).c_str(), vecToStr(q).c_str());
+        return;
+    }
+
+    // 新目标接管：旧定时移动立即作废，改由新目标驱动
+    timed_move_active_ = false;  // 新目标取消未完成的定时移动
+
+    // 当 velocity 由 bezier 提供（tact 播放）时：绕过 5Hz 滤波器直接使用原始位置，
+    // 存储速度供 updateExternal 直接使用（绕过 VelocityLimitedGenerator 限速）
+    if (v.size() == arm_joint_count_) {
+        filtered_target_q_ = q;       // bypass 5Hz low-pass filter
+        external_target_v_ = v;       // store feedforward velocity
+        has_external_velocity_ = true;
+    } else {
+        filtered_target_q_ = target_filter_.update(q);
+        has_external_velocity_ = false;
+    }
+}
+
+void MultiModeArmController::moveToExternalTarget(const Eigen::VectorXd& q,
+                                                  double duration) {
+    if (!initialized_) {
+        RL_LOG_WARNING("moveToExternalTarget: not initialized");
+        return;
+    }
+    if (q.size() != arm_joint_count_) {
+        RL_LOG_WARNING("moveToExternalTarget: dimension mismatch: expected %d, got %d",
+                       arm_joint_count_, static_cast<int>(q.size()));
+        return;
+    }
+    if (duration <= 0.0) {
+        // 非正时长退回普通限速接入
+        setExternalTarget(q);
+        return;
+    }
+
+    // 从当前指令位姿出发，保证 cmd.q 不跳变
+    timed_move_interpolator_.setup(desire_arm_q_, q, duration);
+    timed_move_target_q_ = q;  // 记录插值目标，供插值结束时误差判定
+    timed_move_time_ = 0.0;
+    timed_move_active_ = true;
+    // 移动期间视为接入中，完成后置 false（供上层做到位判定）
+    is_approaching_ = true;
+    target_received_ = true;
+    raw_target_q_ = q;
+    has_external_velocity_ = false;
 }
 
 void MultiModeArmController::startModeTransition(const Eigen::VectorXd& from_q,
@@ -224,33 +328,30 @@ bool MultiModeArmController::update(double cmd_stance,
     desire_q->resize(arm_joint_count_);
     desire_v->resize(arm_joint_count_);
 
-    // 处理模式切换过渡
+    // transition 期间也走 should_override 末尾块，保证 tau 被计算（避免重力补偿丢失）
+    bool should_override = false;
     if (mode_transitioning_) {
-        bool transition_done = updateModeTransition(desire_q, desire_v);
-        desire_arm_q_ = *desire_q;
-
-        if (!transition_done) {
-            return true;  // 过渡期间始终覆盖
-        }
-        // 过渡完成，继续执行新模式逻辑
+        updateModeTransition(desire_q, desire_v);
+        should_override = true;
     }
 
-    // 根据模式调用对应的更新函数
-    bool should_override = false;
-    switch (mode_) {
-        case ArmControlMode::kKeepPose:
-            should_override = updateKeepPose(current_arm_pos, desire_q, desire_v);
-            break;
+    // 根据模式调用对应的更新函数（无过渡 或 过渡刚完成）
+    if (!mode_transitioning_) {
+        switch (mode_) {
+            case ArmControlMode::kKeepPose:
+                should_override = updateKeepPose(current_arm_pos, desire_q, desire_v);
+                break;
 
-        case ArmControlMode::kAuto:
-            should_override = updateAuto(cmd_stance, current_arm_pos, current_arm_vel,
-                                         desire_q, desire_v);
-            break;
-
-        case ArmControlMode::kExternal:
-            should_override = updateExternal(current_arm_pos, current_arm_vel,
+            case ArmControlMode::kAuto:
+                should_override = updateAuto(cmd_stance, current_arm_pos, current_arm_vel,
                                              desire_q, desire_v);
-            break;
+                break;
+
+            case ArmControlMode::kExternal:
+                should_override = updateExternal(current_arm_pos, current_arm_vel,
+                                                 desire_q, desire_v);
+                break;
+        }
     }
 
     if (should_override) {
@@ -334,9 +435,45 @@ bool MultiModeArmController::updateExternal(const Eigen::VectorXd& current_arm_p
                                             const Eigen::VectorXd& current_arm_vel,
                                             Eigen::VectorXd* desire_q,
                                             Eigen::VectorXd* desire_v) {
+    // 定时移动（moveToExternalTarget / 进入External接入插值）：五次多项式插值，到期后保持目标
+    if (timed_move_active_) {
+        timed_move_time_ += dt_;
+        Eigen::VectorXd pos, vel;
+        timed_move_interpolator_.evaluate(timed_move_time_, pos, vel);
+        *desire_q = pos;
+        *desire_v = vel;
+        if (timed_move_interpolator_.isFinished(timed_move_time_)) {
+            // 插值完成：目标已在 setExternalTarget 中实时 re-plan 到最新，直接解除插值恢复直通。
+            timed_move_active_ = false;
+            is_approaching_ = false;
+            *desire_q = raw_target_q_;
+            desire_v->setZero();
+            // 同步跟踪状态，后续由限速生成器保持目标位
+            filtered_target_q_ = raw_target_q_;
+            target_filter_.reset(raw_target_q_);
+            external_generator_.setMaxVelocity(Eigen::VectorXd::Constant(
+                arm_joint_count_, config_.tracking_velocity));
+            RL_LOG_INFO("[ArmCtrl] 退出滤波(接入插值完成): 解除插值恢复直通, is_approaching_=false, "
+                        "target=%s", vecToStr(raw_target_q_).c_str());
+        }
+        return true;
+    }
+
+    // 高频轨迹模式（tact 播放提供 velocity）：直接使用原始位置+速度，
+    // 绕过 VelocityLimitedGenerator 限速（2.0 rad/s）和 5Hz 低通滤波
+    if (has_external_velocity_ && target_received_) {
+        *desire_q = raw_target_q_;
+        *desire_v = external_target_v_;
+        // 确保接入阶段已完成，避免 is_approaching_ 残留
+        if (is_approaching_) {
+            is_approaching_ = false;
+        }
+        return true;
+    }
+
     if (!target_received_) {
-        // 未收到外部目标，保持当前位置
-        *desire_q = current_arm_pos;
+        // 锁住切换时快照；用 current_arm_pos 会让 kp 失效，重力补偿偏差会被阻尼成漂移
+        *desire_q = raw_target_q_;
         *desire_v = Eigen::VectorXd::Zero(arm_joint_count_);
         return true;
     }

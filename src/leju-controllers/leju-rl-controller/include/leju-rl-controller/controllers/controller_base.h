@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -80,6 +81,45 @@ class ControllerBase {
    * @param cmd 包含线速度和角速度的指令
    */
   virtual void setVelocityCommand(const VelocityCommand& cmd);
+  virtual const VelocityCommand& getVelocityCommand() const { return velocity_cmd_; }
+
+  /// @brief 清零速度滤波 等内部状态（Running 入口用，默认空实现）
+  virtual void clearVelocityFilterState() {}
+
+  /**
+   * @brief 设置 cmd_stance 模式
+   * @param stance 0=正常 AMP 行走态，1=站立/下蹲/弯腰态
+   */
+  void setCmdStanceMode(int stance);
+
+  /**
+   * @brief 在 0 和 1 之间切换 cmd_stance
+   * @return 切换后的 cmd_stance
+   */
+  int toggleCmdStanceMode();
+
+  /**
+   * @brief 获取当前 cmd_stance 模式
+   * @return 0=行走态，1=站立/下蹲/弯腰态
+   */
+  int getCmdStanceMode() const;
+
+  /// @brief 深蹲守备：基于实际平滑高度命令，阻止退出 posture
+  virtual bool isDeepSquatGuardActive() const { return false; }
+
+  /// @brief 是否仍有残留平滑下蹲高度命令（smoothed 高度 < 0）
+  virtual bool hasResidualStanceHeightCommand() const { return false; }
+
+  /// @brief 转身退出深蹲守备：smoothed 下蹲高度 >= 阈值 且 |smoothed cmd_z| > 阈值
+  virtual bool canTurnExitDeepSquatGuard(double pending_angular_z) const { return false; }
+
+  /// @brief 行走模式下用于判定的 smoothed cmd_z（policy command unit，非 IMU）
+  virtual double getSmoothedWalkingCmdZ(double pending_angular_z) const {
+    return pending_angular_z;
+  }
+
+  /// @brief 转身退出守备的最小 |smoothed cmd_z| 阈值（policy command unit）
+  virtual double getTurnExitGuardThreshold() const { return 0.5; }
 
   /**
    * @brief 将关节移动到默认位置
@@ -87,6 +127,16 @@ class ControllerBase {
    * @param elapse 过渡时间 [s]
    */
   virtual void moveToDefaultPos(const RobotState& current_state, double elapse);
+
+  /**
+   * @brief 设置默认姿态过渡的取消标志
+   *
+   * ControllerManager 在 requestStop()/stop() 时置位该标志，使控制器
+   * 自身实现的阻塞式插值也能及时退出。未由管理器托管的控制器可不设置。
+   */
+  void setDefaultPoseStopFlag(const std::atomic<bool>* stop_flag) noexcept {
+    default_pose_stop_flag_ = stop_flag;
+  }
 
   /// @brief 获取控制器名称
   std::string getName() const;
@@ -96,6 +146,28 @@ class ControllerBase {
 
   /// @brief 获取默认关节位置
   const array_t& getDefaultJointPos() const;
+
+  /**
+   * @brief 设置控制器配置文件路径
+   * @param config_path 配置文件路径
+   * @return 成功返回 true（如果控制器支持配置）
+   *
+   * 默认实现返回 false，子类如需支持配置加载应 override 此方法。
+   */
+  virtual bool setConfigPath(const std::string& config_path) { return false; }
+
+  /**
+   * @brief 设置部位关节名称（由 ControllerManager 从 SDK 获取后传入）
+   * @param arm_joint_names 手臂关节名称列表（来自机器人硬件）
+   * @param waist_joint_names 腰部关节名称列表（来自机器人硬件）
+   *
+   * 解耦 ControllerBase 和 SDK，避免直接依赖 GlobalRobot。
+   */
+  void setPartJointNames(const std::vector<std::string>& arm_joint_names,
+                         const std::vector<std::string>& waist_joint_names) {
+    arm_joint_names_ = arm_joint_names;
+    waist_joint_names_ = waist_joint_names;
+  }
 
   /// @brief 是否正在运行
   bool isActive() const;
@@ -119,16 +191,30 @@ class ControllerBase {
   /// @brief 获取控制频率 [Hz]
   int getControlFrequency() const { return static_cast<int>(1.0 / loop_dt_); }
 
+  /// @brief 策略切换时用于重建 q_target/kp/kd 的参考命令
+  virtual const RobotCmd* getDualInferenceBlendReferenceCmd() const { return nullptr; }
+
+  /// @brief 策略切换时策略关节的力矩限幅（电机空间）
+  virtual const array_t* getDualInferenceTorqueLimits() const { return nullptr; }
+
+  /// @brief 策略切换时哪些关节应使用 q_target 重算 tau
+  virtual const array_i* getDualInferenceRecomputeMask() const { return nullptr; }
+
+  /// @brief 判断当前是否处于站立状态（速度指令接近零）
+  bool isStanding() const {
+    std::lock_guard<std::mutex> lock(cmd_mutex_);
+    return std::abs(velocity_cmd_.linear_x) < 0.01 &&
+           std::abs(velocity_cmd_.linear_y) < 0.01 &&
+           std::abs(velocity_cmd_.angular_z) < 0.01;
+  }
+
   /**
-   * @brief 接收手柄原生输入
+   * @brief 开始播放 motion（用于舞蹈/动作播放控制器）
+   * @return 成功返回 true，不支持则返回 false
    *
-   * 子类按自己的业务逻辑解读按键和摇杆含义。
-   * 默认空实现。
-   *
-   * @param joy 当前帧手柄数据
-   * @param prev_buttons 上一帧按钮状态（用于边缘检测）
+   * 默认实现返回 false，子类（如 GenericRLController）可 override 实现具体逻辑。
    */
-  virtual void onJoyInput(const JoyData& joy, const JoyData::Buttons& prev_buttons);
+  virtual bool startMotion() { return false; }
 
   // ===================== 部位控制器访问接口 =====================
 
@@ -143,6 +229,46 @@ class ControllerBase {
    * @return 腰部控制器指针，如果不存在则返回 nullptr
    */
   WaistController* getWaistController() { return waist_controller_.get(); }
+
+  /**
+   * @brief 获取手臂关节索引（在 cmd.q 中的位置）
+   * @return 手臂关节索引数组
+   */
+  const std::vector<int>& getArmJointIds() const { return arm_joint_ids_; }
+
+  /**
+   * @brief 获取手臂关节数量
+   * @return 手臂关节数，未配置返回 0
+   */
+  size_t getArmJointCount() const { return arm_joint_ids_.size(); }
+
+  /**
+   * @brief 获取默认手臂姿态（从 default_joint_pos_ 中提取）
+   * @return 默认手臂位置向量，未配置返回空向量
+   */
+  virtual Eigen::VectorXd getDefaultArmPos() const {
+    return getConfigDefaultArmPos();
+  }
+
+  /**
+   * @brief 获取腰部关节索引（SDK 电机索引）
+   * @return 腰部关节索引列表
+   */
+  const std::vector<int>& getWaistJointIds() const { return waist_joint_ids_; }
+
+  /**
+   * @brief 获取腰部关节数量
+   * @return 腰部关节数，未配置返回 0
+   */
+  size_t getWaistJointCount() const { return waist_joint_ids_.size(); }
+
+  /**
+   * @brief 获取默认腰部姿态（从 default_joint_pos_ 中提取）
+   * @return 默认腰部位置向量，未配置返回空向量
+   */
+  virtual Eigen::VectorXd getDefaultWaistPos() const {
+    return getConfigDefaultWaistPos();
+  }
 
  protected:
   // ===================== 模板方法：子类必须实现 =====================
@@ -183,6 +309,17 @@ class ControllerBase {
    * @param[in,out] cmd 控制指令（会修改腰部关节部分）
    */
   virtual void updateWaistCommand(RobotCmd& cmd);
+
+  /**
+   * @brief 获取防抖后的站立/行走状态（非对称滞回）
+   *
+   * 进入站立需连续零速至少 100ms，恢复行走立即响应。
+   * 防遥控器 SDL3 单帧丢零导致手臂/腰部控制模式反复切换。
+   * v46/v52 等部位控制器 kAuto 模式：stance=1 表示站立并插值到 default pose。
+   *
+   * @return 1.0=站立, 0.0=行走
+   */
+  double getDebouncedStance() const;
 
   // ===================== 配置加载接口 =====================
 
@@ -235,6 +372,15 @@ class ControllerBase {
    */
   void buildPartJointMapping();
 
+  /// @brief 按关节名查找其在 joint_names_ / default_joint_pos_ 中的策略索引
+  int findPolicyJointIndex(const std::string& joint_name) const;
+
+  /// @brief 从 YAML defaultJointState 提取手臂默认姿态（policy 空间，不受 motion 影响）
+  Eigen::VectorXd getConfigDefaultArmPos() const;
+
+  /// @brief 从 YAML defaultJointState 提取腰部默认姿态（policy 空间，不受 motion 影响）
+  Eigen::VectorXd getConfigDefaultWaistPos() const;
+
   // ===================== 控制器标识 =====================
   std::string name_;                                          ///< 名称
   ControllerState state_ = ControllerState::kUninitialized;   ///< 当前状态
@@ -246,7 +392,8 @@ class ControllerBase {
   // ===================== 关节配置 =====================
   std::vector<std::string> joint_names_;  ///< 策略关节名称（按策略顺序）
   std::vector<int> policy_joint_ids_;     ///< 策略关节对应的 SDK 电机索引
-  array_t default_joint_pos_;   ///< 默认关节位置 [rad]
+  array_t default_joint_pos_;      ///< 策略 default pose [rad]（AMP 动作/观测中心）
+  array_t start_stand_joint_pos_;  ///< 启动插值目标 [rad]；未配置时与 default_joint_pos_ 相同
   array_t joint_kp_;            ///< 位置增益
   array_t joint_kd_;            ///< 速度增益
   array_t joint_action_scale_;  ///< 动作缩放系数
@@ -266,6 +413,15 @@ class ControllerBase {
   // ===================== 指令输入 =====================
   mutable std::mutex cmd_mutex_;  ///< 速度指令锁
   VelocityCommand velocity_cmd_;  ///< 当前速度指令
+  int cmd_stance_mode_ = 0;        ///< AMP cmd_stance: 0=行走态, 1=站立/下蹲/弯腰态
+
+  // cmd_stance 防抖（手臂/腰部控制器共用，时间基准）
+  // 任意频率下保证至少 100ms 零速才判定站立
+  mutable std::chrono::steady_clock::time_point stance_zero_since_{};  ///< 首次零速时刻
+  int stance_debounce_threshold_ = 5;  ///< 站立判定所需连续零速帧数（RL 策略观测用）
+
+  double getCmdStanceValue() const;
+  virtual double getPartControllerCmdStanceValue() const;
 
   // ===================== 传感器数据缓存 =====================
   RobotState current_state_;  ///< 缓存的关节状态
@@ -280,10 +436,10 @@ class ControllerBase {
 
   // ===================== 部位关节映射 =====================
   //
-  // 【三个空间的映射关系】
+  // 【两个空间的映射关系】
   //
-  //  Config Space          Policy Space              SDK Space
-  //  (YAML配置)            (RL策略数组)              (硬件电机)
+  //                        Policy Space              SDK Space (硬件电机)
+  //  (关节名称)            (RL策略数组)              (cmd.q 索引)
   //  ─────────────         ─────────────             ─────────────
   //                        joint_names_[]:
   //                        ┌───┬───────────┐
@@ -313,6 +469,14 @@ class ControllerBase {
   //
   std::vector<std::string> arm_joint_names_;
   std::vector<std::string> waist_joint_names_;
+
+  /// @brief 管理器请求停止默认姿态过渡时的共享只读标志
+  const std::atomic<bool>* default_pose_stop_flag_ = nullptr;
+
+  bool defaultPoseStopRequested() const noexcept {
+    return default_pose_stop_flag_ != nullptr &&
+           default_pose_stop_flag_->load(std::memory_order_relaxed);
+  }
   std::vector<int> arm_joint_ids_;
   std::vector<int> waist_joint_ids_;
   int arm_policy_start_idx_ = -1;

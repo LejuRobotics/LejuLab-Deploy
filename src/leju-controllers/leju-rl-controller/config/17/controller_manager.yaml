@@ -1,5 +1,12 @@
 loop_dt: 0.001
-default_controller: "mimic_dance"
+default_controller: "amp"
+# 控制器切换期间插值用的 kp/kd（确保能跟踪到位）
+switch_interpolation:
+  arm_kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
+  arm_kd: [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0]
+  # 17版本: 1个腰部关节
+  waist_kp: [40.179]
+  waist_kd: [2.557]
 
 controllers:
   - name: "amp"
@@ -7,13 +14,73 @@ controllers:
     config: "controllers/config_amp.yaml"
     enabled: true
 
-  - name: "mimic_dance"
-    type: "GenericRLController"
-    config: "controllers/config_mimic_dance.yaml"
+  - name: "depth_walk"
+    type: "DepthWalkController"
+    config: "controllers/config_depth_walk.yaml"
     enabled: true
 
-  # 实物未测试: 勿运行
-  # - name: "mimic_yongchun"
+  # 搬运模式 LOCK 用：捕获当前全身关节位后位控锁死
+  # （独立配置，增益沿用 amp 运控 config_amp.yaml actuator_kp/kd，详见 config_hold_pose.yaml 头部）
+  - name: "hold_pose"
+    type: "HoldPoseController"
+    config: "controllers/config_hold_pose.yaml"
+    enabled: true
+
+  - name: "mimic_fall_stand"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_fall_stand.yaml"
+    enabled: true
+
+  # - name: "mimic_dance"
   #   type: "GenericRLController"
-  #   config: "controllers/config_mimic_yongchun.yaml"
+  #   config: "controllers/config_mimic_dance.yaml"
   #   enabled: true
+
+  - name: "mimic_dance_lading"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_lading.yaml"
+    music: "dance.wav"
+    music_delay: 0.5
+    enabled: true
+
+  - name: "mimic_dance_lonelydance"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_lonelydance.yaml"
+    music: "dance_lonelydance.wav"
+    music_delay: 2.1
+    enabled: true
+
+  - name: "mimic_dance_parapara"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_parapara.yaml"
+    music: "dance_parapara.wav"
+    music_delay: 0.5
+    enabled: true
+
+  - name: "mimic_dance_balei"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_balei.yaml"
+    music: "dance_balei.wav"
+    music_delay: 0.5
+    enabled: true
+
+  - name: "mimic_dance_qqxinjiang"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_qqxinjiang.yaml"
+    music: "dance_xinjiang.wav"
+    music_delay: 3.0
+    enabled: true
+
+  - name: "mimic_dance_bingjiling"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_bingjiling.yaml"
+    music: "dance_bingjiling.wav"
+    music_delay: 5.0
+    enabled: true
+
+  - name: "mimic_dance_ezuoju"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_ezuoju.yaml"
+    music: "dance_ezuoju.wav"
+    music_delay: 1.0
+    enabled: true

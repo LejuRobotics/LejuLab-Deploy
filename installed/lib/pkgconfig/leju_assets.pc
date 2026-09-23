@@ -1,0 +1,8 @@
+prefix=/media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: leju_assets
+Description: Description of leju_assets
+Version: 10.3.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lleju_assets
+Requires: 

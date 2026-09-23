@@ -1,0 +1,22 @@
+[Unit]
+Description=LejuLab joy autostart monitor
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Environment="LEJULAB_WS_ROOT=@LEJULAB_WS@"
+Environment="ROBOT_VERSION=@ROBOT_VERSION@"
+Environment="LD_LIBRARY_PATH=@BUILD_DIR@/src/leju-joystick:@LEJULAB_WS@/installed/lib"
+# monitor_lejulab_joy.sh 里 source ~/.bashrc 拿 CYCLONEDDS_URI 不可靠（systemd 服务不是登录
+# shell），必须在这里显式声明，否则 autostart_manager 用默认网卡发现，和走
+# cyclonedds_shm.xml（锁定 192.168.26.1 网卡）的 runtime 互相发现不了，RPC 永远 "service
+# not available"。需与 setup_cyclonedds_config.sh 部署的实际值保持一致。
+Environment="CYCLONEDDS_URI=file:///etc/cyclonedds/cyclonedds_shm.xml"
+WorkingDirectory=@LEJULAB_WS@
+ExecStart=@MONITOR_SCRIPT@
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

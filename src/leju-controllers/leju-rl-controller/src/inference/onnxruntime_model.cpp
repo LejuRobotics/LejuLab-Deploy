@@ -44,6 +44,7 @@ ONNXRuntimeModel::ONNXRuntimeModel() : impl_(std::make_unique<Impl>()) {
     impl_->session_options->SetIntraOpNumThreads(1);
     impl_->session_options->SetGraphOptimizationLevel(
         GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+    // intra_op=1 时推理在调用线程执行，调用方需绑定大核 (见 mainLoop/cpu_affinity.hpp)
 
     // 内存信息 (CPU)
     impl_->memory_info = std::make_unique<Ort::MemoryInfo>(

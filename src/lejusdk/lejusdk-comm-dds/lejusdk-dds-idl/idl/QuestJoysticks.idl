@@ -1,0 +1,27 @@
+// Quest3 controller joystick data structure
+// Used to transmit Quest3 left/right controller state (axes, triggers, grips, buttons)
+module leju {
+  module msgs {
+    @final
+    struct QuestJoysticks {
+      int32 header_sec;
+      uint32 header_nanosec;
+      float left_x;
+      float left_y;
+      float left_trigger;
+      float left_grip;
+      boolean left_first_button_pressed;
+      boolean left_second_button_pressed;
+      boolean left_first_button_touched;
+      boolean left_second_button_touched;
+      float right_x;
+      float right_y;
+      float right_trigger;
+      float right_grip;
+      boolean right_first_button_pressed;
+      boolean right_second_button_pressed;
+      boolean right_first_button_touched;
+      boolean right_second_button_touched;
+    };
+  };
+};

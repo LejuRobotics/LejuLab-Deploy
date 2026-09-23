@@ -1,8 +1,18 @@
 // Quest3 UDP to DDS bridge
 // Receives LejuHandPoseEvent protobuf from Quest3 via UDP, publishes QuestBonePoses and QuestJoysticks via lejusdk-vr
+//
+// 与 motion_vr.py（Quest3BoneFramePublisher）的 VR 原始数据处理流程对齐：
+// - 本节点将 protobuf 中第 i 个 pose 按 initBoneNames() 顺序填入 DDS（与 motion_vr.py bone_names 前 24 项一致；本节点多含 Neck、Head，Chest 仍为索引 23）。
+// - 位置/四元数默认做「Quest 左手系 → 右手系」重映射（rx=-lz, ry=-lx, rz=ly；rqx=-qz, rqy=-qx, rqz=qy, rqw=qw），
+//   与 motion_vr.py convert_position/quaternion_to_right_hand 一致；位置不做 ×3 缩放（×3 在 motion_vr.py 中仅用于 TF 展示，
+//   PoseInfoList 喂 IK 保持未缩放，手臂长度映射由下游 leju-ik 内部完成）。
+// - 骨骼每帧都发布（不按高置信度门控），is_high_confidence 随消息下发由下游消费方自行判断；空 poses 纯命令包不下发。
+// - 环境变量 QUEST_POSE_COORD_MODE=passthrough 时跳过该重映射，直接使用 protobuf 的 x,y,z 与 qx,qy,qz,qw（用于与 ROS 侧逐帧对比调试）。
 
 #include <hand_pose.pb.h>
 #include <robot_info.pb.h>
+
+using namespace protos;
 
 #include <lejusdk-vr/lejusdk_vr.h>
 
@@ -18,6 +28,7 @@
 #include <cerrno>
 #include <chrono>
 #include <csignal>
+#include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <iostream>
@@ -83,8 +94,16 @@ class QuestUdpToDdsNode {
       : data_socket_(-1),
         listening_udp_ports_cnt_(0),
         exit_listen_thread_(false) {
+    const char* coord = std::getenv("QUEST_POSE_COORD_MODE");
+    if (coord && std::strcmp(coord, "passthrough") == 0) {
+      pose_coord_passthrough_ = true;
+      std::cout << "[quest_udp_to_dds] QUEST_POSE_COORD_MODE=passthrough — 不重映射骨骼位姿，与默认 remux 二选一用于对齐 ik_ros_uni/ROS 桥\n";
+    } else {
+      std::cout << "[quest_udp_to_dds] QUEST_POSE_COORD_MODE=remux (default) — Quest 左手系→右手系 rx=-lz,ry=-lx,rz=ly\n";
+    }
     initBoneNames();
-    if (!vr_api_.initialize()) {
+    dds_initialized_ = vr_api_.initialize();
+    if (!dds_initialized_) {
       std::cerr << "Failed to initialize lejusdk-vr" << std::endl;
     }
   }
@@ -276,8 +295,8 @@ class QuestUdpToDdsNode {
         g_running = false;
       }
 
-      // Publish bone poses (only when high confidence) via lejusdk-vr
-      if (event.isdatahighconfidence()) {
+      // Publish bone poses (always, matching motion_vr.py: is_high_confidence is just a flag, not a gate)
+      {
         leju::vr::QuestBonePosesData poses_msg;
         processPoseData(event, poses_msg);
         poses_msg.header_sec = static_cast<int32_t>(sec);
@@ -285,10 +304,35 @@ class QuestUdpToDdsNode {
         poses_msg.timestamp_ms = event.timestamp();
         poses_msg.is_high_confidence = event.isdatahighconfidence();
         poses_msg.is_hand_tracking = event.ishandtracking();
-        vr_api_.publishQuestBonePoses(poses_msg);
+        if (!poses_msg.poses.empty()) {
+          vr_api_.publishQuestBonePoses(poses_msg);
+        }
       }
 
       std::this_thread::sleep_for(interval);
+    }
+  }
+
+  /// 连接状态心跳：sendInitialMessage() 握手成功后持续发布。
+  /// 上位机 vr_heartbeat_bridge 订阅 /rt/quest/connected，
+  /// 持续收到 = 握手成功 = VR 已连接；进程退出心跳停 = 断开。
+  /// 与 bone_poses/joysticks 无关：不依赖后续数据流，握手成功即算连接。
+  void publishConnectedHeartbeat() {
+    constexpr int kHeartbeatMs = 1000;
+    constexpr int kFailLogEvery = 5;  // 连续失败 N 次打一次 ERROR
+    int fail_count = 0;
+    while (g_running) {
+      if (!dds_initialized_) {
+        // DDS 初始化失败，心跳必然静默失败——提前告警，避免误导上位机
+        std::cerr << "[quest_udp_to_dds] DDS not initialized, heartbeat cannot publish" << std::endl;
+        return;
+      }
+      if (vr_api_.publishQuestConnected("connected")) {
+        fail_count = 0;
+      } else if (++fail_count % kFailLogEvery == 1) {
+        std::cerr << "[quest_udp_to_dds] heartbeat publish failed (fail_count=" << fail_count << ")" << std::endl;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(kHeartbeatMs));
     }
   }
 
@@ -342,20 +386,31 @@ class QuestUdpToDdsNode {
       double ly = pose.position().y();
       double lz = pose.position().z();
 
-      // Convert from Quest3 left-handed to right-handed frame
-      double rx = -lz;
-      double ry = -lx;
-      double rz = ly;
-
+      double rx, ry, rz;
       double qx = pose.quaternion().x();
       double qy = pose.quaternion().y();
       double qz = pose.quaternion().z();
       double qw = pose.quaternion().w();
+      double rqx, rqy, rqz, rqw;
 
-      double rqx = -qz;
-      double rqy = -qx;
-      double rqz = qy;
-      double rqw = qw;
+      if (pose_coord_passthrough_) {
+        rx = lx;
+        ry = ly;
+        rz = lz;
+        rqx = qx;
+        rqy = qy;
+        rqz = qz;
+        rqw = qw;
+      } else {
+        // Convert from Quest3 left-handed to right-handed frame（与 motion_vr.py convert_position/quaternion_to_right_hand 一致）
+        rx = -lz;
+        ry = -lx;
+        rz = ly;
+        rqx = -qz;
+        rqy = -qx;
+        rqz = qy;
+        rqw = qw;
+      }
 
       leju::vr::Pose p;
       p.x = static_cast<float>(rx);
@@ -486,6 +541,13 @@ class QuestUdpToDdsNode {
   std::vector<std::string> broadcast_ips_;
   std::atomic<int> listening_udp_ports_cnt_;
   std::atomic<bool> exit_listen_thread_;
+
+  /// DDS 是否初始化成功（构造函数 vr_api_.initialize() 的结果）。
+  /// false 时心跳线程提前退出，避免静默调用失败的发布 API。
+  bool dds_initialized_{false};
+
+  /// false：默认 remux；true：QUEST_POSE_COORD_MODE=passthrough，与 ik_ros_uni 若使用「未重映射」的 Pose 时对齐
+  bool pose_coord_passthrough_{false};
 };
 
 int main(int argc, char** argv) {
@@ -540,7 +602,12 @@ int main(int argc, char** argv) {
   }
 
   if (node.sendInitialMessage()) {
+    // 握手成功：启动连接心跳线程（进程退出自动停止），再进入数据接收循环
+    std::thread heartbeat([&node] { node.publishConnectedHeartbeat(); });
     node.run();
+    g_running = false;
+    if (heartbeat.joinable())
+      heartbeat.join();
   } else {
     std::cout << "Failed to establish initial connection." << std::endl;
   }

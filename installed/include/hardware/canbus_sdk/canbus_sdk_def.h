@@ -53,6 +53,7 @@ enum class CanBusModelType {
     BUSMUST_B, // BUSMUST B 款
     LEJU_CAN_A,  // Leju CAN A
     LEJU_CAN_B,  // Leju CAN B
+    SOCKETCAN,   // Linux SocketCAN (RK3588 native CAN FD)
     UNKNOWN,   // 未知
 };
 

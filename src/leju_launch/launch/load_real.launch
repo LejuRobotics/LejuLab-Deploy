@@ -10,6 +10,19 @@
   <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds_shm.xml" if="$(arg enable_iceoryx_shm)"/>
   <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds.xml" unless="$(arg enable_iceoryx_shm)"/>
   <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)" />
+  <arg name="controller_manager_config"
+       default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml"/>
+
+  <!-- URDF path for arm gravity compensation (optional) -->
+  <arg name="urdf_path" default="$(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/urdf/biped_s$(optenv ROBOT_VERSION 46).urdf"/>
+  <arg name="urdf_arg" value="-u $(arg urdf_path)" if="$(eval urdf_path != '')"/>
+  <arg name="urdf_arg" value="" unless="$(eval urdf_path != '')"/>
+
+  <arg name="auto_start" default="false"/>
+
+  <!-- Cleanup old logs, MCAP recordings and coredumps -->
+  <node pkg="leju_launch" type="cleanup.sh" name="cleanup" output="screen"
+        args="$(find leju_launch)/config/cleanup.yaml" />
 
   <!-- Hardware node for Leju humanoid robot -->
   <node pkg="leju-hardware" type="leju-hardware" name="leju_hardware" output="screen"
@@ -20,11 +33,17 @@
   <!-- Load joystick control -->
   <node name="leju_joystick" pkg="leju-joystick" type="leju-joystick" output="screen"
         launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
-        required="true"/>
+        required="true"
+        unless="$(arg auto_start)"/>
+
+  <!-- Optional: Custom teleop bindings config -->
+  <arg name="teleop_config" default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/teleop_bindings.yaml"/>
+  <arg name="teleop_arg" value="-t $(arg teleop_config)" if="$(eval teleop_config != '')"/>
+  <arg name="teleop_arg" value="" unless="$(eval teleop_config != '')"/>
 
   <!-- Load RL controller (controller_manager 模式) -->
   <node name="leju_rl_controller" pkg="leju-rl-controller" type="run_rl_controller" output="screen"
-        args="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml $(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/urdf/biped_s$(optenv ROBOT_VERSION 46).urdf"
+        args="$(arg teleop_arg) $(arg urdf_arg) -c $(arg controller_manager_config)"
         launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
         required="true"/>
 

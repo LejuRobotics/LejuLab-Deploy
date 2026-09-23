@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lejusdk-dds-idl</name>
+  <version>0.0.1</version>
+  <description>Leju DDS IDL definitions and generated C++ classes for robot communication</description>
+
+  <maintainer email="edu@lejurobot.com">Leju Robotics</maintainer>
+  <maintainer email="1779012028@qq.com">Li Sishu</maintainer>
+  <license>MIT</license>
+
+  <url type="repository">https://www.lejuhub.com/highlydynamic/lejulab</url>
+  <author>Leju Robotics Team</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- No ROS message dependencies - this is a pure DDS library -->
+  <!-- catkin is only used for build system integration -->
+
+</package>

@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
-// #include "elmo_motor.h"
+#ifdef ENABLE_ECMASTER
 #include "EcDemoPlatform.h"
 #include "EcDemoApp.h"
+#else
+#include "ec_types_compat.h"
+#endif
 
 using JointParam_t = MotorParam_t;
 typedef struct {

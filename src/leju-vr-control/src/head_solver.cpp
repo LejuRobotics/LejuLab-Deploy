@@ -16,16 +16,22 @@ namespace {
 constexpr int POSE_INDEX_CHEST = 23;
 constexpr int POSE_INDEX_HEAD = 25;
 
-void quatToEulerZYX(const Eigen::Quaterniond& q, double& yaw, double& pitch, double& roll) {
+void quatToEulerXYZ(const Eigen::Quaterniond& q, double& yaw, double& pitch, double& roll) {
+  // 头部旋转使用外旋XYZ顺序
   Eigen::Matrix3d R = q.toRotationMatrix();
-  pitch = std::asin(-R(2, 0));
+  double X, Y, Z;
+  Y = std::asin(R(0, 2));
   if (std::abs(std::cos(pitch)) > 1e-6) {
-    yaw = std::atan2(R(1, 0), R(0, 0));
-    roll = std::atan2(R(2, 1), R(2, 2));
-  } else {
-    yaw = 0.0;
-    roll = std::atan2(-R(0, 1), R(1, 1));
+    Z  = std::atan2(-R(0, 1), R(0, 0));
+    X = std::atan2(-R(1, 2), R(2, 2));
+  } else { // 奇异点 (Y ≈ ±π/2)，自由度退化，设定 yaw = 0
+    Z  = 0.0;
+    X = std::atan2(R(1, 0), R(1, 1));
   }
+  // Extract pitch (around X-axis) and yaw (around Y-axis)
+  pitch = X;
+  yaw = Y;
+  roll = Z;
 }
 }  // namespace
 
@@ -50,11 +56,14 @@ bool computeHeadFromBones(const QuestBonePosesData& quest_poses,
 
   Eigen::Quaterniond q_rel = q_chest.inverse() * q_head;
   double yaw, pitch, roll;
-  quatToEulerZYX(q_rel, yaw, pitch, roll);
-
+  quatToEulerXYZ(q_rel, yaw, pitch, roll);
+  constexpr double pitch_max = static_cast<double>(M_PI/6.0);
+  constexpr double pitch_min = -static_cast<double>(M_PI/9.0);
+  yaw = std::clamp(yaw, -static_cast<double>(M_PI_2), static_cast<double>(M_PI_2));
+  pitch = std::clamp(pitch, pitch_min, pitch_max);
   out_q.resize(2);
-  out_q[0] = pitch;
-  out_q[1] = yaw;
+  out_q[0] = yaw;
+  out_q[1] = pitch;
   return true;
 }
 

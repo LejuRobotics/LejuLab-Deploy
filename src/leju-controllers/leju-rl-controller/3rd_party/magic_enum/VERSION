@@ -1,0 +1,8 @@
+magic_enum version 0.9.7
+
+Source: https://github.com/Neargye/magic_enum
+Commit: v0.9.7 release
+Date: 2024-11-14
+
+Used for compile-time enum reflection in C++17.
+Only header files are included (include/magic_enum/).

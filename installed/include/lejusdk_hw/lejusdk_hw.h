@@ -88,6 +88,20 @@ public:
     uint32_t GetMotorNumber() const;
 
     /**
+     * @brief Check if there are EC_MASTER motors
+     * @return true if EC_MASTER motors exist
+     */
+    bool HasECMasterMotors() const;
+
+    /**
+     * @brief 检查 bcan0/bcan1 电机是否存在需要进入保护的不可用问题
+     * @param fault_info [out] 需要保护的问题详情
+     * @param ready_ok 上层是否已完成初始化并进入 READY_OK
+     * @return true 上层应进入保护模式
+     */
+    bool HasLowerLimbMotorFault(std::string &fault_info, bool ready_ok);
+
+    /**
      * @brief Get IMU data
      *
      * Read latest attitude and motion data from IMU sensor
@@ -102,6 +116,27 @@ public:
      *         - Failed: Read failed
      */
     HwErrorType GetImuData(ImuData_t &imu_data);
+
+    /**
+     * @brief Set ankle solver bypass mode
+     *
+     * When bypass is enabled, hardware node skips ankle IK solver
+     * and treats motor/joint space as 1:1.
+     *
+     * @param v true to bypass ankle solver, false for normal operation
+     */
+    void SetBypassAnkleSolver(bool v);
+
+    /**
+     * @brief Activate/deactivate runtime skip for head motors
+     *
+     * With kuavo.json skip_head_runtime_comm=true, head motors return to
+     * zero normally during initialization; once activated (start button
+     * pressed), motion frames to head motors stop (enable-only).
+     *
+     * @param active true to stop sending motion frames to runtime_skip motors
+     */
+    void SetRuntimeSkipActive(bool active);
 
     /**
      * @brief Set joint control command
@@ -133,6 +168,29 @@ public:
      */
     HwErrorType GetJointState(JointData_t &joint_data);
 
+    /**
+     * @brief Get raw joint state (no Kalman filtering)
+     *
+     * Read motor data directly without Kalman filter processing.
+     * Used for diagnostics to compare with filtered GetJointState data.
+     *
+     * @param joint_data [out] Raw joint state data (unfiltered)
+     * @return HwErrorType Read result status code
+     */
+    HwErrorType GetRawJointState(JointData_t &joint_data);
+
+    /**
+     * @brief 获取电机层原始反馈快照（pre-c2t, pre-ankle-inv）
+     * 用于诊断 c2t / ankle solver / 电机本身的链路问题。
+     * 与 GetJointState 共用同一拍 readSensor 数据。
+     */
+    HwErrorType GetMotorState(JointData_t &motor_data);
+
+    /**
+     * @brief 获取写电机前最终命令快照（post-ankle-fwd, post-c2t/A）
+     * tau 字段是 PTM torqueOffset/torque 写帧前的值（单位 A）。
+     */
+    HwErrorType GetMotorCmd(JointCommand_t &motor_cmd);
 
     /**
      * @brief Move all joints to specified target positions with specified speed
@@ -148,7 +206,23 @@ public:
      *         - NotInitialized: Hardware interface not initialized
      */
     HwErrorType JointMoveTo(const std::vector<double> &goal_pos, double speed, double dt = 1e-3, double current_limit=-1);
-    
+
+    /**
+     * @brief 设置手部控制命令 (6指 × 2手)
+     *
+     * @param hand_command [in] 手部命令 (位置 0-100 或速度 -100~100)
+     * @return HwErrorType 执行结果状态码
+     */
+    HwErrorType SetHandCommand(const HandCommand_t &hand_command);
+
+    /**
+     * @brief 获取手部状态
+     *
+     * @param hand_state [out] 手部状态 (位置/速度/电流/状态，6指 × 2手)
+     * @return HwErrorType 读取结果状态码
+     */
+    HwErrorType GetHandState(HandState_t &hand_state);
+
     // TODO(ohh): Implement these methods
     // HwErrorType SetMotorCommand(const MotorCommand_t &motor_command);
     // TODO(ohh): Implement these methods

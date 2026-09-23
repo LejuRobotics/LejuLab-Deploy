@@ -14,8 +14,8 @@ check_cyclonedds() {
 }
 
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
-LOG_DIR="$HOME/.ros/leju/stdout/${TIMESTAMP}"
-CORE_DUMP_DIR="$HOME/.ros/leju/coredumps/$PPID"
+LOG_DIR="$HOME/.ros/lejulab/stdout/${TIMESTAMP}"
+CORE_DUMP_DIR="$HOME/.ros/lejulab/coredumps/$PPID"
 START_ARG_IDX=1
 
 if [ "$1" = "--with-coredump" ]; then

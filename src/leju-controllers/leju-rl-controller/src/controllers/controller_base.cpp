@@ -1,7 +1,9 @@
 #include "leju-rl-controller/controllers/controller_base.h"
 #include "leju-rl-controller/rl_log.h"
 
+#include <algorithm>
 #include <cmath>
+#include <sstream>
 #include <thread>
 #include <yaml-cpp/yaml.h>
 
@@ -18,6 +20,8 @@ void ControllerBase::stop() {
 
 void ControllerBase::reset() {
   step_count_ = 0;
+  setCmdStanceMode(0);
+  stance_zero_since_ = std::chrono::steady_clock::time_point{};
   // 基类空实现，子类按需 override
 }
 
@@ -81,39 +85,47 @@ void ControllerBase::updateArmCommand(RobotCmd& cmd) {
     return;
   }
 
-  // 计算站立/行走状态：1=站立, 0=行走
-  double cmd_stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
-                       std::abs(velocity_cmd_.linear_y) < 0.01 &&
-                       std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
+  const double cmd_stance = getPartControllerCmdStanceValue();
 
-  // 提取当前手臂位置和速度
+  // 提取当前手臂位置和速度（policy 空间：direction * q）
   Eigen::VectorXd current_arm_pos(arm_joint_names_.size());
   Eigen::VectorXd current_arm_vel(arm_joint_names_.size());
-  for (int i = 0; i < arm_joint_names_.size(); ++i) {
-    int motor_id = arm_joint_ids_[i];
-    int policy_idx = arm_policy_start_idx_ + i;
-    // 应用方向系数转换到策略空间
+  for (int i = 0; i < static_cast<int>(arm_joint_names_.size()); ++i) {
+    const int motor_id = arm_joint_ids_[i];
+    const int policy_idx = findPolicyJointIndex(arm_joint_names_[i]);
+    if (policy_idx < 0) {
+      continue;
+    }
     current_arm_pos[i] = joint_direction_[policy_idx] * current_state_.q[motor_id];
     current_arm_vel[i] = joint_direction_[policy_idx] * current_state_.v[motor_id];
   }
 
   Eigen::VectorXd desire_arm_q, desire_arm_v, desire_arm_tau;
-  bool override_arm = arm_controller_->update(cmd_stance, current_arm_pos, current_arm_vel,
-                                               &desire_arm_q, &desire_arm_v, &desire_arm_tau);
-  if (override_arm) {
-    // 用部位控制器输出完全覆盖 cmd 中的手臂关节
-    // 必须同时覆盖 q, v, tau，否则 RL 输出的速度/力矩会导致手臂偏离
-    for (int i = 0; i < arm_joint_names_.size(); ++i) {
-      int motor_id = arm_joint_ids_[i];
-      int policy_idx = arm_policy_start_idx_ + i;
-      // 转换回电机空间
-      cmd.q[motor_id] = joint_direction_[policy_idx] * desire_arm_q[i];
-      cmd.v[motor_id] = joint_direction_[policy_idx] * desire_arm_v[i];
-      // 重力补偿前馈力矩（policy→motor 空间转换）
-      cmd.tau[motor_id] = (desire_arm_tau.size() > i)
-                              ? joint_direction_[policy_idx] * desire_arm_tau[i]
-                              : 0.0;
+  const bool override_arm = arm_controller_->update(
+      cmd_stance, current_arm_pos, current_arm_vel,
+      &desire_arm_q, &desire_arm_v, &desire_arm_tau);
+  if (!override_arm) {
+    return;
+  }
+
+  // 用部位控制器输出完全覆盖 cmd 中的手臂关节
+  for (int i = 0; i < static_cast<int>(arm_joint_names_.size()); ++i) {
+    const int motor_id = arm_joint_ids_[i];
+    const int policy_idx = findPolicyJointIndex(arm_joint_names_[i]);
+    if (policy_idx < 0) {
+      continue;
     }
+    const double direction = joint_direction_[policy_idx];
+    cmd.q[motor_id] = direction * desire_arm_q[i];
+    cmd.v[motor_id] = direction * desire_arm_v[i];
+    cmd.tau[motor_id] = (desire_arm_tau.size() > i)
+                            ? direction * desire_arm_tau[i]
+                            : 0.0;
+    // 部位控制器输出的是位置目标。配置为 CST 时，上游会把硬件
+    // kp/kd 清零，因此覆盖生效时必须恢复 CSP 和配置增益。
+    cmd.modes[motor_id] = 2;
+    cmd.kp[motor_id] = joint_kp_[policy_idx];
+    cmd.kd[motor_id] = joint_kd_[policy_idx];
   }
 }
 
@@ -122,10 +134,7 @@ void ControllerBase::updateWaistCommand(RobotCmd& cmd) {
     return;
   }
 
-  // 计算站立/行走状态
-  double cmd_stance = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
-                       std::abs(velocity_cmd_.linear_y) < 0.01 &&
-                       std::abs(velocity_cmd_.angular_z) < 0.01) ? 1.0 : 0.0;
+  double cmd_stance = getPartControllerCmdStanceValue();
 
   // 提取当前腰部位置和速度
   Eigen::VectorXd current_waist_pos(waist_joint_names_.size());
@@ -181,23 +190,52 @@ bool ControllerBase::loadConfig(const std::string& config_path) {
     if (cfg["env"] && cfg["env"]["robot"]) {
       const YAML::Node& robot_node = cfg["env"]["robot"];
 
-      // 解析手臂控制器
+      // 解析 YAML 的 joint_names（策略控制的关节列表）
+      std::vector<std::string> policy_joint_names;
+      if (robot_node["joint_names"]) {
+        policy_joint_names = robot_node["joint_names"].as<std::vector<std::string>>();
+      }
+
+      // 校验：配置中的 joint_names 必须包含所有硬件手臂关节
+      // （关节名称由 ControllerManager 通过 setPartJointNames() 传入）
+      for (const auto& arm_name : arm_joint_names_) {
+        auto it = std::find(policy_joint_names.begin(), policy_joint_names.end(), arm_name);
+        if (it == policy_joint_names.end()) {
+          RL_LOG_FAILURE("Config error: Robot arm joint '%s' not found in joint_names. "
+                         "Please ensure joint_names includes all arm joints from robot hardware.",
+                         arm_name.c_str());
+          return false;
+        }
+      }
+
+      // 校验：配置中的 joint_names 必须包含所有硬件腰部关节
+      for (const auto& waist_name : waist_joint_names_) {
+        auto it = std::find(policy_joint_names.begin(), policy_joint_names.end(), waist_name);
+        if (it == policy_joint_names.end()) {
+          RL_LOG_FAILURE("Config error: Robot waist joint '%s' not found in joint_names. "
+                         "Please ensure joint_names includes all waist joints from robot hardware.",
+                         waist_name.c_str());
+          return false;
+        }
+      }
+
+      // 解析部位控制器开关（只控制是否创建部位控制器实例）
       if (robot_node["enable_arm_controller"]) {
         enable_arm_controller_ = robot_node["enable_arm_controller"].as<bool>();
       }
-      if (enable_arm_controller_ && robot_node["arm_joint_names"]) {
-        arm_joint_names_ = robot_node["arm_joint_names"].as<std::vector<std::string>>();
-        RL_LOGI("Arm controller enabled (%d joints)", arm_joint_names_.size());
-      }
-
-      // 解析腰部控制器
       if (robot_node["enable_waist_controller"]) {
         enable_waist_controller_ = robot_node["enable_waist_controller"].as<bool>();
       }
-      if (enable_waist_controller_ && robot_node["waist_joint_names"]) {
-        waist_joint_names_ = robot_node["waist_joint_names"].as<std::vector<std::string>>();
-        RL_LOGI("Waist controller enabled (%d joints)", waist_joint_names_.size());
-      }
+
+      RL_LOGI("Arm joints loaded (%zu from robot), controller %s",
+              arm_joint_names_.size(), enable_arm_controller_ ? "enabled" : "disabled");
+      RL_LOGI("Waist joints loaded (%zu from robot), controller %s",
+              waist_joint_names_.size(), enable_waist_controller_ ? "enabled" : "disabled");
+    }
+
+    // --- cmd_stance 防抖（可选，默认 5 帧，供 RL 观测；部位控制器用 100ms 时间防抖）---
+    if (cfg["env"] && cfg["env"]["cmd_stance_debounce"]) {
+      stance_debounce_threshold_ = cfg["env"]["cmd_stance_debounce"].as<int>();
     }
 
     return true;
@@ -205,6 +243,49 @@ bool ControllerBase::loadConfig(const std::string& config_path) {
     RL_LOG_FAILURE("Config error in %s\n  %s", config_path.c_str(), e.what());
     return false;
   }
+}
+
+int ControllerBase::findPolicyJointIndex(const std::string& joint_name) const {
+  for (size_t j = 0; j < joint_names_.size(); ++j) {
+    if (joint_names_[j] == joint_name) {
+      return static_cast<int>(j);
+    }
+  }
+  return -1;
+}
+
+Eigen::VectorXd ControllerBase::getConfigDefaultArmPos() const {
+  if (arm_joint_names_.empty() || default_joint_pos_.size() == 0) {
+    return Eigen::VectorXd();
+  }
+  Eigen::VectorXd arm_pos(arm_joint_names_.size());
+  for (size_t i = 0; i < arm_joint_names_.size(); ++i) {
+    const int policy_idx = findPolicyJointIndex(arm_joint_names_[i]);
+    if (policy_idx >= 0 && policy_idx < static_cast<int>(default_joint_pos_.size())) {
+      arm_pos[i] = default_joint_pos_[policy_idx];
+    } else {
+      arm_pos[i] = 0.0;
+      RL_LOG_WARNING("Arm joint '%s' not found in joint_names, default pos set to 0",
+                     arm_joint_names_[i].c_str());
+    }
+  }
+  return arm_pos;
+}
+
+Eigen::VectorXd ControllerBase::getConfigDefaultWaistPos() const {
+  if (waist_joint_names_.empty() || default_joint_pos_.size() == 0) {
+    return Eigen::VectorXd();
+  }
+  Eigen::VectorXd waist_pos(waist_joint_names_.size());
+  for (size_t i = 0; i < waist_joint_names_.size(); ++i) {
+    const int policy_idx = findPolicyJointIndex(waist_joint_names_[i]);
+    if (policy_idx >= 0 && policy_idx < static_cast<int>(default_joint_pos_.size())) {
+      waist_pos[i] = default_joint_pos_[policy_idx];
+    } else {
+      waist_pos[i] = 0.0;
+    }
+  }
+  return waist_pos;
 }
 
 void ControllerBase::buildPartJointMapping() {
@@ -268,14 +349,21 @@ void ControllerBase::initPartControllers() {
     arm_config.enabled = true;
     arm_controller_ = std::make_unique<MultiModeArmController>(arm_config);
 
-    // 提取手臂默认姿态
-    Eigen::VectorXd default_arm_pos(arm_joint_names_.size());
-    for (int i = 0; i < arm_joint_names_.size(); ++i) {
-      default_arm_pos[i] = default_joint_pos_[arm_policy_start_idx_ + i];
+    // 按关节名提取默认姿态（policy 空间，对齐 defaultJointState / amp_hand_param.info）
+    // 始终用 YAML defaultJointState（对齐闭源 amp_hand_param.info），不受 motion 影响
+    const Eigen::VectorXd default_arm_pos = getConfigDefaultArmPos();
+    if (default_arm_pos.size() != static_cast<int>(arm_joint_names_.size())) {
+      RL_LOG_FAILURE("Failed to build default arm pose (size mismatch)");
+      return;
     }
 
     arm_controller_->init(arm_joint_names_.size(), default_arm_pos, loop_dt_);
-    RL_LOG_SUCCESS("Arm controller initialized (%d joints)", arm_joint_names_.size());
+    {
+      std::ostringstream oss;
+      oss << default_arm_pos.transpose();
+      RL_LOG_SUCCESS("Arm controller initialized (%d joints), default_arm_pos: %s",
+                     arm_joint_names_.size(), oss.str().c_str());
+    }
   }
 
   // 初始化腰部控制器
@@ -284,10 +372,10 @@ void ControllerBase::initPartControllers() {
     waist_config.enabled = true;
     waist_controller_ = std::make_unique<WaistController>(waist_config);
 
-    // 提取腰部默认姿态
-    Eigen::VectorXd default_waist_pos(waist_joint_names_.size());
-    for (int i = 0; i < waist_joint_names_.size(); ++i) {
-      default_waist_pos[i] = default_joint_pos_[waist_policy_start_idx_ + i];
+    const Eigen::VectorXd default_waist_pos = getConfigDefaultWaistPos();
+    if (default_waist_pos.size() != static_cast<int>(waist_joint_names_.size())) {
+      RL_LOG_FAILURE("Failed to build default waist pose (size mismatch)");
+      return;
     }
 
     waist_controller_->init(waist_joint_names_.size(), default_waist_pos, loop_dt_);
@@ -302,6 +390,50 @@ void ControllerBase::initPartControllers() {
 void ControllerBase::setVelocityCommand(const VelocityCommand& cmd) {
   std::lock_guard<std::mutex> lock(cmd_mutex_);
   velocity_cmd_ = cmd;
+}
+
+void ControllerBase::setCmdStanceMode(int stance) {
+  std::lock_guard<std::mutex> lock(cmd_mutex_);
+  cmd_stance_mode_ = (stance != 0) ? 1 : 0;
+}
+
+int ControllerBase::toggleCmdStanceMode() {
+  std::lock_guard<std::mutex> lock(cmd_mutex_);
+  cmd_stance_mode_ = (cmd_stance_mode_ == 0) ? 1 : 0;
+  return cmd_stance_mode_;
+}
+
+int ControllerBase::getCmdStanceMode() const {
+  std::lock_guard<std::mutex> lock(cmd_mutex_);
+  return cmd_stance_mode_;
+}
+
+double ControllerBase::getCmdStanceValue() const {
+  return static_cast<double>(getCmdStanceMode());
+}
+
+double ControllerBase::getDebouncedStance() const {
+  bool is_stop = (std::abs(velocity_cmd_.linear_x) < 0.01 &&
+                  std::abs(velocity_cmd_.linear_y) < 0.01 &&
+                  std::abs(velocity_cmd_.angular_z) < 0.01);
+  auto now = std::chrono::steady_clock::now();
+
+  if (is_stop) {
+    if (stance_zero_since_ == std::chrono::steady_clock::time_point{}) {
+      stance_zero_since_ = now;
+    }
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - stance_zero_since_).count();
+    // 至少 100ms 零速才判定站立（与 RL 策略层 5帧×20ms 对齐）
+    return (elapsed >= 100) ? 1.0 : 0.0;
+  } else {
+    stance_zero_since_ = std::chrono::steady_clock::time_point{};
+    return 0.0;
+  }
+}
+
+double ControllerBase::getPartControllerCmdStanceValue() const {
+  // 零速防抖后 stance=1 触发 kAuto 站立插值
+  return getDebouncedStance();
 }
 
 void ControllerBase::moveToDefaultPos(const RobotState& current_state, double elapse) {
@@ -331,11 +463,6 @@ bool ControllerBase::isPaused() const {
 
 bool ControllerBase::isInitialized() const {
   return state_ != ControllerState::kUninitialized;
-}
-
-void ControllerBase::onJoyInput(const JoyData& joy, const JoyData::Buttons& prev_buttons) {
-  (void)joy;
-  (void)prev_buttons;
 }
 
 void ControllerBase::waitNextCycle(std::chrono::steady_clock::time_point cycle_start) {

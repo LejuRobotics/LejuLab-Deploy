@@ -1,0 +1,20 @@
+FROM arm64v8/ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# System dependencies matching RK3588 baseline (Ubuntu 22.04, gcc 11.4, cmake 3.22)
+RUN apt-get update && apt-get install -y \
+    build-essential cmake gcc g++ \
+    libeigen3-dev libyaml-cpp-dev \
+    libglfw3-dev libglew-dev \
+    libgl-dev libglu1-mesa-dev \
+    libegl-dev libgles-dev \
+    libprotobuf-dev protobuf-compiler \
+    libgtest-dev libgflags-dev \
+    libusb-1.0-0-dev libacl1-dev \
+    libncurses5-dev \
+    libwayland-dev libxrandr-dev \
+    libx11-dev libxkbcommon-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace

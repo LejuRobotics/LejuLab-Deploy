@@ -18,8 +18,8 @@ namespace leju {
  * @brief 最小急动度插值器
  *
  * 使用五次多项式实现平滑插值，特性：
- * - 起点和终点速度为零
- * - 起点和终点加速度为零
+ * - 默认起止速度、加速度为零（标准 min-jerk）
+ * - 支持指定起止速度的通用五次多项式（用于实时 re-plan 时速度连续，避免速度突变）
  * - 位置、速度、加速度曲线连续
  */
 class MinimumJerkInterpolator : public InterpolatorBase {
@@ -28,7 +28,7 @@ public:
     ~MinimumJerkInterpolator() override = default;
 
     /**
-     * @brief 设置插值参数
+     * @brief 设置插值参数（起止速度为零的标准 min-jerk）
      * @param start_pos 起始位置向量
      * @param end_pos 目标位置向量
      * @param duration 插值时长 (秒)
@@ -37,6 +37,28 @@ public:
     bool setup(const Eigen::VectorXd& start_pos,
                const Eigen::VectorXd& end_pos,
                double duration) override;
+
+    /**
+     * @brief 设置插值参数（通用五次多项式，支持起止速度）
+     *
+     * 在标准 min-jerk 基础上放宽起始速度约束：满足
+     *   p(0)=start_pos, v(0)=start_vel, a(0)=0,
+     *   p(T)=end_pos,   v(T)=end_vel,   a(T)=0。
+     * 用于插值过程中目标实时变化时的 re-plan：把当前插值输出位置/速度作为起点传入，
+     * 保证新插值轨迹与旧轨迹在起点处位置、速度连续（消除 re-plan 时的速度突变）。
+     *
+     * @param start_pos 起始位置向量
+     * @param start_vel 起始速度向量（需与 start_pos 同维度）
+     * @param end_pos 目标位置向量
+     * @param end_vel 目标速度向量（需与 end_pos 同维度）
+     * @param duration 插值时长 (秒)
+     * @return 设置成功返回 true
+     */
+    bool setup(const Eigen::VectorXd& start_pos,
+               const Eigen::VectorXd& start_vel,
+               const Eigen::VectorXd& end_pos,
+               const Eigen::VectorXd& end_vel,
+               double duration);
 
     /**
      * @brief 计算指定时刻的插值结果
@@ -80,22 +102,10 @@ public:
     const char* getName() const override;
 
 private:
-    /**
-     * @brief 计算归一化时间的插值系数
-     * @param tau 归一化时间 [0, 1]
-     * @return s(tau) = 10*tau^3 - 15*tau^4 + 6*tau^5
-     */
-    static double computeS(double tau);
-
-    /**
-     * @brief 计算归一化时间的速度系数
-     * @param tau 归一化时间 [0, 1]
-     * @return ds/dtau = 30*tau^2 - 60*tau^3 + 30*tau^4
-     */
-    static double computeDsDtau(double tau);
-
     Eigen::VectorXd start_pos_;    ///< 起始位置
+    Eigen::VectorXd start_vel_;    ///< 起始速度（默认零）
     Eigen::VectorXd end_pos_;      ///< 目标位置
+    Eigen::VectorXd end_vel_;      ///< 目标速度（默认零）
     double duration_{0.0};         ///< 插值时长
     bool initialized_{false};      ///< 初始化标志
 };

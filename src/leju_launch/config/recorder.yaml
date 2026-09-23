@@ -12,28 +12,24 @@ dds:
     - "/rt/imu_state"
     - "/rt/joint_state"
     - "/rt/joint_cmd"
+    - "/rt/hand_cmd"
+    - "/rt/hand_state"
+    - "/rt/motor_state"    # 电机层原始反馈（pre-c2t, pre-ankle-inv）
+    - "/rt/motor_cmd"      # 电机层最终命令（post-ankle-fwd, post-c2t/A）
     - "/rt/joy"
     - "/rt/hardware/state"
     - "/rt/hardware/stop"
-    # VR 外部控制指令
-    - "/rt/arm_trajectory"
-    - "/rt/head_trajectory"
-    - "/rt/waist_trajectory"
-    - "/rt/cmd_vel"
-    # VR RPC 服务 (Request/Reply)
-    - "rq/ControllerService/.*/Request"
-    - "rr/ControllerService/.*/Reply"
-    # Quest VR 遥操作
-    - "/rt/quest/bone_poses"
-    - "/rt/quest/joysticks"
+    - "/rt/fall_stand_state"
+    - "/rt/fall_stand_command"
+    - "/rt/micphone_data"   # 麦克风音频流（AudioReceiverData, leju-audio 采集）
+    - "/monitor/.*"         # 系统监控（CPU 使用率/温度/频率、内存、RL 线程核心, leju-monitor 5Hz）
     # 控制器观测数据（匹配所有控制器名称）
     - "/.*/obs/.*"
     - "/.*/observations"
     - "/.*/q_target"
     - "/.*/motion_frame"
-    # 部位控制器模式
-    - "/.*/arm_mode"
-    - "/.*/waist_mode"
+    - "/.*/policy_inference_frequency_hz"
+    - "/.*/velocity_cmd_to_policy"
 
 # Output Configuration
 output:

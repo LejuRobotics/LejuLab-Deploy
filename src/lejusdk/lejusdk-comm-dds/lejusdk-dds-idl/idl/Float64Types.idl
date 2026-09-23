@@ -1,0 +1,19 @@
+// Float64 data types for topic logging
+// Used for publishing scalar and array debug data
+module leju {
+  module msgs {
+    @final
+    struct Float64 {
+      int32 header_sec;
+      uint32 header_nanosec;
+      double data;
+    };
+
+    @final
+    struct Float64Array {
+      int32 header_sec;
+      uint32 header_nanosec;
+      sequence<double> data;
+    };
+  };
+};

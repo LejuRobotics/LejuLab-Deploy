@@ -297,7 +297,7 @@ bool Quest3IkIncrementalAPI::buildPlantAndIK(const std::string& urdf_path,
       drake::multibody::AddMultibodyPlantSceneGraph(diagramBuilder.get(), 0.0);
 
   drake::multibody::Parser parser(&plant);
-  parser.AddModelFromFile(urdf_path);
+  parser.AddModels(urdf_path);
 
   std::string base_frame_name = "base_link";
   try {

@@ -11,34 +11,37 @@
 #                           1: FullBody  - 全身关节校准
 #                           2: UpperBody - 上身校准
 #                           3: LowerBody - 下身校准
+#                           4: Single    - 单电机校准 (运行中交互选择电机序号)
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-PROJECT_DIR=$(realpath "$SCRIPT_DIR/../")
+# 安装模式（下游闭源仓库）下 LEJULAB_PROJECT_ROOT 由 installed/setup.bash 注入；
+# 源码模式（开发者）下回退到 scripts/.. = 仓库根
+PROJECT_DIR="${LEJULAB_PROJECT_ROOT:-$(realpath "$SCRIPT_DIR/../")}"
+CONFIG_DIR="$PROJECT_DIR/src/leju-hardware"
 
-# 保存原始参数并清空当前脚本的参数
-ORIGINAL_ARGS=("$@")
-set --
-
-# 定义工具路径和对应的setup路径
-declare -A TOOL_ENV_MAP=(
-    ["$PROJECT_DIR/devel/lib/leju-hardware/hw_cali_tool"]="$PROJECT_DIR/devel/setup.bash"
-    ["$PROJECT_DIR/installed/bin/hw_cali_tool"]="$PROJECT_DIR/installed/setup.bash"
+# 按优先级查找 hw_cali_tool 二进制
+TOOL_SEARCH_PATHS=(
+    # 安装模式：闭源发布的扁平 bin 树
+    "${LEJULAB_INSTALL_ROOT:-$PROJECT_DIR/installed}/bin/hw_cali_tool"
+    # 源码模式：开发者本地的 cmake build 目录
+    "$PROJECT_DIR/build_cmake/src/leju-hardware/lejusdk-hw/tools/calibration/hw_cali_tool"
+    "$PROJECT_DIR/build/src/leju-hardware/lejusdk-hw/tools/calibration/hw_cali_tool"
+    # 旧 catkin 路径，留作兼容
+    "$PROJECT_DIR/devel/lib/leju-hardware/hw_cali_tool"
 )
 
-# 查找并执行工具
-for tool_path in "${!TOOL_ENV_MAP[@]}"; do
+for tool_path in "${TOOL_SEARCH_PATHS[@]}"; do
     if [ -f "$tool_path" ] && [ -x "$tool_path" ]; then
-        # Source对应的环境
-        [ -f "${TOOL_ENV_MAP[$tool_path]}" ] && source "${TOOL_ENV_MAP[$tool_path]}"
-
-        # 恢复参数
-        set -- "${ORIGINAL_ARGS[@]}"
-
-        # 执行工具
-        exec "$tool_path" --config_dir="$(rospack find leju-hardware)" "$@"
+        exec "$tool_path" --config_dir="$CONFIG_DIR" "$@"
     fi
 done
 
+# 最后回退：PATH（source installed/setup.bash 后 hw_cali_tool 已在 PATH 中）
+if command -v hw_cali_tool >/dev/null 2>&1; then
+    exec hw_cali_tool --config_dir="$CONFIG_DIR" "$@"
+fi
 
-echo "错误：未找到 hw_cali_tool, 请先 catkin build 构建项目"
+echo "错误：未找到 hw_cali_tool"
+echo "  - 安装模式：先 'source installed/setup.bash'"
+echo "  - 源码模式：先 'cmake --build build_cmake --target hw_cali_tool'"
 exit 1

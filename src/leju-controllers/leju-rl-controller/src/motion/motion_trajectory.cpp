@@ -183,6 +183,13 @@ array_t MotionTrajectory::getJointPos() const {
   return joint_pos_.row(current_frame_);
 }
 
+array_t MotionTrajectory::getFirstFrameJointPos() const {
+  if (!loaded_ || num_frames_ <= 0) {
+    return array_t();
+  }
+  return joint_pos_.row(0);
+}
+
 array_t MotionTrajectory::getJointVel() const {
   if (!loaded_) {
     return array_t();

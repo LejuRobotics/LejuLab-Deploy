@@ -52,6 +52,9 @@
   <depend>lejusdk-lowlevel</depend>
   <depend>lejusdk-utils</depend>
   <depend>lejusdk-vr</depend>
+  <depend>lejusdk-dds-idl</depend>
+  <depend>lejusdk-topic-pubsub</depend>
+  <depend>leju-hardware</depend>
   <depend>pinocchio</depend>
 
 

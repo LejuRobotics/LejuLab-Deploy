@@ -17,16 +17,21 @@
 
 ```
 +-----------------------------------------------------------------------------------+
-|                                Controllers                                        |
+|                              Control Layer                                        |
 +-----------------------------------------------------------------------------------+
 |                                                                                   |
 |                        +-----------------------------+                            |
-|                        |     RLDemoController        |                            |
+|                        |     ControllerManager       |                            |
 |                        |                             |                            |
-|                        |     - ONNX Policy Load      |                            |
-|                        |     - OpenVINO Inference    |                            |
-|                        |     - Observation Compute   |                            |
-|                        |     - Action Scaling        |                            |
+|                        |  ControllerBase (Plugin)    |                            |
+|                        |   +---------------------+   |                            |
+|                        |   | GenericRLController |   |                            |
+|                        |   | - ONNX/OpenVINO     |   |                            |
+|                        |   | - Observation Terms |   |                            |
+|                        |   | - Action Scaling    |   |                            |
+|                        |   +---------------------+   |                            |
+|                        |   + ArmController           |                            |
+|                        |   + WaistController         |                            |
 |                        +-----------------------------+                            |
 |                                                                                   |
 +-----------------------------------------------------------------------------------+
@@ -58,6 +63,12 @@
 |    |                              |       |KuavoHumanoid |           |     |      |
 |    |                              |       +--------------+           |     |      |
 |    |                              +----------------------------------+     |      |
+|    +-----------------------------------------------------------------------+      |
+|                                                                                   |
+|    +-----------------------------------------------------------------------+      |
+|    |                      liblejusdk-vr.so                                |      |
+|    |                                                                       |      |
+|    |    VR Head/Arm/Waist control API, used by leju-ik                |      |
 |    +-----------------------------------------------------------------------+      |
 |                                                                                   |
 +-----------------------------------------------------------------------------------+
@@ -106,15 +117,28 @@ src
 ├── leju-controllers  # 控制器
 │   ├── leju-dummy-controller
 │   └── leju-rl-controller
+├── leju-ik           # Quest3 IK 解算模块
+│   ├── config
+│   ├── include
+│   ├── src
+│   └── test
 ├── leju_launch       # 提供一键启动所有必要的功能模块
 │   ├── config
 │   ├── launch
 │   └── scripts
+├── leju-remote       # Quest3 数据接入与 UDP 转发工具
+│   ├── protos
+│   ├── protos_c
+│   └── src
+├── leju-vr-control   # Quest3 VR 控制节点（手臂、头部、速度、腰部控制）
+│   ├── config
+│   ├── include
+│   └── src
 └── lejusdk           # Leju SDK，自动同步，不要编辑
     ├── examples
-    ├── lejusdk-highlevel  # 高层控制 SDK（敬请期待）
     ├── lejusdk-lowlevel   # 底层控制 SDK，提供电机控制与状态读取、IMU 传感器状态读取接口等
-    └── lejusdk-utils      # SDK 工具类, 提供辅助函数
+    ├── lejusdk-utils      # SDK 工具类, 提供辅助函数
+    └── lejusdk-vr         # 外部控制 SDK，提供头部、手臂和腰部控制以及控制器相关接口
 ```
 
 ## LejuSDK 文档
@@ -137,7 +161,6 @@ sudo apt-get update && sudo apt-get install -y \
 source installed/setup.bash  # !!! IMPORTANT !!! 非常重要,不可省略
 # source installed/setup.zsh  # !!! IMPORTANT !!! 非常重要,不可省略 如果是zsh
 catkin build
-sudo su # 实物需要在root用户下运行
 ```
 
 ## 部署 iceoryx 共享内存（首次使用需执行，Docker中则跳过此步骤）
@@ -240,7 +263,7 @@ roslaunch leju_launch load_mujoco_sim.launch
 ### 实物机器人
 
 ```bash
-sudo su  # 需要 root 权限
+sudo su # 实物需要在root用户下运行
 source devel/setup.bash
 
 # Roban2
@@ -321,7 +344,7 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
 | 机型              | 手臂控制 | 头部控制 | 速度控制 | 腰部控制 | 备注                    |
 | ----------------- | -------- | -------- | -------- | -------- | ----------------------- |
 | `Kuavo4Pro(46)` | 支持     | 支持     | 支持     | 不支持   | 无腰部自由度            |
-| `Kuavo5(52)`    | 支持     | 支持     | 支持     | 支持     | 左手 `Y` 触摸时可控腰 |
+| `Kuavo5(52)`    | 支持     | 支持     | 支持     | 不支持   | 暂不提供 VR 腰部控制 |
 | `Roban(14)`     | 不开放   | 不开放   | 不开放   | 不开放   | 当前节点启动即退出      |
 
 #### 操作方式
@@ -351,20 +374,105 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
 | `Auto`     | `1` | 交还给默认自动行为（行走时摆臂），手臂不再接受当前 VR 增量控制 |
 | `External` | `2` | 进入 VR 外部控制模式，按住对应 `grip` 后可进行增量控制       |
 
-`Kuavo5(52)` 额外支持腰部控制：
-
-- 左手只触摸 `Y`
-- 右摇杆左右绝对控制腰部 yaw
-- 触摸 `Y` 时 walking 被禁用
-- 松开 `Y` 后腰部回零
-
 #### 使用示例
 
 1. 启动 `vr_teleop.launch`
 2. 大臂垂直于地面，小臂水平于地面，长按 meta 键标定骨骼点
 3. 按 `X+A` 切到 `External(2)`
 4. 按住单侧或双侧 `grip`，移动 Quest3 手柄开始控制手臂
-5. 若机器人为 `Kuavo5(52)`，可在需要时左手触摸 `Y`，再用右摇杆 x 轴调节腰部
+
+## Controller CLI 工具
+
+`controller_cli` 是一个命令行交互工具，可通过 DDS 接口在运行时查询状态、切换控制器、设置控制模式等，无需手柄或 VR 设备。
+
+### 启动方式
+
+**实机环境：** 本地主机新开一个终端 SSH 连接到机器人。
+
+```bash
+sudo su
+source installed/setup.bash
+controller_cli
+```
+
+**Docker 仿真环境：** 在主机上新开一个终端连接到正在运行的 Docker 容器。
+
+```bash
+docker ps                                    # 查看容器 ID
+docker exec -it <container_id> zsh
+source installed/setup.zsh
+controller_cli
+```
+
+### 命令说明
+
+使用 `help` 命令可查看完整命令列表：
+
+| 命令 | 说明 |
+|------|------|
+| `runtime [--json]` | 查看 runtime 原始状态 |
+| `controller [--json]` | 查看控制器状态 |
+| `list [--json]` | controller 别名 |
+| `motion [--json]` | 查看动作状态 |
+| `start [--json]` | 触发 start（等价 START 事件） |
+| `stop [--json]` | 触发 stop（等价 BACK/quit 事件） |
+| `motion start [name] [--json]` | 触发动作播放 |
+| `switch <name> [--json]` | 切换控制器 |
+| `mode <arm\|waist> <keep\|auto\|external> [--json]` | 设置控制模式 |
+| `walkcontrol` | 键盘速度控制 |
+| `clear` | 清屏 |
+| `help` | 帮助 |
+| `quit` / `exit` | 退出 |
+
+### 使用方法
+
+**动作模仿：**
+
+```bash
+# 触发运行
+start
+
+# 切换控制器
+switch <controller_name>
+
+# 查看动作列表
+motion
+
+# 触发动作播放
+motion start <motion_name>
+```
+
+**运动控制：**
+
+```bash
+# 触发运行
+start
+
+# 切换控制器
+switch <controller_name>
+
+# 键盘行走控制（w/s 前后、a/d 左右、q/e 转向、空格归零、x 退出）
+walkcontrol
+```
+
+## 日志与录制数据
+
+运行时产生的日志和录制数据统一存放在 `~/.ros/lejulab/` 目录下：
+
+```
+~/.ros/lejulab/
+├── stdout/                          # stdout 日志
+│   ├── 2026-04-01_18-29-20/
+│   │   └── stdout.log
+│   └── ...
+├── mcap/                            # MCAP 录制数据
+│   ├── recording_2026-04-01-18-30-00_0.mcap
+│   └── ...
+└── coredumps/                       # coredump 文件（启用时）
+    └── <PPID>/
+        ├── README.txt
+        └── core.*
+```
 
 ## 数据可视化
 
@@ -381,7 +489,7 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
 
 | 文件 | 适用机器人 |
 |------|-----------|
-| `foxglove-roban2-1-layout.json` | Roban 2.1 |
+| `foxglove-roban2-layout.json` | Roban 2 |
 | `foxglove-kuavo4pro-layout.json` | Kuavo 4 Pro |
 | `foxglove-kuavo5-layout.json` | Kuavo 5 |
 
@@ -419,5 +527,5 @@ roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
    ```
 3. **检查服务状态**：
    ```bash
-   systemctl status iox-roudi
+   systemctl status leju-roudi
    ```

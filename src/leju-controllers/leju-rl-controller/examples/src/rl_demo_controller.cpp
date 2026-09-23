@@ -1,22 +1,30 @@
 #include "leju-rl-controller/examples/rl_demo_controller.h"
 
 #include <Eigen/Dense>
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
+
+#include "lejusdk-utils/cpu_affinity.hpp"
+#include "leju-rl-controller/rl_frequency_csv_logger.hpp"
+#include "leju-rl-controller/rl_log.h"
 
 namespace leju {
 namespace rl_demo {
+namespace {
+
+constexpr double kVelocityCommandDeadzone = 0.1;
+
+double applyVelocityDeadzone(double value) {
+  return std::abs(value) < kVelocityCommandDeadzone ? 0.0 : value;
+}
+
+}  // namespace
 
 bool RLDemoConfig::loadFromYaml(YAML::Node root_node) {
   YAML::Node humanoid_cfg = root_node["HumanoidRobotCfg"];
   loop_dt = humanoid_cfg["loop_dt"].as<double>();
   policy_path = humanoid_cfg["policy_path"].as<std::string>();
-
-  // 读取推理引擎配置 (默认 openvino)
-  if (humanoid_cfg["inference_engine"]) {
-    inference_engine = humanoid_cfg["inference_engine"].as<std::string>();
-  } else {
-    inference_engine = "openvino";
-  }
 
   policy_dt = humanoid_cfg["env"]["policy_dt"].as<double>();
 
@@ -150,6 +158,7 @@ void RLDemoController::joyDataCallback(const JoyDataConstPtr& joy) {
   CALC_PRESS(dpad_left)
   CALC_PRESS(dpad_right)
   CALC_PRESS(misc1)
+  CALC_PRESS(misc2)
 #undef CALC_PRESS
 
   joy_data_msg_cnt_++;
@@ -256,6 +265,39 @@ bool RLDemoController::load_cfg(const std::string& config_file) {
     }
   }
 
+  // Load hardware_override_kp_kd (optional):
+  // - v52 等有腰部的版本：15 个值，覆盖 左腿6+右腿6+腰1+左臂第1+右臂第1
+  // - v46 等无腰部的版本：14 个值，覆盖 左腿6+右腿6+左臂第1+右臂第1
+  if (humanoid_cfg["hardware_override_kp_kd"]) {
+    auto kp_vec = humanoid_cfg["hardware_override_kp_kd"]["kp"].as<std::vector<double>>();
+    auto kd_vec = humanoid_cfg["hardware_override_kp_kd"]["kd"].as<std::vector<double>>();
+    if ((kp_vec.size() == 15u && kd_vec.size() == 15u) ||
+        (kp_vec.size() == 14u && kd_vec.size() == 14u)) {
+      hardware_override_kp_15_ = std::move(kp_vec);
+      hardware_override_kd_15_ = std::move(kd_vec);
+    }
+  }
+
+  // Load velocity smoothing config (optional)
+  if (humanoid_cfg["env"]["velocity_smoothing"]) {
+    auto vs = humanoid_cfg["env"]["velocity_smoothing"];
+    cfg_.velocity_smooth_alpha = vs["smooth_alpha"].as<double>(1.0);
+    cfg_.velocity_smooth_alpha = std::clamp(cfg_.velocity_smooth_alpha, 0.0, 1.0);
+    cfg_.lin_vel_x_decel_limit = vs["lin_vel_x_decel_limit"].as<double>(-1.0);
+  }
+
+  // Load mixed motion limits config (optional)
+  if (humanoid_cfg["env"]["mixed_motion_limits"]) {
+    auto mm = humanoid_cfg["env"]["mixed_motion_limits"];
+    cfg_.mixed_motion_enabled = mm["enabled"].as<bool>(false);
+    cfg_.angular_vel_threshold = mm["angular_vel_threshold"].as<double>(0.25);
+    cfg_.max_linear_vel_with_angular = mm["max_linear_vel_with_angular"].as<double>(0.2);
+    cfg_.linear_vel_threshold = mm["linear_vel_threshold"].as<double>(0.4);
+    cfg_.max_angular_vel_with_linear = mm["max_angular_vel_with_linear"].as<double>(0.4);
+    cfg_.smooth_transition = mm["smooth_transition"].as<bool>(true);
+    cfg_.transition_factor = mm["transition_factor"].as<double>(0.9);
+  }
+
   // std::cout << "cfg:" << std::endl;
   // std::cout << "\tloop_dt: " << cfg.loop_dt << std::endl;
   // std::cout << "\tpolicy_path: " << cfg.policy_path << std::endl;
@@ -273,26 +315,59 @@ bool RLDemoController::load_policy() {
   std::string policy_path =
       (config_path.parent_path() / cfg_.policy_path).string();
 
-  // 使用工厂模式创建推理模型
-  model_ = ModelFactory::create(inference_engine_);
-  if (!model_) {
+  compiled_model_ = core_.compile_model(policy_path, "CPU");
+  input_port_ = compiled_model_.input();
+  output_port_ = compiled_model_.output();
+  if (input_port_.get_shape().size() != 2) {
     std::cerr << "[ERROR] [RLDemoController::load_policy] "
-              << "Failed to create inference model: " << inference_engine_
-              << " (supported: openvino, onnxruntime)" << std::endl;
+              << "input_port_ shape size != 2, "
+              << "shape size: " << input_port_.get_shape().size() << "."
+              << std::endl;
     return false;
   }
-
-  // 加载模型
-  if (!model_->load(policy_path)) {
+  if (input_port_.get_shape()[0] != 1) {
     std::cerr << "[ERROR] [RLDemoController::load_policy] "
-              << "Failed to load policy model: " << policy_path << std::endl;
+              << "input_port_ shape[0] != 1, "
+              << "shape[0]: " << input_port_.get_shape()[0] << "." << std::endl;
     return false;
   }
-
-  std::cout << "[INFO] [RLDemoController::load_policy] "
-            << "Policy loaded successfully: " << policy_path
-            << " (engine: " << inference_engine_ << ")" << std::endl;
-
+  if (input_port_.get_shape()[1] != policy_obs_shape_) {
+    std::cerr << "[ERROR] [RLDemoController::load_policy] "
+              << "input_port_ shape[1] != policy_joint_count_, "
+              << "shape[1]: " << input_port_.get_shape()[1]
+              << ", policy_obs_shape_: " << policy_obs_shape_ << "."
+              << std::endl;
+    return false;
+  }
+  if (output_port_.get_shape().size() != 2) {
+    std::cerr << "[ERROR] [RLDemoController::load_policy] "
+              << "output_port_ shape size != 2, "
+              << "shape size: " << output_port_.get_shape().size() << "."
+              << std::endl;
+    return false;
+  }
+  if (output_port_.get_shape()[0] != 1) {
+    std::cerr << "[ERROR] [RLDemoController::load_policy] "
+              << "output_port_ shape[0] != 1, "
+              << "shape[0]: " << output_port_.get_shape()[0] << "."
+              << std::endl;
+    return false;
+  }
+  if (output_port_.get_shape()[1] != policy_joint_count_) {
+    std::cerr << "[ERROR] [RLDemoController::load_policy] "
+              << "output_port_ shape[1] != policy_joint_count_, "
+              << "shape[1]: " << output_port_.get_shape()[1]
+              << ", policy_joint_count_: " << policy_joint_count_ << "."
+              << std::endl;
+    return false;
+  }
+  input_tensor_ =
+      ov::Tensor(input_port_.get_element_type(), input_port_.get_shape());
+  output_tensor_ =
+      ov::Tensor(output_port_.get_element_type(), output_port_.get_shape());
+  infer_request_ = compiled_model_.create_infer_request();
+  infer_request_.set_input_tensor(input_tensor_);
+  infer_request_.set_output_tensor(output_tensor_);
   return true;
 }
 
@@ -332,7 +407,14 @@ void RLDemoController::jointMoveTo(const std::vector<double>& joint_target_pos,
       joint_demand_vel[i] = 0.;
       joint_demand_tau[i] = 0.;
     }
-
+    // 策略关节使用配置文件中的 actuator_kp/kd
+    for (int i = 0; i < policy_joint_count_; ++i) {
+      int motor_idx = policy_joint_ids_[i];
+      if (motor_idx >= 0 && motor_idx < motor_count_) {
+        kp[motor_idx] = cfg_.kp[i];
+        kd[motor_idx] = cfg_.kd[i];
+      }
+    }
     RobotCmd cmd(motor_count_);
     cmd.q = joint_demand_pos;
     cmd.kp = kp;
@@ -340,6 +422,7 @@ void RLDemoController::jointMoveTo(const std::vector<double>& joint_target_pos,
     cmd.modes = mode;
     cmd.v = joint_demand_vel;
     cmd.tau = joint_demand_tau;
+    applyHardwareKpKdOverride(cmd);
     robot.publishRobotCmd(cmd);
     // TODO use loop rate sleep
     std::this_thread::sleep_for(
@@ -347,7 +430,46 @@ void RLDemoController::jointMoveTo(const std::vector<double>& joint_target_pos,
   }
 }
 
+void RLDemoController::applyHardwareKpKdOverride(RobotCmd& cmd) {
+  // 需要有足够长度的 kp/kd（至少覆盖到右臂第 1 个关节所在的 motor 索引 20）
+  if (hardware_override_kp_15_.empty() ||
+      hardware_override_kp_15_.size() != hardware_override_kd_15_.size() ||
+      cmd.kp.size() < 21u || cmd.kd.size() < 21u) {
+    return;
+  }
+
+  if (hardware_override_kp_15_.size() == 15u) {
+    // 有腰部的版本（如 52）：
+    // 15 个值对应：左腿6(0-5) + 右腿6(6-11) + 腰1(12) + 左臂第1(13) + 右臂第1(20，左臂7个之后)
+    // 索引 14-19 左臂其余、21-26 右臂其余、27-28 头部：不覆盖，保持 cmd 原值（主循环中头部为 updateRobotCmd 的默认 100/10）
+    const size_t kOverrideIndices15[15] = {0, 1, 2, 3, 4, 5,
+                                           6, 7, 8, 9, 10, 11,
+                                           12, 13, 20};
+    for (size_t i = 0; i < 15u; i++) {
+      size_t j = kOverrideIndices15[i];
+      cmd.kp[j] = hardware_override_kp_15_[i];
+      cmd.kd[j] = hardware_override_kd_15_[i];
+    }
+  } else if (hardware_override_kp_15_.size() == 14u) {
+    // 无腰部的版本（如 46）：
+    // 14 个值对应：左腿6(0-5) + 右腿6(6-11) + 左臂第1(12) + 右臂第1(19)
+    // 腰部电机（索引 12）在该版本不存在，不做覆盖。
+    const size_t kOverrideIndices14[14] = {0, 1, 2, 3, 4, 5,
+                                           6, 7, 8, 9, 10, 11,
+                                           12, 19};
+    for (size_t i = 0; i < 14u; i++) {
+      size_t j = kOverrideIndices14[i];
+      cmd.kp[j] = hardware_override_kp_15_[i];
+      cmd.kd[j] = hardware_override_kd_15_[i];
+    }
+  }
+}
+
 void RLDemoController::computeObservation() {
+  // Process raw joystick velocity commands once per policy cycle
+  // (applies mixed motion limits + smoothing)
+  updateVelocityCommands();
+
   if (cfg_.stack_order_is_isaaclab) {
     for (int i = 0; i < cfg_.obs_terms.size(); i++) {
       obs_term_stacks_[i].pop_front();
@@ -389,26 +511,40 @@ void RLDemoController::computeObservation() {
 }
 
 void RLDemoController::computeActions() {
-  // 准备输入数据
-  std::vector<float> input(policy_obs_.size());
-  for (int i = 0; i < policy_obs_.size(); i++) {
-    input[i] = static_cast<float>(policy_obs_[i]);
-  }
-
-  // 执行推理
-  std::vector<float> output = model_->forward(input);
-
-  // 检查输出维度
-  if (output.size() != static_cast<size_t>(policy_joint_count_)) {
+  if (input_tensor_.get_element_type() == ov::element::f32) {
+    for (int i = 0; i < policy_obs_shape_; i++) {
+      input_tensor_.data<float>()[i] = policy_obs_[i];
+    }
+  } else if (input_tensor_.get_element_type() == ov::element::f64) {
+    for (int i = 0; i < policy_obs_shape_; i++) {
+      input_tensor_.data<double>()[i] = policy_obs_[i];
+    }
+  } else {
     std::cerr << "[ERROR] [RLDemoController::computeActions] "
-              << "Output size mismatch: got " << output.size()
-              << ", expected " << policy_joint_count_ << std::endl;
+              << "policy input cast to element type not implemented: "
+              << input_tensor_.get_element_type() << "." << std::endl;
     return;
   }
-
-  // 转换为 Eigen::ArrayXd
-  policy_action_ = Eigen::Map<Eigen::ArrayXf>(output.data(), output.size()).cast<double>();
-
+  for (int i = 0; i < policy_obs_shape_; i++) {
+    input_tensor_.data<float>()[i] = policy_obs_[i];
+  }
+  infer_request_.infer();
+  // std::cout << "[DEBUG] [RLDemoController::computeActions] after infer" <<
+  // std::endl;
+  if (output_tensor_.get_element_type() == ov::element::f32) {
+    Eigen::ArrayXf policy_action_32(policy_joint_count_);
+    policy_action_32 = Eigen::Map<const Eigen::ArrayXf>(
+        output_tensor_.data<float>(), policy_joint_count_);
+    policy_action_ = policy_action_32.cast<double>();
+  } else if (output_tensor_.get_element_type() == ov::element::f64) {
+    policy_action_ = Eigen::Map<const Eigen::ArrayXd>(
+        output_tensor_.data<double>(), policy_joint_count_);
+  } else {
+    std::cerr << "[ERROR] [RLDemoController::computeActions] "
+              << "policy output from element type not implemented: "
+              << output_tensor_.get_element_type() << "." << std::endl;
+    return;
+  }
   // std::cout << "observation: " << policy_obs_.transpose() << std::endl;
   // std::cout << "action: " << policy_action_.transpose() << std::endl;
 }
@@ -570,24 +706,80 @@ Eigen::ArrayXd RLDemoController::get_obs_projected_gravity() {
 }
 
 Eigen::ArrayXd RLDemoController::get_obs_velocity_commands() {
+  return smoothed_velocity_command_;
+}
+
+void RLDemoController::applyMixedMotionLimits(Eigen::ArrayXd& vel) const {
+  if (!cfg_.mixed_motion_enabled) return;
+
+  double angular_z_mag = std::abs(vel(2));
+  double linear_xy_mag = std::sqrt(vel(0) * vel(0) + vel(1) * vel(1));
+
+  // Case 1: High angular velocity -> cap linear velocity
+  if (angular_z_mag > cfg_.angular_vel_threshold && linear_xy_mag > 0.0) {
+    if (linear_xy_mag > cfg_.max_linear_vel_with_angular) {
+      double scale = cfg_.max_linear_vel_with_angular / linear_xy_mag;
+      vel(0) *= scale;
+      vel(1) *= scale;
+    }
+  }
+
+  // Case 2: High linear velocity -> cap angular velocity
+  if (linear_xy_mag > cfg_.linear_vel_threshold && angular_z_mag > 0.0) {
+    if (angular_z_mag > cfg_.max_angular_vel_with_linear) {
+      double scale = cfg_.max_angular_vel_with_linear / angular_z_mag;
+      vel(2) *= scale;
+    }
+  }
+}
+
+void RLDemoController::updateVelocityCommands() {
   JoyData joy = getJoyData();
-  Eigen::ArrayXd ans(3);
+  Eigen::ArrayXd raw(3);
+
+  // Step 1: Map joystick axes to velocity range
   if (joy.axes.left_y <= 0.) {
-    ans(0) = -joy.axes.left_y * cfg_.command_range_lin_vel_x_ub;
+    raw(0) = -joy.axes.left_y * cfg_.command_range_lin_vel_x_ub;
   } else {
-    ans(0) = joy.axes.left_y * cfg_.command_range_lin_vel_x_lb;
+    raw(0) = joy.axes.left_y * cfg_.command_range_lin_vel_x_lb;
   }
   if (joy.axes.left_x >= 0.) {
-    ans(1) = -joy.axes.left_x * cfg_.command_range_lin_vel_y_ub;
+    raw(1) = -joy.axes.left_x * cfg_.command_range_lin_vel_y_ub;
   } else {
-    ans(1) = joy.axes.left_x * cfg_.command_range_lin_vel_y_lb;
+    raw(1) = joy.axes.left_x * cfg_.command_range_lin_vel_y_lb;
   }
   if (joy.axes.right_x >= 0.) {
-    ans(2) = -joy.axes.right_x * cfg_.command_range_ang_vel_z_ub;
+    raw(2) = -joy.axes.right_x * cfg_.command_range_ang_vel_z_ub;
   } else {
-    ans(2) = joy.axes.right_x * cfg_.command_range_ang_vel_z_lb;
+    raw(2) = joy.axes.right_x * cfg_.command_range_ang_vel_z_lb;
   }
-  return ans;
+
+  // Step 2: Apply deadzone
+  raw(0) = applyVelocityDeadzone(raw(0));
+  raw(1) = applyVelocityDeadzone(raw(1));
+  raw(2) = applyVelocityDeadzone(raw(2));
+
+  // Step 3: Apply mixed motion limits (cross-coupling)
+  applyMixedMotionLimits(raw);
+
+  // Step 4: X 线速度减速速率限制（高速停止时防前冲）
+  if (cfg_.lin_vel_x_decel_limit > 0.0 &&
+      raw(0) < smoothed_velocity_command_(0)) {
+    double max_drop = cfg_.lin_vel_x_decel_limit * cfg_.policy_dt;
+    double drop = smoothed_velocity_command_(0) - raw(0);
+    if (drop > max_drop) {
+      raw(0) = smoothed_velocity_command_(0) - max_drop;
+    }
+  }
+
+  // Step 5: Exponential moving average smoothing
+  if (cfg_.velocity_smooth_alpha < 1.0) {
+    smoothed_velocity_command_ =
+        (1.0 - cfg_.velocity_smooth_alpha) * smoothed_velocity_command_
+        + cfg_.velocity_smooth_alpha * raw;
+  } else {
+    smoothed_velocity_command_ = raw;
+  }
 }
 
 Eigen::ArrayXd RLDemoController::get_obs_cmd_stance() {
@@ -653,7 +845,6 @@ bool RLDemoController::initialize(const std::string& config_file) {
   std::cout << "[DEBUG] [RLDemoController::initialize] "
             << "func start." << std::endl;
 
-  bool result = true;
   // Store config file path
   config_file_path_ = config_file;
 
@@ -673,18 +864,10 @@ bool RLDemoController::initialize(const std::string& config_file) {
   setupSubscriptions();
 
   load_cfg(config_file);
+  load_policy();
 
-  // 设置推理引擎
-  inference_engine_ = cfg_.inference_engine;
-  std::cout << "[INFO] [RLDemoController::initialize] "
-            << "Inference engine: " << inference_engine_ << std::endl;
-
-  result = load_policy();
-  if (!result) {
-    std::cout << "[ERROR] [RLDemoController::initialize] "
-              << "load policy failed." << std::endl;
-    return false;
-  }
+  // Initialize velocity command state (zero = stationary)
+  smoothed_velocity_command_ = Eigen::ArrayXd::Zero(3);
 
   logger_ = TopicLogger::create();
 
@@ -799,8 +982,23 @@ void RLDemoController::start() {
 }
 
 void RLDemoController::mainLoop() {
+  if (leju::cpu::bindCurrentThreadToBigCores()) {
+    std::cout << "[INFO] RL control/inference thread bound to big cores "
+              << leju::cpu::kRk3588BigCoreFirst << "-" << leju::cpu::kRk3588BigCoreLast
+              << std::endl;
+  } else {
+    std::cout << "[WARN] Failed to bind RL control/inference thread to big cores"
+              << std::endl;
+  }
+
   std::cout << "\n--- Starting Control Loop ---" << std::endl;
   std::cout << "Press Ctrl+C to stop" << std::endl;
+
+  RLFrequencyCsvLogger freq_csv_logger;
+  freq_csv_logger.start(1.0 / cfg_.loop_dt, 1.0 / cfg_.policy_dt);
+  if (freq_csv_logger.isActive()) {
+    RL_LOGI("RL frequency CSV: %s", freq_csv_logger.csvPath().c_str());
+  }
 
   auto& robot = GlobalRobot::getInstance();
   auto start_time = std::chrono::steady_clock::now();
@@ -808,18 +1006,21 @@ void RLDemoController::mainLoop() {
   int cnt = 0;
   auto t0 = std::chrono::steady_clock::now();
   while (true) {
+    freq_csv_logger.tickControl();
     // get data
     if (cnt % decimation_ == 0) {
       // std::cout << "start update observation." << std::endl;
       computeObservation();
       // std::cout << "start update action." << std::endl;
       computeActions();
+      freq_csv_logger.tickInference();
     }
     // std::cout << "start update robot cmd." << std::endl;
     updateRobotCmd();
     // std::cout << "end update robot cmd." << std::endl;
 
     // publish command;
+    applyHardwareKpKdOverride(cmd_);
     bool success = robot.publishRobotCmd(cmd_);
     if (!success) {
       std::cout << "Failed to publish cmd." << std::endl;
@@ -843,10 +1044,13 @@ void RLDemoController::mainLoop() {
   for (int i = 0; i < 50; i++) {
     RobotCmd cmd;
     cmd.resize(motor_count_);
+    applyHardwareKpKdOverride(cmd);
     robot.publishRobotCmd(cmd);
     std::this_thread::sleep_for(
         std::chrono::milliseconds(static_cast<int>(1000 * cfg_.loop_dt)));
   }
+
+  freq_csv_logger.stop();
 
   // Stop Robot
   robot.publishStopRobot();

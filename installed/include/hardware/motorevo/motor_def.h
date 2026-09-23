@@ -11,14 +11,60 @@ namespace motorevo {
 // 参数映射范围
 constexpr float kCAN_COM_THETA_MIN = -12.5f;
 constexpr float kCAN_COM_THETA_MAX = 12.5f;
-constexpr float kCAN_COM_VELOCITY_MIN = -10.0f;
-constexpr float kCAN_COM_VELOCITY_MAX = 10.0f;
+constexpr float kCAN_COM_VELOCITY_MIN = -15.0f;
+constexpr float kCAN_COM_VELOCITY_MAX = 15.0f;
 constexpr float kCAN_COM_POS_KP_MIN = 0.0f;
 constexpr float kCAN_COM_POS_KP_MAX = 250.0f;
 constexpr float kCAN_COM_POS_KD_MIN = 0.0f;
 constexpr float kCAN_COM_POS_KD_MAX = 50.0f;
 constexpr float kCAN_COM_TORQUE_MIN = -50.0f;
 constexpr float kCAN_COM_TORQUE_MAX = 50.0f;
+
+/// @brief 电机通信协议类型
+enum class MotorProtocol {
+   CAN_SINGLE_FRAME,    // 旧协议: 每帧8字节控制1个电机, CAN ID = 电机ID
+   CANFD_BROADCAST,     // 新协议: 每帧64字节广播控制最多8个电机, 固定CAN ID
+};
+
+namespace canfd {
+   constexpr uint32_t kCanIdControl = 0x10;
+   constexpr uint32_t kCanIdMIT     = 0x20;
+   constexpr uint32_t kCanIdPosVel  = 0x40;
+   constexpr uint32_t kCanIdVel     = 0x60;
+
+   // 注意: 协议文档 V1.0.1 的范围有误, 以下为电机固件实际参数范围
+   // 与 kCAN_COM_* 常量保持一致
+   constexpr float kVelocityMin = -15.0f;
+   constexpr float kVelocityMax =  15.0f;
+   constexpr float kKpMin       =   0.0f;
+   constexpr float kKpMax       = 250.0f;
+   constexpr float kKdMin       =   0.0f;
+   constexpr float kKdMax       =  50.0f;
+   constexpr float kTorqueMin   = -50.0f;
+   constexpr float kTorqueMax   =  50.0f;
+
+   constexpr uint8_t kCmdEnable    = 0xFC;
+   constexpr uint8_t kCmdDisable   = 0xFD;
+   constexpr uint8_t kCmdSaveZero  = 0xFE;
+   constexpr uint8_t kCmdClearErr  = 0xFB;
+
+   constexpr size_t kMaxJointsPerFrame = 8;
+   constexpr size_t kBytesPerJoint     = 8;
+   constexpr size_t kFrameSize         = 64;
+
+   constexpr uint16_t kStatusEnabled       = (1 << 0);
+   constexpr uint16_t kStatusOverVoltage   = (1 << 1);
+   constexpr uint16_t kStatusOverCurrent   = (1 << 2);
+   constexpr uint16_t kStatusOverTemp      = (1 << 3);
+   constexpr uint16_t kStatusOverSpeed     = (1 << 4);
+   constexpr uint16_t kStatusEncoderFault  = (1 << 5);
+   constexpr uint16_t kStatusDriverFault   = (1 << 6);
+   constexpr uint16_t kStatusOverload      = (1 << 7);
+   constexpr uint16_t kStatusStall         = (1 << 8);
+   constexpr uint16_t kStatusDeviation     = (1 << 9);
+   constexpr uint16_t kStatusCustom        = (1 << 10);
+   constexpr uint16_t kStatusFaultMask     = 0x07FE;
+} // namespace canfd
 
 // magic number零点偏移
 constexpr float kOFFSET_MAGIC_NUMBER = 3.14159265359e-3f;  // π/1000 ≈ 0.00314159265f
@@ -57,6 +103,9 @@ struct RevoMotorConfig_t {
    std::string name;     // 电机名称
    bool negtive;         // 电机方向是否为负
    bool ignore;          // 是否忽略该电机
+   bool runtime_skip = false; // 运行期跳过: 仍参与使能/去使能和初始化回零, 但 setRuntimeSkipActive(true)
+                              // (上层控制开始下发命令) 后不再发 PTM/MIT 运动帧
+                              // 用于 policy 不控制的关节(如头部), 由 skip_head_runtime_comm 开启
    float zero_offset;    // 零点偏移值(rad)
    float ratio;          // 减速比
    MotorParam_t default_params;  // 电机默认控制参数(外部没有传时使用)
@@ -132,6 +181,28 @@ public:
 
 private:
    uint8_t    payload_[8];
+};
+
+/// @brief CAN FD 广播协议反馈帧 (Motorevo CanFd V1.0.1)
+/// 布局: pos(16bit) + vel(12bit) + torque(12bit) + temp(8bit) + status(16bit)
+/// 注意: 无 motor_id 字节, motor_id 从 CAN 帧 SID 获取
+class FeedbackFrameFd
+{
+public:
+   FeedbackFrameFd();
+   explicit FeedbackFrameFd(const uint8_t payload[8]);
+
+   void     set_payload(const uint8_t payload[8]);
+   float    position() const;
+   float    velocity() const;
+   float    torque() const;
+   int16_t  temperature() const;
+   uint16_t status_word() const;
+   bool     is_enabled() const;
+   bool     has_fault() const;
+
+private:
+   uint8_t payload_[8];
 };
 
 // 数值转换函数

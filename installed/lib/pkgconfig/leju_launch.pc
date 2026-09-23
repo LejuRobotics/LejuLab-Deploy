@@ -1,0 +1,8 @@
+prefix=/media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab
+
+Name: leju_launch
+Description: Description of leju_launch
+Version: 0.0.1
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

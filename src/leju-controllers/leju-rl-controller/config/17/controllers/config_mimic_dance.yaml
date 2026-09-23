@@ -1,5 +1,5 @@
 HumanoidRobotCfg:
-  inference_engine: "openvino"
+  inference_engine: "onnxruntime"
   loop_dt: 0.001
   policy_path: "../policy/dance/policy_20260325_newdance_02_53000.onnx"
 

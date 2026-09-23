@@ -1,0 +1,15 @@
+// Joint state data structure
+// Used to transmit the current state information of robot joints, including position, velocity, and torque
+module leju {
+  module msgs {
+    @final
+    struct JointState {
+      int32 header_sec;
+      uint32 header_nanosec;
+      sequence<double> q;
+      sequence<double> v;
+      sequence<double> vd;
+      sequence<double> tau;
+    };
+  };
+};

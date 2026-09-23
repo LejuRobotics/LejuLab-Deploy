@@ -1,0 +1,25 @@
+# x86 原生 MuJoCo 仿真镜像（GUI，NVIDIA 硬件渲染）。
+# 仅用于在开发机跑仿真，与交叉编译镜像(Dockerfile.cross-aarch64)完全分开。
+# lejulab 是 DDS/纯 CMake(非 ROS)，故无需 ROS/drake/casadi —— 比 kuavo-ros-control 的
+# 仿真镜像精简很多。mujoco-3.2.0 与 CycloneDDS/iceoryx 用仓库自带 x86_64 预编译库。
+#
+# 20.04 基础镜像(gcc-9)：仓库 x86_64 预编译的 CycloneDDS/iceoryx 是 GCC9 LTO 字节码，
+# 必须 gcc-9 链接（gcc-11 会报 "bytecode generated with GCC older than 10.0"）。
+# 与 kuavo-ros-control 仿真镜像同基。注意：aarch64 交叉编译那套反而要 gcc-11(板子预编译版本)。
+FROM nvidia/opengl:1.2-glvnd-runtime-ubuntu20.04
+
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=all,display
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake ninja-build pkg-config git ca-certificates file \
+    libeigen3-dev libyaml-cpp-dev libgtest-dev libgflags-dev \
+    libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev libglew-dev libosmesa6-dev \
+    libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+    libacl1-dev libncurses5-dev libusb-1.0-0-dev \
+    mesa-utils x11-apps \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace

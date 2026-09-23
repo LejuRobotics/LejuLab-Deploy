@@ -2,8 +2,9 @@
 <CycloneDDS>
     <Domain Id="any">
         <!--
-            CycloneDDS 共享内存传输配置
+            CycloneDDS 共享内存传输配置（含跨机通信）
             RouDi 随 roslaunch 自动启动
+            默认绑 lo 本机通信，部署时若检测到 192.168.26.1 网口则自动切换为跨机通信
         -->
         <SharedMemory>
             <Enable>true</Enable>

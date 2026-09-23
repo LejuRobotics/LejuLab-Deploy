@@ -25,8 +25,13 @@ ROUDI_CONFIG="${PKG_DIR}/config/roudi_config.toml"
 NORMAL_XML="${PKG_DIR}/config/cyclonedds.xml"
 SHM_XML="${PKG_DIR}/config/cyclonedds_shm.xml"
 
+# DDS 发现网段：部署时检测，默认 lo 本机通信，有 192.168.26.1 则切换为跨机通信
+DDS_TARGET_NET="192.168.26.1"
+
 # 自动检测 iox-roudi 路径 (兼容 lejulab-platform 和 lejulab)
+ARCH=$(uname -m)
 ROUDI_SEARCH_PATHS=(
+    "${PROJECT_DIR}/src/lejusdk/3rd_party/${ARCH}/iceoryx/bin/iox-roudi"
     "${PROJECT_DIR}/src/lejusdk/3rd_party/iceoryx/bin/iox-roudi"
     "${PROJECT_DIR}/installed/bin/iox-roudi"
 )
@@ -136,6 +141,14 @@ deploy() {
     sudo cp "${ROUDI_CONFIG}" /etc/iceoryx/roudi_config.toml
     sudo cp "${NORMAL_XML}" /etc/cyclonedds/cyclonedds.xml
     sudo cp "${SHM_XML}" /etc/cyclonedds/cyclonedds_shm.xml
+
+    # 检测 192.168.26.1 是否可用，可用则从 lo 切换为跨机通信
+    if ip addr show 2>/dev/null | grep -q "${DDS_TARGET_NET}/"; then
+        sudo sed -i "s|name=\"lo\"|address=\"${DDS_TARGET_NET}\"|" /etc/cyclonedds/cyclonedds_shm.xml
+        echo -e "\033[1;32m[DDS] 检测到 ${DDS_TARGET_NET}，切换为跨机通信\033[0m"
+    else
+        echo -e "\033[1;33m[DDS] ${DDS_TARGET_NET} 未找到，保持 lo（仅本机通信，NX 不可达）\033[0m"
+    fi
 
     # systemd 服务
     # UMask=0000: 确保 RouDi 创建的 socket/shm 不受 umask 限制

@@ -1,0 +1,60 @@
+#########################################################
+# bcan3 单总线测试配置
+# 右臂 (6个电机, ID 0x01-0x04, 0x09-0x0A)
+# 经典 CAN 单帧协议
+#########################################################
+canbus_interfaces:
+  bcan3:
+    type: SOCKETCAN
+    name: "bcan3"
+    nbitrate: 1000000
+    dbitrate: 1000000
+    nsamplepos: 80
+    dsamplepos: 80
+    enable: true
+#########################################################
+# bcan3: 右臂 (6个电机)
+#########################################################
+bcan3_devices:
+  - name: Rarm_joint_01
+    class: motor
+    device_id: 0x01
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_02
+    class: motor
+    device_id: 0x02
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_03
+    class: motor
+    device_id: 0x03
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_04
+    class: motor
+    device_id: 0x04
+    params: [0, 25, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_05
+    class: motor
+    device_id: 0x09
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_06
+    class: motor
+    device_id: 0x0A
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false

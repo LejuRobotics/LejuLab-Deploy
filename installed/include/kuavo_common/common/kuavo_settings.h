@@ -140,6 +140,7 @@ namespace HighlyDynamic
         double v_takeoff;
         bool swing_arm;
         bool only_half_up_body = false;
+        bool skip_head_runtime_comm = false;  // 头部仅参与使能/去使能, 运行期不发运动帧 (policy 不控制头部时用)
         std::vector<int32_t> joint_kp;
         std::vector<int32_t> joint_kd;
         std::vector<double> ruiwo_kp;

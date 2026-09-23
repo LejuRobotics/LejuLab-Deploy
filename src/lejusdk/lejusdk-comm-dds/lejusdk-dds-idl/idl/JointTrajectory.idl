@@ -1,0 +1,23 @@
+/**
+ * @file JointTrajectory.idl
+ * @brief 关节轨迹消息定义
+ *
+ * 定义关节轨迹相关的消息类型：
+ * - JointTrajectoryPoint: 轨迹中的单个点，用于实时流式发送
+ */
+module leju {
+  module msgs {
+    /**
+     * 关节轨迹点
+     * 表示轨迹中某一时刻的目标状态（位置、速度、加速度）
+     */
+    @final
+    struct JointTrajectoryPoint {
+      int32 header_sec;       // 时间戳 - 秒
+      uint32 header_nanosec;  // 时间戳 - 纳秒
+      sequence<double> q;     // 目标关节位置 (rad)
+      sequence<double> v;     // 目标关节速度 (rad/s)
+      sequence<double> acc;   // 目标关节加速度 (rad/s^2)
+    };
+  };
+};

@@ -15,6 +15,7 @@
 #include <lejusdk-lowlevel/leju_sdk.h>
 #include <lejusdk-vr/lejusdk_vr.h>
 #include <lejusdk-utils/robot_version.hpp>
+#include <lejusdk-utils/time_utils.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -198,6 +199,14 @@ int main(int argc, char** argv) {
   bool has_bones = false;
   bool has_joy = false;
 
+  // 骨骼新鲜度: 每次收到骨骼帧就刷新时间戳。Quest 断开/骨骼停发后,
+  // 时间戳不再更新, 主循环据此判定骨骼失效, 停发头部/手臂指令。
+  // 与 quest_vr_abs_control_node 一致, 保证增量IK模式下残留进程
+  // 也不会压住手柄/其他控制源。
+  std::chrono::steady_clock::time_point last_bone_rx_time =
+      std::chrono::steady_clock::time_point::min();
+  constexpr std::chrono::milliseconds kBoneFreshWindow{200};  // < 运控 0.5s 超时
+
   leju::vr_control::QuestVrFSM fsm;
   leju::vr_control::ArmCtrlModeFSM arm_ctrl_mode_fsm;
   int current_arm_mode = 1;
@@ -223,12 +232,14 @@ int main(int argc, char** argv) {
   constexpr float GRIP_THRESHOLD = 0.5f;
   bool prev_left_grip = false;
   bool prev_right_grip = false;
+  float prev_left_trigger = -1.0f, prev_right_trigger = -1.0f;  // 灵巧手扳机变化检测
   bool prev_waist_active = false;
 
   vr_api.subscribeQuestBonePoses([&](const leju::vr::QuestBonePosesData& data) {
     std::lock_guard<std::mutex> lock(bone_mutex);
     latest_bones = data;
     has_bones = true;
+    last_bone_rx_time = std::chrono::steady_clock::now();
   });
 
   vr_api.subscribeQuestJoystickData([&](const leju::vr::QuestJoystickData& data) {
@@ -285,6 +296,23 @@ int main(int argc, char** argv) {
         std::lock_guard<std::mutex> lock(joy_mutex);
         joy_copy = latest_joy;
       }
+
+      // --- 灵巧手控制: 扳机→同侧手6指全动 ---
+      {
+        if (joy_copy.left_trigger != prev_left_trigger ||
+            joy_copy.right_trigger != prev_right_trigger) {
+          prev_left_trigger  = joy_copy.left_trigger;
+          prev_right_trigger = joy_copy.right_trigger;
+          leju::HandCmd hand_cmd;
+          for (int i = 0; i < 6; i++) {
+            hand_cmd.position[i]     = static_cast<double>(joy_copy.left_trigger  * 100.0f);
+            hand_cmd.position[6 + i] = static_cast<double>(joy_copy.right_trigger * 100.0f);
+          }
+          hand_cmd.timestamp = leju::common::GetUnixTimestampS();
+          leju::GlobalRobot::getInstance().publishHandCmd(hand_cmd);
+        }
+      }
+      // --- 灵巧手控制 end ---
 
       // X + Y (left first + left second) triggers immediate stop.
       const bool xy_pressed =
@@ -385,12 +413,17 @@ int main(int argc, char** argv) {
 
     if (has_bones) {
       leju::vr::QuestBonePosesData bones_copy;
+      std::chrono::steady_clock::time_point bone_rx;
       {
         std::lock_guard<std::mutex> lock(bone_mutex);
         bones_copy = latest_bones;
+        bone_rx = last_bone_rx_time;
       }
-
-      if (bones_copy.is_high_confidence) {
+      // 骨骼新鲜才下发: Quest 断开后骨骼停发, 时间戳不再刷新,
+      // 超过 kBoneFreshWindow 即停发头部/手臂, 让运控超时回退手柄。
+      const bool bone_fresh =
+          (std::chrono::steady_clock::now() - bone_rx) < kBoneFreshWindow;
+      if (bone_fresh && bones_copy.is_high_confidence) {
         std::vector<double> head_q;
         if (leju::vr_control::computeHeadFromBones(bones_copy, head_q)) {
           leju::vr::JointTrajectoryPoint head_cmd;

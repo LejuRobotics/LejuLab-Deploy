@@ -1,0 +1,13 @@
+// Joystick data structure
+// Used to transmit joystick controller state information
+module leju {
+  module msgs {
+    @final
+    struct Joy {
+      int32 header_sec;          // Timestamp seconds
+      uint32 header_nanosec;     // Timestamp nanoseconds
+      sequence<float> axes;      // Joystick axis values (normalized -1.0 to 1.0)
+      sequence<int32> buttons;   // Button states (0 = released, 1 = pressed)
+    };
+  };
+};

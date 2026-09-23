@@ -125,6 +125,30 @@ public:
     virtual void saveZeroPosition() = 0;
 
     /**
+     * @brief 单独标定一个电机: 将该电机当前位置设为零点并立即持久化零点文件
+     *
+     * 与 saveAsZeroPosition()/saveZeroPosition() 不同, 本方法只改写目标电机的
+     * 内存零点偏移, 不触碰其它电机, 因此调用前无需(也不应)对整条 CAN 总线做批量清零。
+     *
+     * @param index 电机索引 (对应 getMotorRefNames() 的下标)
+     * @return true 标定并保存成功, false 索引非法/电机未使能/偏移超出安全范围
+     */
+    virtual bool calibrateSingleMotor(int index) = 0;
+
+    /**
+     * @brief 对所有标定总线执行完整标定并保存到零点文件（用户按 'c' 确认后调用）
+     *
+     * 完整流程: disableAll → multiTurnZeroAll(硬件清零) → enableAll → calibrateMotors(记录零点) → hold → saveZeroToFile
+     * 与 saveZeroPosition() 不同, 本方法包含了不可逆的硬件编码器清零操作,
+     * 仅在用户明确确认后才执行。
+     *
+     * 默认返回 false (空实现), MotorevoActuator 覆盖。
+     *
+     * @return true 标定并保存成功
+     */
+    virtual bool calibrateAllAndSave() { return false; }
+
+    /**
      * @brief 设置示教模式
      *
      * @param mode 示教模式值 1：示教模式 0：非示教模式
@@ -162,6 +186,26 @@ public:
     virtual MotorStateDataVec get_motor_state() = 0;;
 
     /**
+     * @brief 获取所有电机状态码 (0=正常, 1=离线/故障)
+     * @param status_codes 输出: 按 motor_refs_ 索引排列的状态码
+     */
+    virtual void get_all_status(std::vector<uint8_t>& status_codes) {
+        status_codes.clear();
+    }
+
+    /**
+     * @brief 检查 bcan0/bcan1 电机是否存在需要进入保护的不可用问题
+     * @param fault_info 输出: 需要保护的问题详情
+     * @param ready_ok 上层是否已完成初始化并进入 READY_OK
+     * @return true 需进入保护模式
+     */
+    virtual bool check_lowerlimb_fault(std::string& fault_info, bool ready_ok) {
+        (void)fault_info;
+        (void)ready_ok;
+        return false;
+    }
+
+    /**
      * @brief 设置多个关节位置
      *
      * @param index 关节索引 [0,1,2,3,...]
@@ -179,10 +223,7 @@ public:
                              const std::vector<double> &kd_pos = {}) = 0;
 
     /**
-     * @brief 设置多个关节力矩（CST 模式）
-     *
-     * 基于 MIT/PTM 模式实现：内部将 kp 和 kd 设置为 0，仅下发前馈力矩，
-     * 即电机控制律退化为 tau_out = torque_ff（无位置/速度反馈）。
+     * @brief 设置多个关节力矩
      *
      * @param index 关节索引 [0,1,2,3,...]
      * @param torque 力矩值
@@ -238,6 +279,39 @@ public:
      * @return std::vector<double> 速度值
      */
     virtual std::vector<double> get_velocity() = 0;
+
+    /**
+     * @brief 一次性获取所有关节的位置、速度、力矩数据（避免3次独立调用的堆分配开销）
+     *
+     * @param pos 输出位置缓冲区（弧度），由调用方复用
+     * @param vel 输出速度缓冲区（弧度/秒），由调用方复用
+     * @param torque 输出力矩缓冲区，由调用方复用
+     */
+    virtual void get_all_data(std::vector<double>& pos,
+                              std::vector<double>& vel,
+                              std::vector<double>& torque) {
+        pos = get_positions();
+        vel = get_velocity();
+        torque = get_torque();
+    }
+
+    /**
+     * @brief 获取所有电机的名称列表（按内部索引顺序）
+     *
+     * 返回的名称列表与 set_positions/get_positions 的索引一一对应。
+     * 用于在上层建立 kuavo.json 关节顺序与电机内部索引的映射。
+     *
+     * @return 电机名称列表，默认返回空（子类可覆盖）
+     */
+    virtual std::vector<std::string> getMotorRefNames() const { return {}; }
+
+    /**
+     * @brief 激活/关闭 runtime_skip 电机的运动帧跳过（默认空实现）
+     *
+     * skip_head_runtime_comm 开启时: 初始化阶段头部正常回零, 上层控制开始
+     * 下发命令后调用 setRuntimeSkipActive(true), 头部不再接收运动帧。
+     */
+    virtual void setRuntimeSkipActive(bool /*active*/) {}
 };
 
 #endif // RUIWO_ACTUATOR_BASE_H

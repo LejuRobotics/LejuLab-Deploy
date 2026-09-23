@@ -4,7 +4,10 @@
 #include <string>
 
 #include "leju-rl-controller/inference/inference_model.h"
+
+#ifdef USE_OPENVINO
 #include "leju-rl-controller/inference/openvino_model.h"
+#endif
 
 #ifdef USE_ONNXRUNTIME
 #include "leju-rl-controller/inference/onnxruntime_model.h"
@@ -32,8 +35,10 @@ class ModelFactory {
    */
   static std::unique_ptr<InferenceModel> create(ModelType type) {
     switch (type) {
+#ifdef USE_OPENVINO
       case ModelType::kOpenVINO:
         return std::make_unique<OpenVINOModel>();
+#endif
 
 #ifdef USE_ONNXRUNTIME
       case ModelType::kONNXRuntime:
@@ -58,13 +63,17 @@ class ModelFactory {
    * @return 模型智能指针，失败返回 nullptr
    */
   static std::unique_ptr<InferenceModel> create(const std::string& type_str) {
+#ifdef USE_OPENVINO
     if (type_str == "openvino" || type_str == "ov") {
       return create(ModelType::kOpenVINO);
-#ifdef USE_ONNXRUNTIME
-    } else if (type_str == "onnxruntime" || type_str == "onnx" || type_str == "ort") {
-      return create(ModelType::kONNXRuntime);
+    } else
 #endif
-    } else if (type_str == "torch" || type_str == "pytorch") {
+#ifdef USE_ONNXRUNTIME
+    if (type_str == "onnxruntime" || type_str == "onnx" || type_str == "ort") {
+      return create(ModelType::kONNXRuntime);
+    } else
+#endif
+    if (type_str == "torch" || type_str == "pytorch") {
       return create(ModelType::kTorch);
     } else {
       std::cerr << "[ERROR] [ModelFactory] "
@@ -80,7 +89,13 @@ class ModelFactory {
    * @return 默认返回 OpenVINO
    */
   static ModelType getDefaultType() {
+#ifdef USE_OPENVINO
     return ModelType::kOpenVINO;
+#elif defined(USE_ONNXRUNTIME)
+    return ModelType::kONNXRuntime;
+#else
+    return ModelType::kTorch;
+#endif
   }
 
   /**
@@ -88,8 +103,10 @@ class ModelFactory {
    */
   static std::string typeToString(ModelType type) {
     switch (type) {
+#ifdef USE_OPENVINO
       case ModelType::kOpenVINO:
         return "OpenVINO";
+#endif
 #ifdef USE_ONNXRUNTIME
       case ModelType::kONNXRuntime:
         return "ONNXRuntime";

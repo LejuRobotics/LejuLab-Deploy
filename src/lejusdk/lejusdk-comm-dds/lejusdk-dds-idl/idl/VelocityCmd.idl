@@ -1,0 +1,22 @@
+/**
+ * @file VelocityCmd.idl
+ * @brief 速度指令消息定义
+ *
+ * 用于发送机器人基座速度指令（线速度和角速度）
+ */
+module leju {
+  module msgs {
+    /**
+     * 速度指令
+     * 用于控制机器人底盘移动
+     */
+    @final
+    struct VelocityCmd {
+      int32 header_sec;       // 时间戳 - 秒
+      uint32 header_nanosec;  // 时间戳 - 纳秒
+      double linear_x;        // X 方向线速度 (m/s)
+      double linear_y;        // Y 方向线速度 (m/s)
+      double angular_z;       // Z 轴角速度 (rad/s)
+    };
+  };
+};

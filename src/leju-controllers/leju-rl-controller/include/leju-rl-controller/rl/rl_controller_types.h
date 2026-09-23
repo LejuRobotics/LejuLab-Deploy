@@ -35,16 +35,11 @@ struct Bounds {
 
 /**
  * @brief Velocity command in robot base frame
- *
- * Coordinate convention (right-hand rule):
- *   - X: forward (positive = forward)
- *   - Y: left (positive = left)
- *   - Z: up (positive = counter-clockwise when viewed from above)
  */
 struct VelocityCommand {
-  scalar_t linear_x = 0.0;   ///< Forward velocity [m/s], positive = forward
-  scalar_t linear_y = 0.0;   ///< Lateral velocity [m/s], positive = left
-  scalar_t angular_z = 0.0;  ///< Yaw rate [rad/s], positive = counter-clockwise
+  scalar_t linear_x = 0.0;
+  scalar_t linear_y = 0.0;
+  scalar_t angular_z = 0.0;
 
   void setZero() { linear_x = linear_y = angular_z = 0.0; }
 };
@@ -53,27 +48,19 @@ struct VelocityCommand {
  * @brief Controller lifecycle state
  */
 enum class ControllerState {
-  kUninitialized = 0,  ///< Not yet initialized
-  kRunning,            ///< Actively running
-  kPaused,             ///< Temporarily paused
-  kStopped,            ///< Stopped and idle
-  kError,              ///< Error state
+  kUninitialized = 0,
+  kRunning,
+  kPaused,
+  kStopped,
+  kError,
 };
 
 /**
  * @brief 观测历史堆叠顺序
- *
- * 假设 2 个 term (A, B), history_length=3:
- *
- *   kIsaaclab: [A_t-2, A_t-1, A_t, B_t-2, B_t-1, B_t]
- *               |---- term A ----|  |---- term B ----|
- *
- *   kClassic:  [A_t-2, B_t-2, A_t-1, B_t-1, A_t, B_t]
- *               |-- t-2 --|  |-- t-1 --|  |-- t --|
  */
 enum class StackOrder {
-  kIsaaclab,  ///< 按 term 优先
-  kClassic,   ///< 按 time 优先
+  kIsaaclab,
+  kClassic,
 };
 
 /**
@@ -82,7 +69,7 @@ enum class StackOrder {
 struct ObsTermConfig {
   std::string name;
   double scale = 1.0;
-  Bounds clip = {-100.0, 100.0};  ///< clip 范围
+  Bounds clip = {-100.0, 100.0};
 };
 
 }  // namespace leju

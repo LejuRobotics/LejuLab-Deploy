@@ -160,6 +160,56 @@ using RobotCmdPtr = std::shared_ptr<leju::RobotCmd>;
 using RobotCmdConstPtr = std::shared_ptr<const leju::RobotCmd>;
 
 /**
+ * @struct HandCmd
+ * @brief 双手 12 维位置控制指令
+ *
+ * 前 6 维为左手，后 6 维为右手；取值范围 [0, 100]。
+ */
+struct HandCmd {
+  std::vector<double> position;  ///< 手指目标位置 [0,100]，左手6维 + 右手6维
+  double timestamp;              ///< 时间戳，单位: s
+
+  HandCmd() : position(12, 0.0), timestamp(0.0) {}
+
+  explicit HandCmd(const std::vector<double>& pos) : position(pos), timestamp(0.0) {}
+
+  bool isValid() const { return position.size() == 12; }
+};
+
+using HandCmdPtr = std::shared_ptr<leju::HandCmd>;
+using HandCmdConstPtr = std::shared_ptr<const leju::HandCmd>;
+
+/**
+ * @struct HandState
+ * @brief 双手 12 维状态反馈
+ *
+ * 前 6 维为左手，后 6 维为右手。有效位由驱动最近一次成功读取决定，
+ * 不能根据默认构造的全零数据推断设备在线。
+ */
+struct HandState {
+  bool left_valid = false;
+  bool right_valid = false;
+  uint32_t left_sample_age_ms = UINT32_MAX;
+  uint32_t right_sample_age_ms = UINT32_MAX;
+  std::vector<double> position;
+  std::vector<double> velocity;
+  std::vector<double> current;
+  std::vector<uint8_t> state;
+  double timestamp = 0.0;
+
+  HandState()
+      : position(12, 0.0), velocity(12, 0.0), current(12, 0.0), state(12, 0) {}
+
+  bool isValid() const {
+    return position.size() == 12 && velocity.size() == 12 &&
+           current.size() == 12 && state.size() == 12;
+  }
+};
+
+using HandStatePtr = std::shared_ptr<leju::HandState>;
+using HandStateConstPtr = std::shared_ptr<const leju::HandState>;
+
+/**
  * @struct ImuData
  * @brief IMU传感器数据结构体
  *
@@ -234,7 +284,8 @@ struct JoyData {
     int32_t dpad_down = 0;      ///< 方向键下
     int32_t dpad_left = 0;      ///< 方向键左
     int32_t dpad_right = 0;     ///< 方向键右
-    int32_t misc1 = 0;          ///< 额外按键1
+    int32_t misc1 = 0;          ///< 额外按键1 (M1)
+    int32_t misc2 = 0;          ///< 额外按键2 (M2)
   };
 
   double timestamp = 0.0;       ///< 时间戳，单位: s

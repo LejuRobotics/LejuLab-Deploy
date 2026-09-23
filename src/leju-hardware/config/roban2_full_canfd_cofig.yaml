@@ -1,0 +1,257 @@
+#########################################################
+# Roban v14 全 SocketCAN 配置 (RK3588 原生 CAN FD 接口)
+#
+# 腿/腰: bcan0, bcan1 — CAN FD 广播协议
+# 手臂/头: bcan2, bcan3 — CAN 单帧协议
+#
+# 所有总线均使用 RK3588 原生 SocketCAN 接口，无需 USB-CAN 适配器
+# 程序启动时会自动执行 ip link set 配置，无需手动操作
+#########################################################
+canbus_interfaces:
+  # ===== 腿部 CAN FD 广播总线 =====
+  bcan0:
+    type: SOCKETCAN
+    name: "bcan0"
+    nbitrate: 1000000
+    dbitrate: 5000000
+    nsamplepos: 80
+    dsamplepos: 75
+    enable: true
+    protocol: canfd_broadcast
+  bcan1:
+    type: SOCKETCAN
+    name: "bcan1"
+    nbitrate: 1000000
+    dbitrate: 5000000
+    nsamplepos: 80
+    dsamplepos: 75
+    enable: true
+    protocol: canfd_broadcast
+  # ===== 手臂/头 经典 CAN 单帧总线 (手臂电机不支持 CAN FD) =====
+  bcan2:
+    type: SOCKETCAN
+    name: "bcan2"
+    nbitrate: 1000000
+    dbitrate: 1000000
+    nsamplepos: 80
+    dsamplepos: 80
+    enable: true
+  bcan3:
+    type: SOCKETCAN
+    name: "bcan3"
+    nbitrate: 1000000
+    dbitrate: 1000000
+    nsamplepos: 80
+    dsamplepos: 80
+    enable: true
+#########################################################
+# bcan0: 左腿 (joint 1-6) — CAN FD 广播
+# 电机默认参数: [vel, kp_pos, kd_pos, tor, kp_vel, kd_vel, ki_vel]
+#########################################################
+bcan0_devices:
+  # ///////////////
+  - name: Lleg_joint_01
+    class: motor
+    device_id: 0x01
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Lleg_joint_02
+    class: motor
+    device_id: 0x02
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 36
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Lleg_joint_03
+    class: motor
+    device_id: 0x03
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Lleg_joint_04
+    class: motor
+    device_id: 0x04
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 36
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Lleg_joint_05
+    class: motor
+    device_id: 0x05
+    params: [0, 100, 30, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Lleg_joint_06
+    class: motor
+    device_id: 0x06
+    params: [0, 100, 30, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+#########################################################
+# bcan1: 右腿 (joint 7-12) + 腰 (joint 13) — CAN FD 广播
+#########################################################
+bcan1_devices:
+  # ///////////////
+  - name: Rleg_joint_01
+    class: motor
+    device_id: 0x01
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rleg_joint_02
+    class: motor
+    device_id: 0x02
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 36
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rleg_joint_03
+    class: motor
+    device_id: 0x03
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rleg_joint_04
+    class: motor
+    device_id: 0x04
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 36
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rleg_joint_05
+    class: motor
+    device_id: 0x05
+    params: [0, 100, 30, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rleg_joint_06
+    class: motor
+    device_id: 0x06
+    params: [0, 100, 30, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Waist_joint_01
+    class: motor
+    device_id: 0x07
+    params: [0, 200, 50, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+#########################################################
+# bcan2: 左臂 (joint 14-17) + 头 (joint 22-23) — CAN 单帧
+#########################################################
+bcan2_devices:
+  # ///////////////
+  - name: Larm_joint_01
+    class: motor
+    device_id: 0x01
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: true
+    ignore: false
+  # ///////////////
+  - name: Larm_joint_02
+    class: motor
+    device_id: 0x02
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Larm_joint_03
+    class: motor
+    device_id: 0x03
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Larm_joint_04
+    class: motor
+    device_id: 0x04
+    params: [0, 25, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: true
+    ignore: false
+  # ///////////////
+  - name: Head_yaw
+    class: motor
+    device_id: 0x09
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Head_pitch
+    class: motor
+    device_id: 0x0A
+    params: [0, 10, 3, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Lhand_revo2_hand
+    class: revo2_hand
+    device_id: 0x01
+    ignore: false
+#########################################################
+# bcan3: 右臂 (joint 18-21) — CAN 单帧
+#########################################################
+bcan3_devices:
+  # ///////////////
+  - name: Rarm_joint_01
+    class: motor
+    device_id: 0x05
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rarm_joint_02
+    class: motor
+    device_id: 0x06
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rarm_joint_03
+    class: motor
+    device_id: 0x07
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: true
+    ignore: false
+  # ///////////////
+  - name: Rarm_joint_04
+    class: motor
+    device_id: 0x08
+    params: [0, 25, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  # ///////////////
+  - name: Rhand_revo2_hand
+    class: revo2_hand
+    device_id: 0x02
+    ignore: false

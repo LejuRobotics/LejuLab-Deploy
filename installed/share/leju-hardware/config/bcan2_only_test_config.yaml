@@ -1,0 +1,46 @@
+#########################################################
+# bcan2 单总线测试配置
+# 4个电机 (ID 0x05-0x08)
+# 经典 CAN 单帧协议
+#########################################################
+canbus_interfaces:
+  bcan2:
+    type: SOCKETCAN
+    name: "bcan2"
+    nbitrate: 1000000
+    dbitrate: 1000000
+    nsamplepos: 80
+    dsamplepos: 80
+    enable: true
+#########################################################
+# bcan2: 4个电机
+#########################################################
+bcan2_devices:
+  - name: arm_joint_01
+    class: motor
+    device_id: 0x05
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: arm_joint_02
+    class: motor
+    device_id: 0x06
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: arm_joint_03
+    class: motor
+    device_id: 0x07
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: arm_joint_04
+    class: motor
+    device_id: 0x08
+    params: [0, 25, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false

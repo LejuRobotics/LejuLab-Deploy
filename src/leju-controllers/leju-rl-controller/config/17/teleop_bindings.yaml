@@ -1,0 +1,214 @@
+# Teleop Bindings Configuration for Robot Version 17
+# 需求来源：需求文档-Roban2.2手柄控制功能调整需求文档V2.0--3588版.pdf
+# 格式：buttons + action 嵌套结构；可选 edge(press|release) / block_when_walking
+
+# ============================================================================
+# 速度配置
+# ============================================================================
+velocity_limits:
+  stick_deadzone: 0.05
+  linear_x: 1.0
+  linear_y: 1.00            # amp_hand_controller 解禁 Y 方向速度
+  angular_z: 1.0
+  trigger_threshold: 0.50   # LT/RT 扳机按下判定阈值 [0,1]
+
+# ============================================================================
+# Joy 手柄绑定
+# ============================================================================
+# 系统内置（不在此配置）：START（启动）、BACK+START（立即终止 Quit）
+# 可用按键：A B X Y LB RB L3 R3 GUIDE LT RT DPAD_UP/DOWN/LEFT/RIGHT MISC MISC2
+# edge: press=按下响应(默认) / release=松开响应
+# block_when_walking: true=走路(遥杆/方向键)时禁止触发
+joy_bindings:
+
+  # -------------------------------------------------------------------------
+  # X 键：切换控制器 AMP（按下响应）
+  - buttons: ["X"]
+    action:
+      type: SwitchController
+      args:
+        name: amp
+  # A 键：暂空（无绑定）
+  # B 键：暂空（无绑定）
+  # Y 键：暂空（无绑定）
+
+  # -------------------------------------------------------------------------
+  # 舞蹈（RB + 面键，松开响应）
+  # -------------------------------------------------------------------------
+  - buttons: ["RB", "A"]           # 芭蕾（舞蹈）
+    edge: release
+    action:
+      type: SwitchController
+      args:
+        name: mimic_dance_balei
+        auto_start_motion: true
+  - buttons: ["RB", "B"]           # 冰淇淋（舞蹈）
+    edge: release
+    action:
+      type: SwitchController
+      args:
+        name: mimic_dance_bingjiling
+        auto_start_motion: true
+  - buttons: ["RB", "X"]           # lonely dance（舞蹈）
+    edge: release
+    action:
+      type: SwitchController
+      args:
+        name: mimic_dance_lonelydance
+        auto_start_motion: true
+  - buttons: ["RB", "Y"]           # 新疆舞（舞蹈）
+    edge: release
+    action:
+      type: SwitchController
+      args:
+        name: mimic_dance_qqxinjiang
+        auto_start_motion: true
+  - buttons: ["LT", "RT", "A"]     # 恶作剧（舞蹈）
+    edge: release
+    action:
+      type: SwitchController
+      args:
+        name: mimic_dance_ezuoju
+        auto_start_motion: true
+
+  # -------------------------------------------------------------------------
+  # LB 组合
+  # -------------------------------------------------------------------------
+  - buttons: ["LB", "A"]           # 屏蔽遥杆和方向键（再次按下恢复）
+    action:
+      type: SetInputMask
+      args:
+        name: toggle
+  # LB+B：暂空（如需行走时摆臂，应按下 LB+Y 切换）
+  # LB+X：灵巧手抓握 toggle，由 adapter 内部实现（见 handleHandGripToggle）
+
+  # LB+Y：切换手臂控制模式（如行走时按下，会在停止时生效；如静止时按下，立即生效）
+
+  # -------------------------------------------------------------------------
+  # 左扳机 LT + 面键 → 预设动作（松开响应，可边走边做）
+  # -------------------------------------------------------------------------
+  - buttons: ["LT", "A"]           # 抱拳
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 抱拳, music: 抱拳.wav } }
+  - buttons: ["LT", "B"]           # 右手打招呼
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 右手打招呼, music: 右手打招呼.wav } }
+  - buttons: ["LT", "X"]           # 左转腰打招呼
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 右转腰打招呼, music: 左转腰打招呼.wav } }
+  - buttons: ["LT", "Y"]           # 右手握手
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 右手握手, music: 右手握手.wav } }
+
+  # -------------------------------------------------------------------------
+  # 右扳机 RT + 面键 → 预设动作（松开响应，可边走边做）
+  # -------------------------------------------------------------------------
+  - buttons: ["RT", "A"]           # 碰拳
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 碰拳, music: 碰拳.wav } }
+  - buttons: ["RT", "B"]           # 飞吻
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 飞吻, music: 飞吻.wav } }
+  - buttons: ["RT", "X"]           # 欢呼
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 欢呼, music: 欢呼.wav } }
+  - buttons: ["RT", "Y"]           # 抬右手致意
+    edge: release
+    action: { type: MotionCommand, args: { op: Start, name: 抬右手致意, music: 抬右手致意.wav } }
+
+  # =========================================================================
+  # 以下为「依赖模型/硬件/状态机」的下游，触发层已支持其组合检测，
+  # 待对应控制器/资产就绪后取消注释即可
+  # =========================================================================
+  # 已实现：
+  # 灵巧手握拳/张开：LB+X，由 adapter 内部实现（handleHandGripToggle）
+  #
+  # （搬运/起身/断电已实现，见下方 TransportFallStand 绑定段）
+
+  # -------------------------------------------------------------------------
+  # 搬运模式 + 倒地起身（roban22，对齐研杨按键映射）
+  # 组合键 -> TransportFallStand 事件：进 TriggerBuffer，由 ControlLogic 交进程内
+  # TransportFallStandScheduler 消费（搬运/起身协调器原语 + cm 直调）
+  # -------------------------------------------------------------------------
+  # LB+RB+Y：进入搬运模式（手臂归零插值）
+  - buttons: ["LB", "RB", "Y"]
+    action: { type: TransportFallStand, args: { name: transport.enter } }
+  # LT+RB+A：LOCK（全身位控锁定）；保护窗内同键重置保护计时（调度层判定）
+  - buttons: ["LT", "RB", "A"]
+    action: { type: TransportFallStand, args: { name: transport.lock } }
+  # LB+RB+A：退出/取消搬运（调度层内部走 HAND_OVER；与 LT+RB+A 为不同组合）
+  - buttons: ["LB", "RB", "A"]
+    action: { type: TransportFallStand, args: { name: transport.exit } }
+  # LB+RB+B 长按 2s：FALL_DOWN 软倒地（仅 ACTIVE 下生效，调度层门控）
+  - buttons: ["LB", "RB", "B"]
+    hold: 2.0
+    action: { type: TransportFallStand, args: { name: transport.fall_down } }
+  # LB+RB+X：起身（ACTIVE->硬起身链 / HANDING_OVER->软两按 / INACTIVE 躺平->
+  # 独立起身链；按搬运状态区分，调度层判定）
+  - buttons: ["LB", "RB", "X"]
+    action: { type: TransportFallStand, args: { name: fallstand.standup } }
+  #
+  # M1/M2 自定义（M1=misc1=MISC, M2=misc2=MISC2，走路时禁触发）：
+  # 单 M1 + 字母键（出厂预设动作库，用户可修改）
+  - buttons: ["MISC", "X"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: 举左手, music: 举左手.wav } }
+  - buttons: ["MISC", "Y"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: 敬少先队队礼, music: 敬少先队队礼.wav  } }
+  - buttons: ["MISC", "A"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: 双手叉腰, music: 双手叉腰.wav  } }
+  - buttons: ["MISC", "B"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: 举右手, music: 举右手.wav  } }
+
+  # 单 M2 + 字母键
+  - buttons: ["MISC2", "X"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: "" } }
+  - buttons: ["MISC2", "Y"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: 抱箱子, music: 抱箱子.wav  } }
+  - buttons: ["MISC2", "A"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: 放箱子, music: 放箱子.wav  } }
+  - buttons: ["MISC2", "B"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: ""  } }
+
+  # 双 M1+M2 + 字母键（用户按需修改）
+  - buttons: ["MISC", "MISC2", "X"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: "" } }
+  - buttons: ["MISC", "MISC2", "Y"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: "" } }
+  - buttons: ["MISC", "MISC2", "A"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: "" } }
+  - buttons: ["MISC", "MISC2", "B"]
+    edge: release
+    block_when_walking: true
+    action: { type: MotionCommand, args: { op: Start, name: "" } }
+
+  # LB+B 固定手臂：由 adapter 内部实现（handleArmModeToggle）
+  # LB+X 灵巧手抓握：由 adapter 内部实现（handleHandGripToggle）
+
+# ============================================================================
+# Quest VR 控制器绑定
+# ============================================================================
+quest_bindings:
+  # 可用按键：LEFT_TRIGGER, RIGHT_TRIGGER, LEFT_GRIP, RIGHT_GRIP,
+  #           LEFT_FIRST, LEFT_SECOND, RIGHT_FIRST, RIGHT_SECOND

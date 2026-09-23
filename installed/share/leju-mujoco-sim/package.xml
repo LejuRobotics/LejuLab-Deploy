@@ -52,6 +52,7 @@
 
   <depend>lejusdk-lowlevel</depend>
   <depend>lejusdk-utils</depend>
+  <depend>leju-hardware</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

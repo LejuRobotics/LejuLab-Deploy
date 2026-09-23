@@ -5,8 +5,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include <atomic>
 #include <iterator>
+#include <atomic>
 #include "ruiwo_actuator_base.h"
 #include <iostream>
 
@@ -96,7 +96,12 @@ struct RuiwoMotorConfig_t {
 class RuiWoActuator : public RuiwoActuatorBase
 {
 public:
-    RuiWoActuator(std::string unused = "", bool is_cali = false);
+    /**
+     * @param single_motor_mode 单电机标定专用: 跳过启动阶段整体使能/go_to_zero, 所有电机保持
+     *                          失能静止; calibrateSingleMotor() 只对操作者选中的那一个电机
+     *                          单独做 清多圈->使能->标零->失能
+     */
+    RuiWoActuator(std::string unused = "", bool is_cali = false, bool single_motor_mode = false);
     ~RuiWoActuator();
     
     /**
@@ -154,6 +159,8 @@ public:
     void changeEncoderZeroRound(int index, double direction) override;
     void adjustZeroPosition(int index, double offset) override;
     std::vector<double> getMotorZeroPoints() override;
+    // 单独标定一个电机: 当前位置设为零点并立即持久化, 不影响其它电机
+    bool calibrateSingleMotor(int index) override;
     
     /**
      * @brief 设置电机目标位置
@@ -326,6 +333,7 @@ private:
     bool multi_turn_encoder_mode = false;
     int teach_pendant_mode = 0;
     bool is_cali_ = false;
+    bool single_motor_mode_ = false;  // 单电机标定专用: 跳过启动阶段整体使能/go_to_zero
 
     std::vector<int> ratio = {36, 36, 36, 10, 10, 10, 36, 36, 36, 10, 10, 10, 36, 36};
 
