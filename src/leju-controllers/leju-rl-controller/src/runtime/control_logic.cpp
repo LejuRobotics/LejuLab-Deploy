@@ -244,7 +244,11 @@ void ControlLogic::handleActionTriggers(const ImuData& imu,
           }
           if (mode_opt.has_value()) {
             std::string message;
-            bool success = controller_manager.setArmMode(mode_opt.value(), message);
+            auto* completion = dynamic_cast<TactCompletionArgs*>(args);
+            bool success = completion
+                ? controller_manager.applyTactCompletion(completion->generation,
+                                                        mode_opt.value(), message)
+                : controller_manager.setArmMode(mode_opt.value(), message);
             RL_LOGI("ControlLogic: setArmMode result=%s, msg=%s", success ? "true" : "false", message.c_str());
             // TactPlayer 播完/冻结时复位 M1/M2 速度屏蔽标记：
             // - kAuto：TactPlayer 正常播完恢复
@@ -396,6 +400,10 @@ std::vector<ActionTrigger> ControlLogic::processDuplicateTriggers(
 
   // 第一遍：统计每种类型的最后位置
   for (size_t i = 0; i < triggers.size(); ++i) {
+    // 完成通知不参与用户模式指令的 LastWins 去重。
+    if (dynamic_cast<TactCompletionArgs*>(triggers[i].args.get())) {
+      continue;
+    }
     last_index[triggers[i].type] = i;
   }
 
@@ -410,7 +418,12 @@ std::vector<ActionTrigger> ControlLogic::processDuplicateTriggers(
       continue;
     }
 
-    if (isDuplicateSensitive(type)) {
+    if (dynamic_cast<TactCompletionArgs*>(trigger.args.get())) {
+      // 同批次有主动手臂模式指令时，以用户指令为准。
+      if (last_index.find(ActionType::SetArmMode) == last_index.end()) {
+        result.push_back(trigger);
+      }
+    } else if (isDuplicateSensitive(type)) {
       // 去重策略：只保留第一个
       if (seen.insert(type).second) {
         result.push_back(trigger);

@@ -395,7 +395,15 @@ class ControllerManager {
    * @param message 返回消息
    * @return 是否成功
    */
-  bool setArmMode(ArmControlMode mode, std::string& message);
+  bool setArmMode(ArmControlMode mode, std::string& message,
+                  bool notify_freeze = true);
+  using TactCompletionHandler = std::function<bool(uint64_t, ArmControlMode, std::string&)>;
+  void setTactCompletionHandler(TactCompletionHandler handler) {
+    tact_completion_handler_ = std::move(handler);
+  }
+  bool applyTactCompletion(uint64_t generation, ArmControlMode mode, std::string& message) {
+    return tact_completion_handler_ && tact_completion_handler_(generation, mode, message);
+  }
 
   /**
    * @brief 设置腰部控制模式
@@ -529,6 +537,7 @@ private:
 
   double last_fallback_attempt_time_ = 0.0;  ///< 数据流退化回退限频 [steady s]
 
+  TactCompletionHandler tact_completion_handler_;
   TactFallback tact_fallback_;    ///< tact 降级回调（CSV motion 失败时尝试 .tact 播放）
   ArmFreezeCallback arm_freeze_callback_;  ///< 手臂冻结回调（LB+B keep_pose 时通知 TactPlayer 冻结）
 };

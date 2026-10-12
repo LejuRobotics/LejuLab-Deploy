@@ -1510,7 +1510,8 @@ double ControllerManager::getTurnExitGuardThreshold() const {
   return controllers_[active_index_].controller->getTurnExitGuardThreshold();
 }
 
-bool ControllerManager::setArmMode(ArmControlMode mode, std::string& message) {
+bool ControllerManager::setArmMode(ArmControlMode mode, std::string& message,
+                                   bool notify_freeze) {
   if (isTransitioning()) {
     message = "Controller is transitioning, cannot set arm mode";
     RL_LOGW("ControllerManager: Ignoring arm mode change during controller transition");
@@ -1534,7 +1535,7 @@ bool ControllerManager::setArmMode(ArmControlMode mode, std::string& message) {
   RL_LOG_SUCCESS("ControllerManager: Arm mode set to %d", static_cast<int>(mode));
 
   // keep_pose 时通知 TactPlayer 冻结（LB+B 锁定手臂）
-  if (mode == ArmControlMode::kKeepPose && arm_freeze_callback_) {
+  if (notify_freeze && mode == ArmControlMode::kKeepPose && arm_freeze_callback_) {
     arm_freeze_callback_();
   }
 

@@ -126,13 +126,15 @@ TactPlayer::TactPlayer(CommandBuffer* cmd_buffer,
                        int waist_index,
                        int hand_index,
                        const std::string& action_dir,
-                       double loop_dt)
+                       double loop_dt,
+                       bool hold_after_tact)
     : cmd_buffer_(cmd_buffer),
       trigger_buffer_(trigger_buffer),
       arm_dof_(arm_dof),
       waist_index_(waist_index),
       hand_index_(hand_index),
       action_dir_(action_dir),
+      hold_after_tact_(hold_after_tact),
       loop_dt_(loop_dt) {}
 
 TactPlayer::~TactPlayer() {
@@ -343,13 +345,15 @@ bool TactPlayer::Play(const std::string& name,
     }
   }
 
-  // 等上一个 worker 彻底结束（正常情况下 playing_ 为 false 时已 join）
+  // playing_ 为 false 不代表线程已回收；锁内等待旧 worker 彻底退出。
   if (worker_.joinable()) {
     worker_.join();
   }
 
   stop_requested_.store(false);
   frozen_.store(false);
+  const uint64_t generation = ++generation_;
+  active_generation_.store(generation);
   playing_.store(true);
   // 状态模型：成功启动播放，覆盖上次终态
   error_code_.store(kTactOk);
@@ -359,13 +363,24 @@ bool TactPlayer::Play(const std::string& name,
     error_message_.clear();
   }
   state_.store(kTactPlaying);
-  worker_ = std::thread(&TactPlayer::PlaybackLoop, this, target_execution_time_ns);
+  worker_ = std::thread(&TactPlayer::PlaybackLoop, this, target_execution_time_ns, generation);
 
   if (message) *message = "tact playback started: " + name;
   return true;
 }
 
+bool TactPlayer::applyCompletion(uint64_t generation,
+                                 const std::function<bool()>& apply) {
+  std::unique_lock<std::mutex> lock(play_mutex_, std::try_to_lock);
+  if (!lock.owns_lock() || generation != generation_ || playing_.load()) {
+    return false;
+  }
+  return apply();
+}
+
 void TactPlayer::Stop() {
+  // 与 Play 串行化 worker_ 的 join/赋值；只在非控制线程调用。
+  std::lock_guard<std::mutex> lock(play_mutex_);
   stop_requested_.store(true);
   if (worker_.joinable()) {
     worker_.join();
@@ -373,11 +388,14 @@ void TactPlayer::Stop() {
 }
 
 void TactPlayer::Freeze() {
-  frozen_.store(true);
-  Stop();
+  // 不 join、不获取播放锁；旧代请求不能停止下一代播放。
+  const uint64_t generation = active_generation_.load();
+  if (playing_.load()) {
+    freeze_generation_.store(generation);
+  }
 }
 
-void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns) {
+void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns, uint64_t generation) {
   // 切 External 模式
   SetArmMode("kExternal");
   if (precomputed_has_waist_) {
@@ -410,6 +428,10 @@ void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns) {
   }
 
   for (size_t i = 0; i < precomputed_samples_.size(); ++i) {
+    if (freeze_generation_.load() == generation) {
+      frozen_.store(true);
+      break;
+    }
     if (stop_requested_.load()) {
       break;
     }
@@ -441,9 +463,20 @@ void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns) {
         std::chrono::steady_clock::duration>(period * (i + 1)));
   }
 
+  // 最后一帧等待期间收到冻结请求，也不恢复 Auto。
+  if (freeze_generation_.load() == generation) {
+    frozen_.store(true);
+  }
+  // 仅正常结束受配置影响；Stop 仍恢复 Auto，Freeze 仍保留外部设置的模式。
+  const bool hold_on_finish = hold_after_tact_ &&
+      !stop_requested_.load() && !frozen_.load();
   // 恢复 Auto 模式（冻结时不恢复，保持 keep_pose 由 LB+B 设置的模式）
   if (!frozen_.load()) {
-    SetArmMode("kAuto");
+    if (!hold_on_finish) {
+      SetArmMode("kAuto");
+    }
+    // hold_after_tact 仅保持手臂，不锁定腰部；正常完成/Stop 后腰部仍恢复 Auto。
+    // 带腰部动作的 tact 不保证全身姿态或末端位置保持，抓持场景需确认腰部恢复的影响。
     if (precomputed_has_waist_) {
       SetWaistMode("kAuto");
     }
@@ -452,7 +485,7 @@ void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns) {
   }
 
   // 状态模型收尾：按退出路径设终态。
-  // 注意 Freeze() 会先调 Stop()，故 frozen_ 时 stop_requested_ 也为 true，需先判 frozen_。
+  // 冻结请求优先于普通停止，保留 Frozen 终态。
   if (frozen_.load()) {
     state_.store(kTactFrozen);
   } else if (stop_requested_.load()) {
@@ -463,6 +496,13 @@ void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns) {
 
   RL_LOGI("TactPlayer: playback finished");
   playing_.store(false);
+  if (hold_on_finish) {
+    // 结束保持不是主动冻结；控制线程校验代数后再设置模式。
+    if (trigger_buffer_) {
+      trigger_buffer_->push(ActionTrigger(ActionType::SetArmMode,
+          std::make_shared<TactCompletionArgs>("kKeepPose", generation)));
+    }
+  }
 }
 
 }  // namespace runtime

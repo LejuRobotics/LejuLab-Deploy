@@ -35,6 +35,7 @@
 #include "lejusdk-utils/time_utils.hpp"
 
 #include <dds/dds.hpp>
+#include <yaml-cpp/yaml.h>
 #include "lejusdk-dds-idl/StringData.hpp"
 #include "lejusdk-topic-pubsub/topic_names.h"
 #include "lejusdk-topic-pubsub/topic_publisher.hpp"
@@ -171,6 +172,12 @@ int main(int argc, char** argv) {
   }
 
   try {
+    // 启动时读取；缺省保持旧的播放后回正行为，非法配置由外层异常处理拒绝启动。
+    const YAML::Node startup_config = YAML::LoadFile(config_file);
+    const YAML::Node tact_config = startup_config["tact_player"];
+    const bool hold_after_tact = tact_config && tact_config["hold_after_tact"]
+        ? tact_config["hold_after_tact"].as<bool>() : false;
+
     // ========================================================================
     // 1. 初始化基础设施
     // ========================================================================
@@ -302,7 +309,8 @@ int main(int argc, char** argv) {
     // 4. 初始化外部接口（VR/SDK）
     // ========================================================================
     ExternalInterface external_interface;
-    if (!external_interface.initialize(version, trigger_buffer, controller_manager, lifecycle)) {
+    if (!external_interface.initialize(version, trigger_buffer, controller_manager, lifecycle,
+                                       hold_after_tact)) {
       RL_LOGW("Failed to initialize ExternalInterface, continuing without VR support");
     } else {
       RL_LOGI("ExternalInterface initialized");

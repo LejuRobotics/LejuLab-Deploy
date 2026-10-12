@@ -1,5 +1,8 @@
 loop_dt: 0.001
 default_controller: "amp"
+# tact 正常播放结束后保持手臂姿态；false 恢复 Auto 回正。
+tact_player:
+  hold_after_tact: false
 # 控制器切换期间插值用的 kp/kd（确保能跟踪到位）
 switch_interpolation:
   arm_kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
