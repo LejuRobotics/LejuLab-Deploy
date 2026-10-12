@@ -7,6 +7,9 @@
 
 #include "leju-rl-controller/inference/model_factory.h"
 #include "leju-rl-controller/rl_log.h"
+#include "lejusdk-utils/cpu_affinity.hpp"
+#include "leju-rl-controller/rl_frequency_csv_logger.hpp"
+#include "leju-rl-controller/rl_log.h"
 
 namespace leju {
 namespace rl_mimic {
@@ -151,6 +154,7 @@ void RLMimicController::joyDataCallback(const JoyDataConstPtr& joy) {
   CALC_PRESS(dpad_left)
   CALC_PRESS(dpad_right)
   CALC_PRESS(misc1)
+  CALC_PRESS(misc2)
 #undef CALC_PRESS
 
   joy_data_msg_cnt_++;
@@ -825,8 +829,23 @@ void RLMimicController::start() {
 }
 
 void RLMimicController::mainLoop() {
+  if (leju::cpu::bindCurrentThreadToBigCores()) {
+    std::cout << "[INFO] RL control/inference thread bound to big cores "
+              << leju::cpu::kRk3588BigCoreFirst << "-" << leju::cpu::kRk3588BigCoreLast
+              << std::endl;
+  } else {
+    std::cout << "[WARN] Failed to bind RL control/inference thread to big cores"
+              << std::endl;
+  }
+
   std::cout << "\n--- Starting Control Loop ---" << std::endl;
   std::cout << "Press Ctrl+C to stop" << std::endl;
+
+  RLFrequencyCsvLogger freq_csv_logger;
+  freq_csv_logger.start(1.0 / cfg_.loop_dt, 1.0 / cfg_.policy_dt);
+  if (freq_csv_logger.isActive()) {
+    RL_LOGI("RL frequency CSV: %s", freq_csv_logger.csvPath().c_str());
+  }
 
   auto& robot = GlobalRobot::getInstance();
   auto start_time = std::chrono::steady_clock::now();
@@ -834,6 +853,7 @@ void RLMimicController::mainLoop() {
   int cnt = 0;
   auto t0 = std::chrono::steady_clock::now();
   while (true) {
+    freq_csv_logger.tickControl();
     bool press_guide = false;
     {
       std::lock_guard<std::mutex> lock(joy_data_mutex_);
@@ -853,6 +873,7 @@ void RLMimicController::mainLoop() {
       computeObservation();
       // std::cout << "start update action." << std::endl;
       computeActions();
+      freq_csv_logger.tickInference();
       if (start_play_motion_) {
         policy_phase_cnt_++;
       }
@@ -889,6 +910,8 @@ void RLMimicController::mainLoop() {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(static_cast<int>(1000 * cfg_.loop_dt)));
   }
+
+  freq_csv_logger.stop();
 
   // Stop Robot
   robot.publishStopRobot();

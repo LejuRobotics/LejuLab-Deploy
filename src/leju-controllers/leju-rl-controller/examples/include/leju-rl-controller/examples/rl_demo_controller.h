@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
+#include <openvino/openvino.hpp>
 #include <Eigen/Dense>
 
 #include "lejusdk-lowlevel/leju_sdk.h"
@@ -15,8 +16,6 @@
 #include "lejusdk-utils/time_utils.hpp"
 #include "leju-rl-controller/examples/arm_controller.h"
 #include "leju-rl-controller/examples/cmd_stance_calculator.h"
-#include "leju-rl-controller/inference/inference_model.h"
-#include "leju-rl-controller/inference/model_factory.h"
 
 namespace leju {
 namespace rl_demo {
@@ -33,7 +32,6 @@ struct ObsTermConfig {
 struct RLDemoConfig {
   double loop_dt;
   std::string policy_path;
-  std::string inference_engine;  // 推理引擎 (openvino, onnxruntime)
 
   double policy_dt;
   std::vector<std::string> joint_names;
@@ -65,6 +63,19 @@ struct RLDemoConfig {
   double command_range_lin_vel_y_ub;
   double command_range_ang_vel_z_lb;
   double command_range_ang_vel_z_ub;
+
+  // Velocity smoothing (EMA coefficient: 1.0 = instant/disabled, smaller = more smoothing)
+  double velocity_smooth_alpha = 1.0;
+  double lin_vel_x_decel_limit = -1.0;  // X减速限制 [m/s²], <0=禁用
+
+  // Mixed motion limits (optional, default disabled)
+  bool mixed_motion_enabled = false;           // master switch
+  double angular_vel_threshold = 0.25;         // rad/s: above this, linear gets capped
+  double max_linear_vel_with_angular = 0.2;    // m/s: linear cap when turning
+  double linear_vel_threshold = 0.4;           // m/s: above this, angular gets capped
+  double max_angular_vel_with_linear = 0.4;    // rad/s: angular cap when moving forward
+  bool smooth_transition = true;
+  double transition_factor = 0.9;
 
   bool loadFromYaml(YAML::Node node);
 };
@@ -100,6 +111,12 @@ class RLDemoController {
   void computeObservation();
   void computeActions();
   void updateRobotCmd();
+
+  // Process raw joystick input into smoothed, limited velocity command once per policy cycle
+  void updateVelocityCommands();
+
+  // Apply mixed motion cross-coupling limits in-place to velocity array [lin_x, lin_y, ang_z]
+  void applyMixedMotionLimits(Eigen::ArrayXd& vel) const;
 
   Eigen::ArrayXd get_obs_term(const std::string& name);
   int get_shape_obs_term(const std::string& name);
@@ -156,10 +173,15 @@ class RLDemoController {
   std::vector<int> policy_joint_ids_;
   int policy_obs_shape_;
 
-  // inference resource (抽象推理层)
-  std::unique_ptr<InferenceModel> model_;
-  std::string inference_engine_ = "openvino";  // 推理引擎 (openvino, onnxruntime)
-
+  // inference resource
+  ov::Core core_;
+  ov::CompiledModel compiled_model_;
+  ov::Output<const ov::Node> input_port_;
+  ov::Output<const ov::Node> output_port_;
+  ov::Tensor input_tensor_;
+  ov::Tensor output_tensor_;
+  ov::InferRequest infer_request_;
+  
 
   // data buffer
   std::mutex robot_state_mutex_;
@@ -186,6 +208,9 @@ class RLDemoController {
   Eigen::ArrayXd policy_action_;  // no lock because we have only 1 thread
   RobotCmd cmd_;
 
+  // Velocity command state (smoothing + mixed motion limits)
+  Eigen::ArrayXd smoothed_velocity_command_;   // size 3, [lin_x, lin_y, ang_z]
+
   // logger
   std::unique_ptr<TopicLogger> logger_;
   std::string name_ = "rl_demo";
@@ -195,6 +220,9 @@ class RLDemoController {
   int arm_start_index_ = 0;   // 手臂在 policy 关节中的起始索引
   int arm_joint_count_ = 0;   // 手臂关节数
 
+  /// 前 15 关节 kp/kd 覆盖（左腿6+右腿6+腰1+左臂第1+右臂第1），与 kuavo 配置一致；空则不覆盖
+  std::vector<double> hardware_override_kp_15_;
+  std::vector<double> hardware_override_kd_15_;
 };
 
 }  // namespace rl_demo

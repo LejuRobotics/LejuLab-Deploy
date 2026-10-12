@@ -1,0 +1,650 @@
+{
+  "_readme": [
+    "电机固件预检配置 (roban_v17, 与 kuavo.json 同目录, 随代码版本管理)。",
+    "程序启动时自动从本文件读取, 无需复制到 ~/.config。",
+    "firmware_version = 参数表 idx10 实际读回值, 可用以下任一方式读取:",
+    "  1) build_cmake/.../motor_preflight_check <canbus_yaml> <本文件> (会打印实际读到的版本)",
+    "  2) scripts/can_param_tools/can_param_tool.py (读 idx 10)",
+    "0x00000000 为占位值, 未填写前预检必然失败, 属预期行为。",
+    "firmware_version 可写单值或数组白名单(命中任一版本即通过), 如 motorevo_4315_36。",
+    "params 为启动时写入参数 (写 RAM 不落 flash, 每次启动重写):",
+    "  { \"idx\": 61, \"dtype\": \"uint32\", \"value\": 100 }",
+    "  dtype 支持 float / uint32 / hex32; 禁止 idx 10 (固件版本只读)。",
+    "device_map 必须覆盖 canbus yaml 中所有非 ignore 的 motor 设备, 缺条目预检失败。",
+    "_params_source 仅为来源标注, 加载器忽略。"
+  ],
+  "models": {
+    "motorevo_PA81_25": {
+      "firmware_version": "0xEF260616",
+      "params": [
+        {
+          "idx": 11,
+          "dtype": "uint32",
+          "value": 2
+        },
+        {
+          "idx": 12,
+          "dtype": "float",
+          "value": 0.4079
+        },
+        {
+          "idx": 13,
+          "dtype": "float",
+          "value": 0.0324
+        },
+        {
+          "idx": 14,
+          "dtype": "float",
+          "value": 0.4079
+        },
+        {
+          "idx": 15,
+          "dtype": "float",
+          "value": 0.0324
+        },
+        {
+          "idx": 21,
+          "dtype": "float",
+          "value": 80.0
+        },
+        {
+          "idx": 24,
+          "dtype": "float",
+          "value": -12.5
+        },
+        {
+          "idx": 25,
+          "dtype": "float",
+          "value": 12.5
+        },
+        {
+          "idx": 26,
+          "dtype": "float",
+          "value": -15.0
+        },
+        {
+          "idx": 27,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 28,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 29,
+          "dtype": "float",
+          "value": 250.0
+        },
+        {
+          "idx": 30,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 31,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 32,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 33,
+          "dtype": "float",
+          "value": 0.05
+        },
+        {
+          "idx": 34,
+          "dtype": "float",
+          "value": -50.0
+        },
+        {
+          "idx": 35,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 43,
+          "dtype": "float",
+          "value": 10.0
+        }
+      ],
+      "_params_source": "scripts/can_param_tools/81_params.json"
+    },
+    "motorevo_PA76_25": {
+      "firmware_version": "0xEF260710",
+      "params": [
+        {
+          "idx": 11,
+          "dtype": "uint32",
+          "value": 2
+        },
+        {
+          "idx": 12,
+          "dtype": "float",
+          "value": 1.3253
+        },
+        {
+          "idx": 13,
+          "dtype": "float",
+          "value": 0.0942
+        },
+        {
+          "idx": 14,
+          "dtype": "float",
+          "value": 1.3253
+        },
+        {
+          "idx": 15,
+          "dtype": "float",
+          "value": 0.0942
+        },
+        {
+          "idx": 21,
+          "dtype": "float",
+          "value": 80.0
+        },
+        {
+          "idx": 24,
+          "dtype": "float",
+          "value": -12.5
+        },
+        {
+          "idx": 25,
+          "dtype": "float",
+          "value": 12.5
+        },
+        {
+          "idx": 26,
+          "dtype": "float",
+          "value": -15.0
+        },
+        {
+          "idx": 27,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 28,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 29,
+          "dtype": "float",
+          "value": 250.0
+        },
+        {
+          "idx": 30,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 31,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 32,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 33,
+          "dtype": "float",
+          "value": 0.05
+        },
+        {
+          "idx": 34,
+          "dtype": "float",
+          "value": -50.0
+        },
+        {
+          "idx": 35,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 43,
+          "dtype": "float",
+          "value": 1.0
+        }
+      ],
+      "_params_source": "scripts/can_param_tools/76_params.json"
+    },
+    "motorevo_4315_36": {
+      "firmware_version": [
+        "0xEF260601",
+        "0xEF260516"
+      ],
+      "params": [
+        {
+          "idx": 11,
+          "dtype": "uint32",
+          "value": 2
+        },
+        {
+          "idx": 12,
+          "dtype": "float",
+          "value": 0.4898
+        },
+        {
+          "idx": 13,
+          "dtype": "float",
+          "value": 0.0961
+        },
+        {
+          "idx": 14,
+          "dtype": "float",
+          "value": 0.4898
+        },
+        {
+          "idx": 15,
+          "dtype": "float",
+          "value": 0.0961
+        },
+        {
+          "idx": 21,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 24,
+          "dtype": "float",
+          "value": -12.5
+        },
+        {
+          "idx": 25,
+          "dtype": "float",
+          "value": 12.5
+        },
+        {
+          "idx": 26,
+          "dtype": "float",
+          "value": -15.0
+        },
+        {
+          "idx": 27,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 28,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 29,
+          "dtype": "float",
+          "value": 250.0
+        },
+        {
+          "idx": 30,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 31,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 32,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 33,
+          "dtype": "float",
+          "value": 0.05
+        },
+        {
+          "idx": 34,
+          "dtype": "float",
+          "value": -50.0
+        },
+        {
+          "idx": 35,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 43,
+          "dtype": "float",
+          "value": 10.0
+        }
+      ],
+      "_params_source": "scripts/can_param_tools/4336_params.json"
+    },
+    "ruiwo": {
+      "firmware_version": "0xBF260601",
+      "params": [
+        {
+          "idx": 11,
+          "dtype": "uint32",
+          "value": 2
+        },
+        {
+          "idx": 12,
+          "dtype": "float",
+          "value": 0.3
+        },
+        {
+          "idx": 13,
+          "dtype": "float",
+          "value": 0.01
+        },
+        {
+          "idx": 14,
+          "dtype": "float",
+          "value": 0.3
+        },
+        {
+          "idx": 15,
+          "dtype": "float",
+          "value": 0.01
+        },
+        {
+          "idx": 21,
+          "dtype": "float",
+          "value": 50
+        },
+        {
+          "idx": 24,
+          "dtype": "float",
+          "value": -12.5
+        },
+        {
+          "idx": 25,
+          "dtype": "float",
+          "value": 12.5
+        },
+        {
+          "idx": 26,
+          "dtype": "float",
+          "value": -15.0
+        },
+        {
+          "idx": 27,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 28,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 29,
+          "dtype": "float",
+          "value": 250.0
+        },
+        {
+          "idx": 30,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 31,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 32,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 33,
+          "dtype": "float",
+          "value": 0.05
+        },
+        {
+          "idx": 34,
+          "dtype": "float",
+          "value": -50.0
+        },
+        {
+          "idx": 35,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 43,
+          "dtype": "float",
+          "value": 10.0
+        }
+      ]
+    },
+    "ruiwo_60": {
+      "firmware_version": "0xCF260519",
+      "params": [
+        {
+          "idx": 11,
+          "dtype": "uint32",
+          "value": 2
+        },
+        {
+          "idx": 12,
+          "dtype": "float",
+          "value": 0.3
+        },
+        {
+          "idx": 13,
+          "dtype": "float",
+          "value": 0.0075
+        },
+        {
+          "idx": 14,
+          "dtype": "float",
+          "value": 0.3
+        },
+        {
+          "idx": 15,
+          "dtype": "float",
+          "value": 0.0075
+        },
+        {
+          "idx": 21,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 24,
+          "dtype": "float",
+          "value": -12.5
+        },
+        {
+          "idx": 25,
+          "dtype": "float",
+          "value": 12.5
+        },
+        {
+          "idx": 26,
+          "dtype": "float",
+          "value": -15.0
+        },
+        {
+          "idx": 27,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 28,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 29,
+          "dtype": "float",
+          "value": 250.0
+        },
+        {
+          "idx": 30,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 31,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 32,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 33,
+          "dtype": "float",
+          "value": 0.05
+        },
+        {
+          "idx": 34,
+          "dtype": "float",
+          "value": -50.0
+        },
+        {
+          "idx": 35,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 43,
+          "dtype": "float",
+          "value": 10.0
+        }
+      ],
+      "_params_source": "scripts/can_param_tools/60_params.json"
+    },
+    "ruiwo_25": {
+      "firmware_version": "0xBF260601",
+      "params": [
+        {
+          "idx": 11,
+          "dtype": "uint32",
+          "value": 2
+        },
+        {
+          "idx": 12,
+          "dtype": "float",
+          "value": 0.3
+        },
+        {
+          "idx": 13,
+          "dtype": "float",
+          "value": 0.01
+        },
+        {
+          "idx": 14,
+          "dtype": "float",
+          "value": 0.3
+        },
+        {
+          "idx": 15,
+          "dtype": "float",
+          "value": 0.01
+        },
+        {
+          "idx": 21,
+          "dtype": "float",
+          "value": 50
+        },
+        {
+          "idx": 24,
+          "dtype": "float",
+          "value": -12.5
+        },
+        {
+          "idx": 25,
+          "dtype": "float",
+          "value": 12.5
+        },
+        {
+          "idx": 26,
+          "dtype": "float",
+          "value": -15.0
+        },
+        {
+          "idx": 27,
+          "dtype": "float",
+          "value": 15.0
+        },
+        {
+          "idx": 28,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 29,
+          "dtype": "float",
+          "value": 250.0
+        },
+        {
+          "idx": 30,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 31,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 32,
+          "dtype": "float",
+          "value": 0.0
+        },
+        {
+          "idx": 33,
+          "dtype": "float",
+          "value": 0.05
+        },
+        {
+          "idx": 34,
+          "dtype": "float",
+          "value": -50.0
+        },
+        {
+          "idx": 35,
+          "dtype": "float",
+          "value": 50.0
+        },
+        {
+          "idx": 43,
+          "dtype": "float",
+          "value": 10.0
+        }
+      ]
+    }
+  },
+  "device_map": {
+    "Lleg_joint_01": "motorevo_PA81_25",
+    "Lleg_joint_02": "motorevo_PA81_25",
+    "Lleg_joint_03": "motorevo_PA76_25",
+    "Lleg_joint_04": "motorevo_PA81_25",
+    "Lleg_joint_05": "motorevo_4315_36",
+    "Lleg_joint_06": "motorevo_4315_36",
+    "Rleg_joint_01": "motorevo_PA81_25",
+    "Rleg_joint_02": "motorevo_PA81_25",
+    "Rleg_joint_03": "motorevo_PA76_25",
+    "Rleg_joint_04": "motorevo_PA81_25",
+    "Rleg_joint_05": "motorevo_4315_36",
+    "Rleg_joint_06": "motorevo_4315_36",
+    "Waist_joint_01": "motorevo_PA76_25",
+    "Larm_joint_01": "ruiwo_60",
+    "Larm_joint_02": "ruiwo",
+    "Larm_joint_03": "ruiwo",
+    "Larm_joint_04": "ruiwo",
+    "Rarm_joint_01": "ruiwo_60",
+    "Rarm_joint_02": "ruiwo",
+    "Rarm_joint_03": "ruiwo",
+    "Rarm_joint_04": "ruiwo",
+    "Head_yaw": "ruiwo_25",
+    "Head_pitch": "ruiwo_25"
+  }
+}

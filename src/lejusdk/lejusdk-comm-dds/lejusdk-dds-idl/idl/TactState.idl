@@ -1,0 +1,16 @@
+// Tact playback state report
+// Published by leju-rl-controller at 1Hz to report tact playback status
+// (idle/playing/finished/failed/stopped/frozen) to the upper computer.
+module leju {
+  module msgs {
+    @final
+    struct TactState {
+      int32  header_sec;          // Timestamp seconds
+      uint32 header_nanosec;      // Timestamp nanoseconds
+      string name;                // current/last tact action name
+      int32  state;               // TactPlayState: 0=idle 1=playing 2=finished 3=failed 4=stopped 5=frozen
+      int32  error_code;          // TactErrorCode: 0=ok, nonzero on failed
+      string error_message;       // empty when no error
+    };
+  };
+};

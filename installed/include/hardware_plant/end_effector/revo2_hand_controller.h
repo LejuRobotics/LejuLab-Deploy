@@ -12,6 +12,8 @@
 #include <condition_variable>
 #include <optional>
 #include <functional>
+#include <chrono>
+#include <cstdint>
 
 namespace eef_controller {  
 using namespace dexhand;
@@ -19,6 +21,12 @@ using DualHandsArray = std::array<FingerArray, 2>;
 using UnsignedDualHandsArray = std::array<UnsignedFingerArray, 2>;
 using FingerStatusArray = std::array<dexhand::FingerStatus, 2>;
 using FingerTouchStatusArray = std::array<TouchSensorStatusArray, 2>;
+
+struct FingerStatusSnapshot {
+    FingerStatusArray status;
+    std::array<bool, 2> valid{{false, false}};
+    std::array<uint32_t, 2> sample_age_ms{{UINT32_MAX, UINT32_MAX}};
+};
 
 
 /**
@@ -121,11 +129,65 @@ public:
     bool set_left_hand_force_level(GripForce level);
 
     /**
+     * @brief 设置双手的turbo模式开关
+     *
+     * @param enabled true为开启turbo模式，false为关闭
+     * @return true 至少有一只手设置成功
+     * @return false 两只手都设置失败
+     */
+    bool set_turbo_mode_enabled(bool enabled);
+
+    /**
+     * @brief 设置右手的turbo模式开关
+     *
+     * @param enabled true为开启turbo模式，false为关闭
+     * @return true 设置成功
+     * @return false 设置失败或右手未连接
+     */
+    bool set_right_hand_turbo_mode_enabled(bool enabled);
+
+    /**
+     * @brief 设置左手的turbo模式开关
+     *
+     * @param enabled true为开启turbo模式，false为关闭
+     * @return true 设置成功
+     * @return false 设置失败或左手未连接
+     */
+    bool set_left_hand_turbo_mode_enabled(bool enabled);
+
+    /**
+     * @brief 查询左手是否开启了turbo模式
+     *
+     * @return true 左手已开启turbo模式
+     * @return false 左手未开启turbo模式或左手未连接
+     */
+    bool is_left_hand_turbo_mode_enabled();
+
+    /**
+     * @brief 查询右手是否开启了turbo模式
+     *
+     * @return true 右手已开启turbo模式
+     * @return false 右手未开启turbo模式或右手未连接
+     */
+    bool is_right_hand_turbo_mode_enabled();
+
+    /**
+     * @brief 查询双手是否都开启了turbo模式
+     *
+     * @return true 双手都已开启turbo模式
+     * @return false 至少有一只手未开启turbo模式或未连接
+     */
+    bool is_turbo_mode_enabled();
+
+    /**
      * @brief 获取双手手指状态
      * 
      * @return FingerStatusArray array[2]，分别为左手和右手的状态
      */
     FingerStatusArray get_finger_status();
+
+    /// @brief 原子获取双手状态、有效位和最近成功读取年龄。
+    FingerStatusSnapshot get_finger_status_snapshot();
 
     /**
      * @brief 获取双手触摸传感器状态
@@ -195,6 +257,9 @@ private:
     FingerArray left_speed_;
 
     FingerStatusArray finger_status_;
+    std::array<bool, 2> finger_device_present_{{false, false}};
+    std::array<bool, 2> finger_status_seen_{{false, false}};
+    std::array<std::chrono::steady_clock::time_point, 2> finger_status_success_at_{};
     FingerTouchStatusArray finger_touch_status_;
     
     // 线程安全保护

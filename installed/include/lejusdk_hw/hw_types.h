@@ -133,5 +133,63 @@ struct JointCommand_t {
     }
 };
 
+// Hand control mode: 0 = position, 1 = velocity
+enum class HandControlMode : uint8_t {
+    POSITION = 0,
+    VELOCITY = 1
+};
+
+// 手部命令（6指 × 2手 = 12维）
+struct HandCommand_t {
+    std::vector<double> position;   // 目标手指位置 [0-100], 前6左手 + 后6右手
+    std::vector<double> velocity;   // 目标手指速度 [-100, 100]
+    HandControlMode control_mode;   // 控制模式
+
+    HandCommand_t() : control_mode(HandControlMode::POSITION) {
+        position.assign(12, 0.0);
+        velocity.assign(12, 0.0);
+    }
+
+    void resize() {
+        position.assign(12, 0.0);
+        velocity.assign(12, 0.0);
+    }
+
+    bool isValid() const {
+        return position.size() == 12 && velocity.size() == 12;
+    }
+};
+
+// 手部状态（6指 × 2手 = 12维）
+struct HandState_t {
+    bool left_valid = false;
+    bool right_valid = false;
+    uint32_t left_sample_age_ms = UINT32_MAX;
+    uint32_t right_sample_age_ms = UINT32_MAX;
+    std::vector<double> position;   // 手指位置 [0-100]
+    std::vector<double> velocity;   // 手指速度
+    std::vector<double> current;    // 手指电流
+    std::vector<uint8_t> state;     // 手指状态 (0=idle, 1=running, 2=stall, 3=turbo)
+
+    HandState_t() {
+        position.assign(12, 0.0);
+        velocity.assign(12, 0.0);
+        current.assign(12, 0.0);
+        state.assign(12, 0);
+    }
+
+    void resize() {
+        position.assign(12, 0.0);
+        velocity.assign(12, 0.0);
+        current.assign(12, 0.0);
+        state.assign(12, 0);
+    }
+
+    bool isValid() const {
+        return position.size() == 12 && velocity.size() == 12 &&
+               current.size() == 12 && state.size() == 12;
+    }
+};
+
 } // hw
 } // namespace leju

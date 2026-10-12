@@ -1,0 +1,25 @@
+// Quest3 bone pose data structure
+// Used to transmit Quest3 body/hand bone poses (position + quaternion per bone)
+module leju {
+  module msgs {
+    @final
+    struct Pose {
+      float x;
+      float y;
+      float z;
+      float qx;
+      float qy;
+      float qz;
+      float qw;
+    };
+    @final
+    struct QuestBonePoses {
+      int32 header_sec;
+      uint32 header_nanosec;
+      int64 timestamp_ms;
+      boolean is_high_confidence;
+      boolean is_hand_tracking;
+      sequence<Pose> poses;
+    };
+  };
+};

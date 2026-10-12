@@ -3,19 +3,18 @@ HumanoidRobotCfg:
   inference_engine: "onnxruntime"
 
   loop_dt: 0.001
-  policy_path: "../policy/amp/2026-03-31_23-48-45-lyy10-168000.onnx"
+  policy_path: "../policy/amp/06-09_15-39-29_amp_agent_72000.onnx"
+  # policy_path: "../policy/amp/06-09_15-39-29_amp_agent_52800.onnx"
 
   env:
     policy_dt: 0.02
     robot:
       enable_arm_controller: true
-      # TODO: 找到更好方法替代此部分
-      arm_joint_names:
-        ["zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
-         "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
-
-      # Roban2.2 AMP 模型不支持腰关节外部指令控制
       enable_waist_controller: false
+      enable_amp_arm_enhance_v17: true
+      enable_back_enhance_v17: true
+      enable_standup_enhance_v17: true
+      enable_turn_in_place_enhance_v17: true
 
       joint_names:
         ["waist_yaw_joint",
@@ -23,56 +22,70 @@ HumanoidRobotCfg:
          "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint",
          "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
          "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
-      # notes: index=0即waist_yaw_joint的方向这里默认设置为-1，是因为:
-      # - 训练的模型模型中base和当前实物的可能存在差异
-      # - 如何确定此处的方向值:以躯干为base,如果腰部的旋转方向是符合右手定则，那么此处设置为-1，否则为1
+      # notes: index=0 即 waist_yaw_joint 的方向默认设置为 -1，
+      # 用法与 14 的 amp 配置保持一致。
       joint_direction:
         [-1.,
          1.,1.,1.,1.,1.,1.,
          1.,1.,1.,1.,1.,1.,
          1.,1.,1.,1.,
          1.,1.,1.,1.]
+      # joint_default_pos:
+      #   [0.,
+      #    -0.05033, -0.0164, -0.0233, 0.155, -0.1, 0.,
+      #    0.05033, 0.0164, -0.0233, 0.155, -0.1, 0.,
+      #    0.2, 0.210, -0.4, -0.6,
+      #    0.2, -0.210, 0.4, -0.6,]
       joint_default_pos:
         [0.,
-         -0.05033, -0.0164, -0.0233, 0.155, -0.1, 0.,
-         0.05033, 0.0164, -0.0233, 0.155, -0.1, 0.,
-         0.2, 0.210, -0.4, -0.6,
-         0.2, -0.210, 0.4, -0.6,]
+         -0.285, -0.0194, -0.201, 0.404, -0.221, 0.,
+         0.285, 0.0194, 0.201, 0.404, -0.221, 0.,
+         0.0, 0.05, -0.0, -0.2,
+         0.0, -0.05, 0.0, -0.2,]
+      start_stand_pos:
+        [0.,
+         -0.185, -0.0194, -0.201, 0.454, -0.221, 0.,
+         0.185, 0.0194, 0.201, 0.454, -0.221, 0.,
+         0.0, 0.05, -0.0, -0.2,
+         0.0, -0.05, 0.0, -0.2,]
       joint_torque_limit:
         [80.,
          150., 150., 70., 150., 74., 74.,
          150., 150., 70., 150., 74., 74.,
          14.1, 37., 37., 37.,
-         14.1, 37., 37., 37.,]
+         14.1, 37., 37., 37.]
       actuator_kp:
         [40.179,
          90.179, 150.098, 40.179, 150.098, 34.25, 34.25,
          90.179, 150.098, 40.179, 150.098, 34.25, 34.25,
          14.25, 14.25, 14.25, 14.25,
-         14.25, 14.25, 14.25, 14.25,]
+         14.25, 14.25, 14.25, 14.25]
       actuator_kd:
         [2.557,
          3.557, 8.308, 3.557, 8.308, 1.907, 1.907,
          3.557, 8.308, 3.557, 8.308, 1.907, 1.907,
          0.907, 0.907, 0.907, 0.907,
-         0.907, 0.907, 0.907, 0.907,]
+         0.907, 0.907, 0.907, 0.907]
       actuator_control_mode:
         [0,
          0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0,
-         2, 2, 2, 2,
-         2, 2, 2, 2,]
+         0, 0, 0, 0,
+         0, 0, 0, 0]
       action_scale:
         [0.25,
          0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
          0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
          0.25, 0.25, 0.25, 0.25,
-         0.25, 0.25, 0.25, 0.25,]
+         0.25, 0.25, 0.25, 0.25]
 
     observations:
       history_length: 1
       stack_order: "classic" # classic
       terms:
+        # numSingleObs = 73:
+        # 3(base_ang_vel) + 3(projected_gravity) + 3(velocity_commands)
+        # + 1(cmd_stance) + 21(joint_pos) + 21(joint_vel) + 21(actions) = 73
         base_ang_vel:
           scale: 1.
           clip: [-5000., 5000.]
@@ -95,10 +108,142 @@ HumanoidRobotCfg:
           scale: 1.
           clip: [-5000., 5000.]
 
-    command_range:
-      lin_vel_x: [-0.8, 0.8]
-      lin_vel_y: [-0.6, 0.6]
-      ang_vel_z: [-1.0, 1.0]
+    velocity_scale:                        # 注意walking下的cmd scale还受teleop_bindings.yaml中velocity_limits影响
+      walking:                             # cmd_stance=0：行走模式（linear_x=前后速, angular_z=转身角速度）
+        linear_x: 0.75                     # 默认档前进上限
+        linear_x_low: 0.4                  # 低速档前进上限
+        linear_x_up: 0.95                  # 高速档前进上限
+        linear_x_negative_scale: 0.45      # 后退 policy 上限（不随档位变化）
+        external_arm_linear_x_boost: 0.1
+        linear_y: 0.4
+        angular_z: 1.2
+
+      standing:                            # cmd_stance=1：姿态模式（仅 angular_z=下蹲高度）
+        angular_z: 1.0
+
+    # 速度平滑在 policy 步执行，固定 dt=policy_dt
+    velocity_smoothing:
+      # 前进 cmd_x：分段 EMA + 加/减速独立单步限幅
+      cmd_x_smooth_enabled: true
+      max_velocity_change_cmd_x: 0.1         # 前进加速单步最大变化量 [m/s]
+      max_velocity_change_decel_cmd_x: 0.05   # 前进减速单步最大变化量 [m/s]
+      cmd_x_decel_ema_tau_threshold: 0.25     # EMA 高/低速分段阈值 [m/s]
+      cmd_x_decel_ema_tau_high: 0.25          # 高速段 EMA 时间常数 [s]
+      cmd_x_decel_ema_tau_low: 1.0            # 低速段 EMA 时间常数 [s]
+
+      # 后退 cmd_x：不使用前进 EMA，加/减速独立单步限幅
+      max_velocity_change_neg_accel_cmd_x: 0.01  # 后退加速单步最大变化量 [m/s]
+      max_velocity_change_neg_cmd_x: 0.008        # 后退减速单步最大变化量 [m/s]
+
+      # 两阶段停车（前后方向共用）：回中时先快速降到保持速度并保持 hold_time，
+      # 再以原有减速斜率缓慢降到 0，避免高速直接急停导致站不稳。
+      # hold_speed<=0 时禁用，行为回退为原有的全程单步限幅。
+      cmd_x_decel_hold_speed: 0.0   # 保持速度 [m/s]
+      cmd_x_decel_hold_time: 5.0     # 在保持速度上停留时长 [s]
+
+      # cmd_y 单步变化限速
+      max_velocity_change_cmd_y: 0.015 # [m/s] per policy step
+
+      # cmd_angz 单步变化限幅，仅减速
+      max_velocity_change_cmd_angz: 0.1 # [rad/s] per policy step
+
+    # angular_z 在目标接近 0 时启用缓停；仅 standing（cmd_stance=1，下蹲高度）生效
+    angular_z_stop_filter:
+      enabled: true
+      angular_z_deceleration: 0.1  # policy command unit/s^2
+      stop_target_threshold: 0.1
+      max_standup_change:  0.012   # 起身单步最大高度命令变化量
+
+    tiny_cmd_clip:
+      enabled: true
+      cmd_x_clip: [0.37, 0.45]
+      cmd_abs_y_clip: [0.2, 0.4]
+
+    # 侧移后短时屏蔽前进：近 history_frames 帧内出现过 abs(cmd_y)>threshold 则 cmd_x=0
+    off_cmdx_after_lateral:
+      enabled: true
+      cmd_y_threshold: 0.35
+      history_frames: 20
+
+    # 低速起步脉冲：cmd_x 落在 trigger±tolerance 且上一帧近零、相对上一帧加速时，先给更高 cmd_x
+    low_speed_kick_start:
+      enabled: true
+      kick_velocity: 0.6          # 脉冲速度 [m/s]
+      duration_steps: 25          # 脉冲持续推理步数 (50Hz 下约 0.5s)
+      rest_cmd_threshold: 0.2     # |上一帧 cmd_x| 低于该值则判定静止起步
+      trigger_velocity: 0.32       # 处理后 cmd_x 触发中心值 [m/s]
+      trigger_tolerance: 0.15     # 触发区间 [0.17, 0.47]
+      lateral_threshold: 0.2      # abs(cmd_y) 超过则取消 [m/s]
+      yaw_threshold: 0.2          # abs(cmd_ang_z) 超过则取消 [rad/s]
+
+    # 低速原地转向脉冲：abs(cmd_ang_z) 落在 trigger±tolerance 且上一帧近零、相对上一帧加速时触发
+    low_speed_yaw_kick_start:
+      enabled: true
+      kick_angular_velocity: 1.0  # 脉冲角速度绝对值 [rad/s]
+      duration_steps: 15            # 脉冲持续推理步数
+      rest_cmd_threshold: 0.3       # |上一帧 cmd_ang_z| 低于该值则判定静止转向
+      trigger_angular_velocity: 0.53 # 触发中心绝对值 [rad/s]
+      trigger_tolerance: 0.33       # 触发区间 [0.2, 0.86]
+      forward_threshold: 0.2        # abs(cmd_x) 超过则取消 [m/s]
+      lateral_threshold: 0.2        # abs(cmd_y) 超过则取消 [m/s]
+      enable_reverse_kick_guard: true # 防止反向脉冲波动
+
+    # 直行时 projected_gravity 的 roll 观测闭环补偿；
+    # 走弧线开环 roll 补偿见 generic_rl_controller.h（kTurnRollCompensation*，cmd_x>0.2 m/s 且 |cmd_angz|>0.5 rad/s）
+    enable_roll_compensation_closed_loop: true
+    roll_compensation_closed_loop:
+      cmd_x_min: 0.20              # 闭环生效 cmd_x 下限 [m/s]
+      cmd_x_max: 1.0               # 闭环生效 cmd_x 上限 [m/s]
+      abs_cmd_y_max: 0.10          # abs(cmd_y) 超过该值不启用闭环 [m/s]
+      abs_cmd_ang_z_max: 0.30      # abs(cmd_ang_z) 超过该值不启用闭环 [rad/s]
+      filter_time_constant_sec: 1.2  # roll 低通时间常数，增大更平稳、响应更慢
+      first_frame_max_abs_roll_deg: 1.0  # 第一帧 |roll| 上限 [deg]，0=不限制；超上限 target_roll=0，超一半则减半
+      kp: 1.2                      # 比例增益，增大可加强即时补偿
+      ki: 0.1                  # 积分增益，设为 0 可关闭积分
+      max_compensation_deg: 1.2  # 闭环观测补偿的绝对限幅 [deg]
+      unable_compensation_arm_controller: false # 是否在外部手臂控制时禁用roll补偿
+
+    # 侧移yaw腰部闭环补偿（进入侧移时锁定航向，policy action 空间修正 waist_yaw）
+    enable_lateral_yaw_compensation_closed_loop: true
+    lateral_yaw_compensation_closed_loop:
+      kp: 2.5           # 比例增益，增大可加强航向纠偏
+      kd: 0.1           # 角速度阻尼，抑制侧移偏航振荡
+      max_action: 0.5   # 单步腰部 action 补偿限幅
+
+    mixedMotionLimits:
+      enableMixedMode:             true
+      angularVelThreshold:         0.05
+      maxLinearVelWithAngular:     0.8
+      linearVelThreshold:          0.05
+      maxAngularVelWithLinear:     0.7
+
+    # 控制器端下蹲守备：膝角判定；深蹲时屏蔽走/转，物理起身后自动退出 posture
+    squat_posture_defense:
+      enabled: true
+      height_threshold: 0.7        # leg_l4/leg_r4 均大于该值视为深蹲 (rad)
+
+    # AMP 入场后只统计真实 Joy 回调中的回中帧，避免输入缓存被人工清零后误解锁
+    velocity_entry_neutral_guard:
+      enabled: true
+      neutral_frames: 5
+
+    # 手柄 amp_hand：右摇杆上下进入姿态模式控制下蹲/起身；十字键切换前进速度档
+    amp_hand_posture_axis:
+      enabled: true
+      axis_threshold: 0.3
+      walk_cmd_block_threshold: 0.1 # 行走时不进入下蹲
+      turn_exit_guard_threshold: 0.8 # 手柄侧：小角速度转身不退出 posture
+      squat_height_min: -0.25   # 摇杆下蹲命令缩放 [m]（物理深度由膝角限制）
+      squat_height_max: 0.01   # 最大站起高度 [m]
+      squat_knee_angle_max: 1.9  # 最大下蹲膝角 [rad]，leg_l4/leg_r4
+      squat_leg1_angle_max: 1.25  # 最大下蹲 leg1 角 [rad]，leg_l1:-1.25/leg_r1:+1.25；外部手控时再收紧 0.05
+
+    # BACK+START 组合键：先下蹲再退出程序（按下即触发，无长按/取消）
+    # 1.5s 主要是物理下蹲+稳定保持时间，命令送达只需 ~0.25s；真机下蹲到位但退出偏快/偏慢优先调 duration_sec
+    quit_squat:
+      enabled: true
+      squat_height: -0.15   # 下蹲高度 [m]，负值=下蹲；真机标定区间约 0.1~0.2
+      duration_sec: 1.5     # 下蹲保持时长 [s]，之后退出
 
   velocity_input_manager:
     timeout_sec: 1.0

@@ -1,6 +1,7 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <deque>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
@@ -8,7 +9,6 @@
 #include <vector>
 
 #include <yaml-cpp/yaml.h>
-#include <openvino/openvino.hpp>
 #include <Eigen/Dense>
 
 #include "lejusdk-lowlevel/leju_sdk.h"

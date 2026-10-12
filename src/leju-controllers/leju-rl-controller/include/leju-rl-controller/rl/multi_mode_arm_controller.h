@@ -14,6 +14,7 @@
 #define LEJU_RL_MULTI_MODE_ARM_CONTROLLER_H_
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -35,6 +36,16 @@ enum class ArmControlMode {
     kAuto = 1,       ///< 自动模式（行走用 RL，站立插值到默认姿态）
     kExternal = 2,   ///< 外部控制（两阶段机制）
 };
+
+inline std::ostream& operator<<(std::ostream& os, ArmControlMode mode) {
+    switch (mode) {
+        case ArmControlMode::kKeepPose: os << "kKeepPose"; break;
+        case ArmControlMode::kAuto:     os << "kAuto";     break;
+        case ArmControlMode::kExternal: os << "kExternal"; break;
+        default:                        os << "Unknown(" << static_cast<int>(mode) << ")"; break;
+    }
+    return os;
+}
 
 /**
  * @brief 多模式手臂控制器配置
@@ -107,16 +118,30 @@ public:
 
     /**
      * @brief 获取当前控制模式
+     * @note 如果正在模式过渡中，返回目标模式（pending_mode_）
      */
-    ArmControlMode getMode() const { return mode_; }
+    ArmControlMode getMode() const { return mode_transitioning_ ? pending_mode_ : mode_; }
 
     /**
      * @brief 设置外部目标（MODE_EXTERNAL 使用）
      * @param q 目标位置
-     * @param v 目标速度（可选，当前实现忽略）
+     * @param v 目标速度（可选；全零/空视为无速度前馈）
+     * @note 接入阶段（is_approaching_ 且无速度前馈，如 VR 全零 v）会用 5 阶多项式（min-jerk）
+     *       从当前指令位姿平滑过渡到初始外部目标，到达后解除插值恢复直接操控。
+     *       有真实速度前馈（tact 播放）时保持原有 bypass 直通路径。
      */
     void setExternalTarget(const Eigen::VectorXd& q,
                            const Eigen::VectorXd& v = Eigen::VectorXd());
+
+    /**
+     * @brief 以指定时长平滑移动到外部目标（MODE_EXTERNAL 使用）
+     *
+     * 五次多项式（min-jerk）插值，起止速度/加速度为零；
+     * 到期后保持目标位，且视为接入完成（isApproaching() == false）。
+     * @param q 目标位置
+     * @param duration 插值时长（秒），<=0 时退回 setExternalTarget 的限速接入
+     */
+    void moveToExternalTarget(const Eigen::VectorXd& q, double duration);
 
     /**
      * @brief 更新手臂控制
@@ -236,8 +261,17 @@ private:
     LowPassFilter target_filter_;                ///< 目标位置滤波器
     Eigen::VectorXd raw_target_q_;               ///< 原始外部目标位置
     Eigen::VectorXd filtered_target_q_;          ///< 滤波后的目标位置
+    Eigen::VectorXd external_target_v_;          ///< 外部目标速度（bezier提供时直接使用，绕过限速器）
+    bool has_external_velocity_{false};          ///< 是否收到非空速度（tact播放=high-freq轨迹模式）
     bool is_approaching_{true};                  ///< 是否在接入阶段
     bool target_received_{false};                ///< 是否已收到外部目标
+
+    // MODE_EXTERNAL 定时移动状态（moveToExternalTarget）
+    MinimumJerkInterpolator timed_move_interpolator_;   ///< 定时移动插值器
+    double timed_move_time_{0.0};                       ///< 定时移动已进行时间
+    bool timed_move_active_{false};                     ///< 时间为s
+    Eigen::VectorXd timed_move_target_q_;               ///< 当前定时移动插值的目标位姿（setup 时 to，用于插值结束误差判定）
+
 
     // 模式切换过渡状态
     MinimumJerkInterpolator transition_interpolator_;  ///< 模式切换插值器

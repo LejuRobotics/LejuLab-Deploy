@@ -118,6 +118,15 @@ public:
     bool controlTorque(float torque);
 
     ///////////////////////////////////////////////////////////////
+    /*** CAN FD 广播协议编码 (不直接发送, 只编码8字节到buffer) ***/
+
+    void encodeMitFrame(uint8_t buf[8], float pos, float vel, float torque, float kp, float kd) const;
+    static void encodeControlFrame(uint8_t buf[8], uint8_t cmd);
+    static void encodePosVelFrame(uint8_t buf[8], float pos, float vel);
+    static void encodeVelFrame(uint8_t buf[8], float vel);
+    bool receiveFeedbackFd(const FeedbackFrameFd& frame, MotorErrCode errcode = MotorErrCode::NO_FAULT);
+
+    ///////////////////////////////////////////////////////////////
     /*** Motor Helper ***/
 
     bool receiveFeedback(const FeedbackFrame& frame);
@@ -133,19 +142,50 @@ private:
 };
 
 
+struct RevoJointSnapshot {
+    MotorId id;
+    float position;
+    float velocity;
+    float torque;
+};
+
+enum class MotorHealthReason : uint8_t {
+    NONE = 0,
+    REPORTED_FAULT,
+    FEEDBACK_TIMEOUT,
+    UNEXPECTED_DISABLED,
+};
+
+struct MotorHealthIssue {
+    MotorId id{0};
+    MotorHealthReason reason{MotorHealthReason::NONE};
+    uint64_t feedback_age_ms{0};
+    uint16_t status_word{0};
+    bool status_word_valid{false};
+    MotorErrCode fault_code{MotorErrCode::NO_FAULT};
+};
+
+struct MotorHealthSummary {
+    size_t armed_count{0};
+    size_t timed_out_armed_count{0};
+};
+
 class RevoMotorControl {
 public:
     /** @brief 构造RevoMotor控制器
      *  @param canbus_name CAN总线名称
      */
-    RevoMotorControl(const std::string& canbus_name);
+    RevoMotorControl(const std::string& canbus_name, MotorProtocol protocol = MotorProtocol::CAN_SINGLE_FRAME);
 
     /** @brief 初始化电机控制器
      *  @param motor_configs 电机配置列表
      *  @param calibrate 是否进行零点校准
+     *  @param move_to_zero 是否执行归零动作 (默认 true)
+     *  @param enable_all 是否整体使能所有电机 (默认 true); 单电机标定模式下传 false,
+     *                     所有电机保持失能, 由 calibrateSingleMotor() 单独处理目标电机
      *  @return 初始化是否成功
      */
-    bool init(const std::vector<RevoMotorConfig_t> &motor_configs, bool calibrate);
+    bool init(const std::vector<RevoMotorConfig_t> &motor_configs, bool calibrate, bool move_to_zero = true, bool enable_all = true);
 
     /** @brief 使能所有电机 */
     bool enableAll();
@@ -166,7 +206,7 @@ public:
      *          - 3: 电机不存在
      *          - 负数: 电机故障码的负数 => -MotorErrCode
      */
-    int enableMotor(MotorId id, int timeout_ms = 100);
+    int enableMotor(MotorId id, int timeout_ms = 500);
 
     /** @brief 失能指定电机
      *  @param id 电机ID
@@ -178,12 +218,19 @@ public:
      *          - 3: 电机不存在
      *          - 负数: 电机故障码的负数 => -MotorErrCode
      */
-    int disableMotor(MotorId id, int timeout_ms = 100);
+    int disableMotor(MotorId id, int timeout_ms = 500);
 
     /** @brief 设置0-torque模式
      *  @param enable 是否启用0-torque模式
      */
     void setZeroTorqueMode(bool enable);
+
+    /** @brief 激活/关闭 runtime_skip 电机的运动帧跳过
+     *  @param active true 后 config.runtime_skip 的电机不再发 PTM/MIT 运动帧
+     *  @note 默认 false: 初始化阶段(使能后 hold、moveToZero)头部等 runtime_skip
+     *        电机正常收帧回零; 上层控制开始下发命令后置 true, 恢复"仅使能不控制"
+     */
+    void setRuntimeSkipActive(bool active);
 
     /** @brief 多圈编码器清零
      *  @param id 电机ID
@@ -210,6 +257,22 @@ public:
      *  @return 电机ID到零点偏移值的映射表(rad)
      */
     std::map<MotorId, float> getZeroOffsets();
+
+    /** @brief 单独标定一个电机: 将该电机当前反馈位置设为零点偏移
+     *  @param id 电机ID
+     *  @param timeout_ms 等待反馈帧超时时间(毫秒)
+     *  @return 标定是否成功 (电机不存在/未收到反馈/偏移超出安全范围时返回 false)
+     *  @note 只修改该电机自身的 zero_offset, 不触碰同总线其它电机
+     */
+    bool calibrateSingleMotor(MotorId id, int timeout_ms = 1000);
+
+    /** @brief 执行完整标定流程（用户确认后调用）
+     *  顺序: disableAll → multiTurnZeroAll → enableAll → waitForFeedback → calibrateMotors → hold
+     *  @return 标定是否成功
+     *  @note 替代 init() 中原 calibrate=true 时的 multiTurnZeroAll + calibrateMotors，
+     *        将不可逆硬件操作从 init 阶段移到用户确认后执行，避免 Ctrl+C 退出时硬件已清零但零点文件未保存
+     */
+    bool calibrateAllMotorsAndHold();
 
     /** @brief 获取所有电机原始位置
      *  @return 电机ID到原始位置的映射表(未处理零点和方向)
@@ -241,10 +304,42 @@ public:
      */
     std::map<MotorId, float> getTorques();
 
+    /** @brief 一次遍历获取所有电机的位置、速度、力矩数据
+     *  @param out 输出缓冲区（由调用方复用，避免堆分配）
+     */
+    void getAllJointData(std::vector<RevoJointSnapshot>& out) const;
+
     /** @brief 获取所有电机的状态信息
      *  @return 电机ID到运行状态的映射表
      */
     std::map<MotorId, MotorState> getMotorStates();
+
+    /** @brief 获取所有电机的故障码
+     *  @return 电机ID到故障码的映射表
+     */
+    std::map<MotorId, MotorErrCode> getFaultCodes();
+
+    /** @brief 快速检查是否有任一电机存在故障码 (无堆分配, 可在实时循环中调用) */
+    bool hasAnyFault() const;
+
+    /** @brief 获取最后一次收到CAN反馈帧的时间戳 (ms) */
+    uint64_t getLastFeedbackTimeMs() const { return last_feedback_time_ms_.load(); }
+
+    /**
+     * @brief 收集当前电机健康问题
+     * @return 当前 armed 数量及其中反馈超时数量
+     */
+    MotorHealthSummary getMotorHealthIssues(uint64_t now_ms,
+                                            bool watchdog_allowed,
+                                            uint64_t feedback_timeout_ms,
+                                            uint8_t disabled_confirm_frames,
+                                            uint8_t feedback_confirm_frames,
+                                            bool suppress_feedback_timeout,
+                                            std::vector<MotorHealthIssue>& out) const;
+
+    /** @brief 发送disable命令后跳过反馈确认，避免失联总线逐个等待超时 */
+    void setSkipDisableWait(bool skip) { skip_disable_wait_.store(skip); }
+    bool skipDisableWait() const { return skip_disable_wait_.load(); }
 
     /** @brief 设置所有电机的目标位置、速度和力矩
      *  @param targets 电机ID到目标控制参数的映射表
@@ -256,6 +351,25 @@ public:
      *  @note 只有当目标更新标志为true时才会发送，发送后重置标志
      */
     void write();
+
+    MotorProtocol getProtocol() const { return protocol_; }
+
+    /** @brief 诊断: 单帧协议 write() 统计信息 */
+    struct SingleFrameWriteStats {
+        uint64_t hit;            // write() 命中 target_updated_=true, 真实发送
+        uint64_t miss;           // write() 未命中, 空转
+        uint64_t samples;        // writeSingleFrame 总调用次数 (= hit)
+        uint64_t total_us;       // writeSingleFrame 累计耗时 us
+        uint64_t max_us;         // writeSingleFrame 单次最大耗时 us
+    };
+
+    /** @brief 诊断: 读取 writeSingleFrame 统计 (非重置读) */
+    SingleFrameWriteStats getSingleFrameWriteStats() const;
+
+    // 区分谁触发了 write: setTargets 路径 vs canControlThread 路径
+    std::atomic<bool> write_from_setTargets_{false};
+    std::atomic<uint64_t> hit_from_setTargets_{0};
+    std::atomic<uint64_t> hit_from_canThread_{0};
 
     /** @brief 析构函数，清理资源 */
     ~RevoMotorControl();
@@ -282,12 +396,21 @@ private:
     void moveToZero(float zero_timeout = 1.0f);
     // 校准零点
     bool calibrateMotors();
-    
+
+    /** @brief CANFD_BROADCAST 协议专用: 只对目标电机的槽位下发控制命令(使能/失能/清多圈/清故障),
+     *         其余电机的槽位统一填 kCmdDisable(失能), 不影响目标电机之外的整体行为语义
+     *  @note 单电机标定场景下调用前提是同总线其它电机本就处于失能状态, 详见 calibrateSingleMotor()
+     */
+    bool sendSingleSlotControlFrame(MotorId target_id, uint8_t target_cmd);
+
     // CAN消息回调函数
     static void internalMessageCallback(canbus_sdk::CanMessageFrame* frame, const canbus_sdk::CallbackContext* context);
 
     // TEF事件回调函数
     static void internalTefEventCallback(canbus_sdk::CanMessageFrame* frame, const canbus_sdk::CallbackContext* context);
+
+    void writeSingleFrame();
+    void writeBroadcast();
 
     // 等待操作状态完成
     /**
@@ -319,6 +442,13 @@ private:
         std::atomic<Operation> operation{Operation::IDLE};              // 当前操作
         std::atomic<OperationStatus> operation_status{OperationStatus::SUCCESS}; // 操作状态
         std::atomic<bool> feedback_received{false};          // 是否收到反馈
+        std::atomic<uint64_t> last_feedback_time_ms{0};      // 最近一次有效反馈时间
+        std::atomic<bool> ever_received_feedback{false};     // 不受 startOperation() 清零影响
+        std::atomic<uint16_t> last_status_word{0};           // 仅 CAN FD 有效
+        std::atomic<bool> status_word_valid{false};          // 经典 CAN 为 false
+        std::atomic<uint8_t> disabled_feedback_count{0};     // 连续 enabled=0 反馈数
+        mutable std::atomic<uint8_t> feedback_timeout_streak{0}; // 连续反馈超时采样数
+        mutable std::atomic<uint8_t> feedback_suppress_run{0};   // 连续迟到抑制周期数
         ////////////////////////////////////////////////
         RevoMotor motor;                  // 电机实例
         RevoMotorConfig_t config;         // 电机配置
@@ -355,6 +485,11 @@ private:
             operation.store(op);
             operation_status.store(OperationStatus::PENDING);
             feedback_received.store(false);
+            if (op == Operation::ENABLE) {
+                disabled_feedback_count.store(0, std::memory_order_release);
+                feedback_timeout_streak.store(0, std::memory_order_release);
+                feedback_suppress_run.store(0, std::memory_order_release);
+            }
         }
 
         // 更新操作状态 (线程安全)
@@ -365,11 +500,27 @@ private:
         MotorErrCode getFaultCode() const {
             return fault_code.load();
         }
+
+        bool expectsEnabled() const {
+            return operation.load() == Operation::ENABLE
+                && operation_status.load() == OperationStatus::SUCCESS;
+        }
     };
     std::atomic<bool> target_updated_{false};
+    std::atomic<bool> broadcast_ready_{false};   // 首次 setTargets 后置 true，CANFD 才开始发 MIT 帧
     std::atomic<bool> zero_torque_mode_{false};  // 0-torque模式标志
+    std::atomic<bool> runtime_skip_active_{false};  // runtime_skip 生效标志: 初始化回零阶段为 false, 上层控制开始后置 true
 
+    // ===== 诊断: 单帧协议 write() 统计 (relaxed atomic, 每次几 ns) =====
+    std::atomic<uint64_t> single_write_hit_{0};
+    std::atomic<uint64_t> single_write_miss_{0};
+    std::atomic<uint64_t> single_write_total_us_{0};
+    std::atomic<uint64_t> single_write_max_us_{0};
     std::string canbus_name_;  // CAN总线名称
+    std::atomic<uint64_t> last_feedback_time_ms_{0};  // 最后收到CAN反馈帧的时间戳(ms)
+    std::atomic<bool> skip_disable_wait_{false};       // 失联时仍发disable，仅跳过反馈确认等待
+    MotorProtocol protocol_;
+    uint8_t canfd_bus_id_{0};
     std::map<MotorId, MotorCtrlData> motor_ctrl_datas_;
 
 };

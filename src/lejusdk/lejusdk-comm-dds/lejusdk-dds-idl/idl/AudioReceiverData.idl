@@ -1,0 +1,10 @@
+// Audio data captured from microphone
+// Raw PCM bytes (S16_LE, 16kHz, mono) — consumer decodes by convention
+module leju {
+  module msgs {
+    @final
+    struct AudioReceiverData {
+      sequence<octet> data;      // Raw PCM bytes
+    };
+  };
+};

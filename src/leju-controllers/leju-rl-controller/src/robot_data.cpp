@@ -60,6 +60,15 @@ bool RobotData::getImuData(ImuData& imu) const {
   return true;
 }
 
+bool RobotData::getSynchronizedData(RobotState& state, ImuData& imu) const {
+  if (!robot_state_valid_.load() || !imu_data_valid_.load()) return false;
+  // Fixed lock order matches no callback lock nesting and prevents mixed reads.
+  std::scoped_lock lock(state_mutex_, imu_mutex_);
+  state = robot_state_;
+  imu = imu_data_;
+  return true;
+}
+
 bool RobotData::isDataReady() const {
   return hasRobotState() && hasImuData();
 }

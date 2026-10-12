@@ -291,6 +291,16 @@ constexpr RobotVersion ROBAN2_BASE{1, 4};
 /// @param rb RobotVersion 对象
 /// @return 如果是 Roban 2代则返回 true
 #define IS_ROBAN2_LEGGED(rb) (rb.major() == 1)
+
+/// @brief 检测是否为 Roban 2.1 代足式机器人 (BIGNUMBER < 17, 即 minor < 7)
+/// @param rb RobotVersion 对象
+/// @return 如果是 Roban 2.1 代则返回 true
+#define IS_ROBAN2_1_LEGGED(rb) (rb.major() == 1 && rb.minor() < 7)
+
+/// @brief 检测是否为 Roban 2.2 代足式机器人 (BIGNUMBER >= 17, 即 minor >= 7)
+/// @param rb RobotVersion 对象
+/// @return 如果是 Roban 2.2 代则返回 true
+#define IS_ROBAN2_2_LEGGED(rb) (rb.major() == 1 && rb.minor() >= 7)
 /// @}
 
 /// @defgroup KuavoWheeledMacros Kuavo 轮式机器人检测宏

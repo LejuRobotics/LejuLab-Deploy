@@ -1,14 +1,9 @@
-cmake_minimum_required(VERSION 2.8.3)
-
+cmake_minimum_required(VERSION 3.16)
 project(biped_s45)
 
-find_package(catkin REQUIRED)
-
-catkin_package()
-
-find_package(roslaunch)
+include(GNUInstallDirs)
 
 foreach(dir config launch meshes urdf)
-	install(DIRECTORY ${dir}/
-		DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
-endforeach(dir)
+    install(DIRECTORY ${dir}/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/${dir})
+endforeach()

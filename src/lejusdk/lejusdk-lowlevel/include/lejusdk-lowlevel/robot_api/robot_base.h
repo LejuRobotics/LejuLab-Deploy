@@ -23,6 +23,8 @@ namespace internal {
 /// @{
 using RobotStateCallback = std::function<void(const RobotStateConstPtr&)>;
 using RobotCmdCallback = std::function<void(const RobotCmdConstPtr&)>;
+using HandCmdCallback = std::function<void(const HandCmdConstPtr&)>;
+using HandStateCallback = std::function<void(const HandStateConstPtr&)>;
 using ImuDataCallback = std::function<void(const ImuDataConstPtr&)>;
 using JoyDataCallback = std::function<void(const JoyDataConstPtr&)>;
 using HwStateCallback = std::function<void(const StringDataConstPtr&)>;
@@ -88,6 +90,26 @@ public:
   virtual void subscribeHardwareState(const HwStateCallback& callback);
 
   /**
+   * @brief 订阅遥控器绑定配置热重载信号
+   *
+   * 上位机修改 teleop_bindings.yaml 后, 通过该 topic 通知运行中的控制器重新加载配置.
+   * 收到的 StringData.data 可选携带配置文件路径; 为空时由订阅方重读已加载的路径.
+   *
+   * @param callback 回调函数, 当收到重载信号时被调用
+   */
+  virtual void subscribeReloadTeleopConfig(const StringDataCallback& callback);
+
+  /**
+   * @brief 订阅控制器列表配置热重载信号
+   *
+   * 上位机修改 controller_manager.yaml 后, 通过该 topic 通知运行中的控制器重新加载配置.
+   * 收到的 StringData.data 可选携带配置文件路径; 为空时由订阅方重读已加载的路径.
+   *
+   * @param callback 回调函数, 当收到重载信号时被调用
+   */
+  virtual void subscribeReloadControllerConfig(const StringDataCallback& callback);
+
+  /**
    * @brief 发布机器人控制指令
    *
    * @param cmd 控制指令，参见 @ref RobotCmd
@@ -98,8 +120,25 @@ public:
    */
   virtual bool publishRobotCmd(const RobotCmd& cmd);
 
+  /// @brief 发布手部控制指令
+  virtual bool publishHandCmd(const HandCmd& cmd);
+
+  /// @brief 订阅双手状态反馈
+  virtual void subscribeHandState(const HandStateCallback& callback);
+
   /// @brief 发布停止指令
   virtual bool publishStopRobot();
+
+  /**
+   * @brief 发布姿态高度指令（通过 /rt/posture_height_cmd 话题）
+   *
+   * 发给 ExternalInterface 的 posture controller。
+   * 设定 cmd_stance=1 并调整身体高度，对标遥控器右摇杆 Y 轴下蹲控制。
+   *
+   * @param height_m 目标站立高度（米），e.g. 0.77 全站立，0.56 深蹲
+   * @return 发布成功返回 true
+   */
+  virtual bool publishPostureHeightCmd(double height_m);
 
   /// @}
 
@@ -107,11 +146,14 @@ public:
   /// @brief 底层驱动或仿真程序使用：发布传感器数据，订阅控制指令
   /// @{
 
-  /// @brief 订阅停止指令
-  virtual void subscribeStopRobot(const StringDataCallback& callback);
-
   /// @brief 订阅控制指令
   virtual void subscribeRobotCmd(const RobotCmdCallback& callback);
+
+  /// @brief 订阅手部控制指令
+  virtual void subscribeHandCmd(const HandCmdCallback& callback);
+
+  /// @brief 订阅停止命令
+  virtual void subscribeStopRobot(const StringDataCallback& callback);
 
   /// @brief 发布硬件状态
   virtual bool publishHardwareState(HardwareState hw_state);
@@ -122,8 +164,21 @@ public:
   /// @brief 发布机器人状态
   virtual bool publishRobotState(const RobotState& state);
 
+  /// @brief 发布电机层原始状态（pre-c2t, pre-ankle-inv）
+  virtual bool publishMotorState(const RobotState& motor_state);
+
+  /// @brief 发布双手状态反馈
+  virtual bool publishHandState(const HandState& state);
+
+  /// @brief 发布写电机前最终命令（post-ankle-fwd, post-c2t）
+  virtual bool publishMotorCmd(const RobotCmd& motor_cmd);
+
   /// @brief 发布手柄数据
   virtual bool publishJoyData(const JoyData& joy);
+
+  /// @brief 发布遥控器绑定配置热重载信号
+  /// @param config_path 可选, 携带配置文件路径; 为空表示让订阅方重读已加载路径
+  virtual bool publishReloadTeleopConfig(const std::string& config_path = "");
 
   /// @}
 
@@ -140,7 +195,11 @@ protected:
   internal::CallbackVector<JoyDataCallback>* joy_data_callbacks_;
   internal::CallbackVector<HwStateCallback>* hw_state_callbacks_;
   internal::CallbackVector<RobotCmdCallback>* robot_cmd_callbacks_;
+  internal::CallbackVector<HandCmdCallback>* hand_cmd_callbacks_;
+  internal::CallbackVector<HandStateCallback>* hand_state_callbacks_;
   internal::CallbackVector<StringDataCallback>* stop_robot_callbacks_;
+  internal::CallbackVector<StringDataCallback>* reload_teleop_config_callbacks_;
+  internal::CallbackVector<StringDataCallback>* reload_controller_config_callbacks_;
 
   ///////////////////////////////////////////////////////////////////////////
   // 机器人版本信息

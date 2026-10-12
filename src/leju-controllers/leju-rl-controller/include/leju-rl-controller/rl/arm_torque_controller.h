@@ -1,9 +1,11 @@
 #pragma once
 
+#ifdef USE_PINOCCHIO
 // Pinocchio forward declarations must be included first
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/multibody/model.hpp>
 #include <pinocchio/multibody/data.hpp>
+#endif  // USE_PINOCCHIO
 
 #include <Eigen/Dense>
 #include <string>
@@ -17,6 +19,9 @@ namespace leju {
  * 使用 Pinocchio 动力学库计算手臂关节力矩：
  *   tau = G(q) + kp*(q_desired - q_measured) + kd*(v_desired - v_measured)
  * 输入输出均在 URDF（物理）空间。
+ *
+ * 当 USE_PINOCCHIO 未定义时，gravity compensation 禁用：
+ *   init() 总是返回 false，computeTorque() 返回零向量。
  */
 class ArmTorqueController {
 public:
@@ -28,7 +33,7 @@ public:
      * @param arm_joint_names 手臂关节名称列表（与 URDF 中的 joint name 一致）
      * @param kp 位置增益（手臂关节数维）
      * @param kd 速度增益（手臂关节数维）
-     * @return 成功返回 true
+     * @return 成功返回 true（USE_PINOCCHIO 未定义时始终返回 false）
      */
     bool init(const std::string& urdf_path,
               const std::vector<std::string>& arm_joint_names,
@@ -47,7 +52,7 @@ public:
      * @brief 计算手臂关节力矩：G + kp*(q_d - q_m) + kd*(v_d - v_m)
      * @param q_desired 期望手臂关节位置 [rad]（URDF 空间）
      * @param v_desired 期望手臂关节速度 [rad/s]（URDF 空间）
-     * @return 手臂关节力矩 [Nm]（URDF 空间）
+     * @return 手臂关节力矩 [Nm]（URDF 空间）；USE_PINOCCHIO 未定义时返回零向量
      */
     Eigen::VectorXd computeTorque(const Eigen::VectorXd& q_desired,
                                   const Eigen::VectorXd& v_desired);
@@ -56,8 +61,10 @@ public:
     int getArmJointCount() const { return n_arm_; }
 
 private:
+#ifdef USE_PINOCCHIO
     pinocchio::Model model_;
     pinocchio::Data data_;
+#endif  // USE_PINOCCHIO
 
     Eigen::VectorXd q_full_;
     Eigen::VectorXd v_full_;

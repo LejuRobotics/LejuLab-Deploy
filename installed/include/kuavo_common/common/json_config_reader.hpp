@@ -74,6 +74,12 @@ namespace HighlyDynamic
                 return {};
             }
         }
+        // 判断顶层是否存在某键 (用于可选字段, 避免 getValue 缺键时打印警告)
+        bool hasKey(const std::string &key) const
+        {
+            return data_.contains(key);
+        }
+
         template <typename T>
         T getValue(const std::string &key)
         {

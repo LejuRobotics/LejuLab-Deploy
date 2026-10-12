@@ -67,14 +67,14 @@ set(leju-hardware_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(leju-hardware_SOURCE_PREFIX /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/src/leju-hardware)
-  set(leju-hardware_DEVEL_PREFIX /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/devel)
+  set(leju-hardware_SOURCE_PREFIX /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/src/leju-hardware)
+  set(leju-hardware_DEVEL_PREFIX /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/devel)
   set(leju-hardware_INSTALL_PREFIX "")
   set(leju-hardware_PREFIX ${leju-hardware_DEVEL_PREFIX})
 else()
   set(leju-hardware_SOURCE_PREFIX "")
   set(leju-hardware_DEVEL_PREFIX "")
-  set(leju-hardware_INSTALL_PREFIX /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab)
+  set(leju-hardware_INSTALL_PREFIX /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab)
   set(leju-hardware_PREFIX ${leju-hardware_INSTALL_PREFIX})
 endif()
 
@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(leju-hardware_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "include " STREQUAL " ")
+if(NOT " " STREQUAL " ")
   set(leju-hardware_INCLUDE_DIRS "")
-  set(_include_dirs "include")
+  set(_include_dirs "")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")
@@ -116,7 +116,7 @@ if(NOT "include " STREQUAL " ")
   endforeach()
 endif()
 
-set(libraries "leju-hardware")
+set(libraries "")
 foreach(library ${libraries})
   # keep build configuration keywords, target names and absolute libraries as-is
   if("${library}" MATCHES "^(debug|optimized|general)$")
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/media/data_old/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/opt/ros/noetic/lib)
+    foreach(path /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/opt/ros/noetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

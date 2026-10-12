@@ -1,6 +1,6 @@
 HumanoidRobotCfg:
   # 推理引擎选择 (可选: openvino, onnxruntime)
-  inference_engine: "openvino"
+  inference_engine: "onnxruntime"
 
   loop_dt: 0.001
   policy_path: "policy/policy_js2_2025-12-18_19-53-45_amp_torch_agent_319200.onnx" # 相对于配置文件的路径
@@ -9,10 +9,6 @@ HumanoidRobotCfg:
     policy_dt: 0.02
     robot:
       enable_arm_controller: true
-      # TODO: 找到更好方法替代此部分
-      arm_joint_names:
-        ["zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint", "zarm_l5_joint", "zarm_l6_joint", "zarm_l7_joint",
-         "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint", "zarm_r5_joint", "zarm_r6_joint", "zarm_r7_joint"]
 
       joint_names: 
         ["leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint", 
@@ -81,10 +77,11 @@ HumanoidRobotCfg:
           scale: 1.
           clip: [-18., 18.]
     
-    command_range:
-      lin_vel_x: [-1.0, 1.0]
-      lin_vel_y: [-0.6, 0.6]
-      ang_vel_z: [-0.3, 0.3]
+    velocity_scale:
+      linear_x: 1.956
+      linear_x_negative_scale: 1.0
+      linear_y: 1.467
+      angular_z: 1.0
 
   # 手臂控制器：行走时 RL 摆手，站立时平滑插值到默认姿态 (用于 RLDemoController)
   arm_controller:

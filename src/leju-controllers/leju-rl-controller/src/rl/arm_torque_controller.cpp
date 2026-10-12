@@ -1,10 +1,15 @@
+#ifdef USE_PINOCCHIO
 #include <pinocchio/fwd.hpp>
+#endif  // USE_PINOCCHIO
 
 #include "leju-rl-controller/rl/arm_torque_controller.h"
 #include "leju-rl-controller/rl_log.h"
 
+#ifdef USE_PINOCCHIO
 #include <pinocchio/algorithm/compute-all-terms.hpp>
 #include <pinocchio/parsers/urdf.hpp>
+#include <sstream>
+#endif  // USE_PINOCCHIO
 
 namespace leju {
 
@@ -12,6 +17,12 @@ bool ArmTorqueController::init(const std::string& urdf_path,
                                  const std::vector<std::string>& arm_joint_names,
                                  const Eigen::VectorXd& kp,
                                  const Eigen::VectorXd& kd) {
+#ifndef USE_PINOCCHIO
+    (void)urdf_path; (void)arm_joint_names; (void)kp; (void)kd;
+    RL_LOG_WARNING("ArmTorqueController: pinocchio disabled at build time, "
+                   "gravity compensation unavailable");
+    return false;
+#else
     try {
         pinocchio::urdf::buildModel(urdf_path, model_);
         data_ = pinocchio::Data(model_);
@@ -71,21 +82,31 @@ bool ArmTorqueController::init(const std::string& urdf_path,
         std::ostringstream oss; oss << kd.transpose(); return oss.str();
     }().c_str());
     return true;
+#endif  // USE_PINOCCHIO
 }
 
 void ArmTorqueController::setMeasuredState(const Eigen::VectorXd& arm_q,
                                              const Eigen::VectorXd& arm_v) {
+#ifndef USE_PINOCCHIO
+    (void)arm_q; (void)arm_v;
+    return;
+#else
     if (!initialized_ || arm_q.size() != n_arm_) return;
 
     for (int i = 0; i < n_arm_; ++i) {
         q_full_[arm_indices_[i].q_idx] = arm_q[i];
         v_full_[arm_indices_[i].v_idx] = arm_v[i];
     }
+#endif  // USE_PINOCCHIO
 }
 
 Eigen::VectorXd ArmTorqueController::computeTorque(
     const Eigen::VectorXd& q_desired,
     const Eigen::VectorXd& v_desired) {
+#ifndef USE_PINOCCHIO
+    (void)q_desired; (void)v_desired;
+    return Eigen::VectorXd::Zero(n_arm_);
+#else
     if (!initialized_) {
         return Eigen::VectorXd::Zero(n_arm_);
     }
@@ -120,6 +141,7 @@ Eigen::VectorXd ArmTorqueController::computeTorque(
         arm_tau[i] = tau[arm_indices_[i].v_idx];
     }
     return arm_tau;
+#endif  // USE_PINOCCHIO
 }
 
 }  // namespace leju

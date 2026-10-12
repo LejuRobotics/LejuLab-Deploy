@@ -10,16 +10,28 @@
 #include "kuavo_common/common/json_config_reader.hpp"
 #include "kuavo_common/kuavo_common.h"
 #include "actuators_interface.h"
+#ifdef ENABLE_XSENS
 #include "imu_receiver.h"
+#else
+namespace xsens_IMU {
+    inline int imu_init() { return -1; }
+    inline void imu_stop() {}
+    inline bool getImuDataFrame(Eigen::Vector3d &, Eigen::Vector3d &, Eigen::Quaterniond &) { return false; }
+    inline bool getImuDataFrame(Eigen::Vector3d &, Eigen::Vector3d &, Eigen::Quaterniond &,
+                                struct timespec &, struct timespec &, struct timespec &, struct timespec &) { return false; }
+}
+#endif
 #include "ruiwo_actuator_base.h"
 #include "hipnuc_imu_receiver.h"
 #include "motor_status_manager.h"
 #include "kuavo_solver/ankle_solver.h"
 #include <set>
 #include <mutex>
+#include <shared_mutex>
 
 #include "lejusdk_hw/hw_types.h"
 #include "lejusdk-utils/robot_version.hpp"
+#include "end_effector/revo2_hand_controller.h"
 
 using namespace leju;
 namespace HighlyDynamic
@@ -37,11 +49,15 @@ struct HardwareParam {
     bool cali_leg{false};
     std::vector<double> default_joint_pos;
     RobotVersion robot_version{4, 2};
-    bool cali{false}; 
+    bool cali{false};
     bool cali_arm{false};
+    // 单电机标定专用: 启动阶段跳过整体使能/moveToZero/go_to_zero, 所有电机保持失能静止,
+    // 由 calibrateSingleMotor() 对操作者选中的那一个电机单独做 清多圈->使能->标零->失能
+    bool cali_single_motor_mode{false};
     bool only_half_up_body{false};
     int teach_pendant_{0};
     std::string kuavo_assets_path{""};
+    int can_send_frequency{0};  // CAN 发送频率(Hz), 0 = 自动选择 (CANFD=500, CAN=250)
 };
 
 enum ImuType
@@ -64,9 +80,30 @@ class HardwarePlant
       std::vector<double> pos;
       std::vector<double> vel;
       std::vector<double> torque;
+      std::vector<double> kp;
+      std::vector<double> kd;
     };
 
   public:
+    struct MotorCmdSnapshot {
+        std::vector<double>  q;        // motor-space target pos (rad)
+        std::vector<double>  v;        // motor-space target vel (rad/s)
+        std::vector<double>  tau;      // current cmd (A), 限幅后
+        std::vector<double>  kp;
+        std::vector<double>  kd;
+        std::vector<double>  tau_max;
+        std::vector<uint8_t> modes;
+        bool valid{false};             // false 表示还没填过一次
+        void resize(size_t n) {
+            q.assign(n, 0.0); v.assign(n, 0.0); tau.assign(n, 0.0);
+            kp.assign(n, 0.0); kd.assign(n, 0.0); tau_max.assign(n, 0.0);
+            modes.assign(n, 0);
+        }
+    };
+
+    bool GetMotorSensorSnapshot(SensorData_t& out) const;
+    bool GetMotorCmdSnapshot(MotorCmdSnapshot& out) const;
+
     HardwarePlant(double dt = 1e-3, HardwareParam hardware_param = HardwareParam(), uint8_t control_mode = MOTOR_CONTROL_MODE_TORQUE,
                  uint16_t num_actuated = 0,
                  uint16_t nq_f = 7, uint16_t nv_f = 6);
@@ -79,7 +116,9 @@ class HardwarePlant
     bool readSensor(SensorData_t &sensor_data);
     void setState(SensorData_t &sensor_data_motor, SensorData_t &sensor_data_joint);
     void getState(SensorData_t &sensor_data_motor, SensorData_t &sensor_data_joint);
+#ifdef ENABLE_ECMASTER
     void initRobotModule();
+#endif
     size_t get_num_actuated() const;
 
     HardwareSettings get_motor_info() const
@@ -93,8 +132,31 @@ class HardwarePlant
     void writeCommand(Eigen::VectorXd cmd_r, uint32_t na_r, std::vector<int> control_modes, Eigen::VectorXd &joint_kp, Eigen::VectorXd &joint_kd);
     bool checkJointPos(JointParam_t *joint_data, std::vector<uint8_t> ids, std::string *msg);
     bool checkJointSafety(const std::vector<JointParam_t> &joint_data, std::vector<uint8_t> ids, std::string &msg);
+    // bcan0/bcan1 电机不可用检测（主动故障 + 新增健康看门狗）
+    bool checkLowerLimbMotorFault(std::string &fault_info, bool ready_ok);
     void jointFiltering(std::vector<JointParam_t> &joint_data, double dt);
+    void getRawMotorData(std::vector<double>& pos_rad, std::vector<double>& vel_rad);
     void setDefaultJointPos(std::vector<double> default_joint_pos);
+    void setBypassAnkleSolver(bool v) { bypass_ankle_solver_ = v; }
+
+    // 激活/关闭头部 runtime_skip (skip_head_runtime_comm 电机停发运动帧)
+    // 初始化阶段头部正常回零; 按下 start 后由 HardwareNode 调用激活
+    void setRuntimeSkipActive(bool active);
+
+    // ===== 末端执行器 (灵巧手) =====
+    /**
+     * @brief 发送手部命令 (位置/速度)
+     * @param eef_data 末端执行器命令数组，每个元素对应一只手
+     */
+    void endEffectorCommand(const std::vector<EndEffectorData>& eef_data);
+
+    /**
+     * @brief 获取手部状态
+     * @param left_status 左手状态 (6指)
+     * @param right_status 右手状态 (6指)
+     * @return true 成功
+     */
+    bool getEndEffectorState(eef_controller::FingerStatusSnapshot& snapshot);
 
     // 修改接口，支持reason参数，默认值为"Joint protection triggered"
     bool disableMotor(int motorIndex, const std::string& reason = "Joint protection triggered");
@@ -107,8 +169,10 @@ class HardwarePlant
     inline void SetMotorTorque(const std::vector<uint8_t> &joint_ids, std::vector<MotorParam_t> &motor_data);
     inline void SetMotorPosition(const std::vector<uint8_t> &joint_ids, std::vector<MotorParam_t> &motor_data);
     inline void GetMotorData(const std::vector<uint8_t> &joint_ids, std::vector<MotorParam_t> &motor_data);
+#ifdef ENABLE_ECMASTER
     // 辅助函数：为 EC_MASTER 电机设置默认的 kp/kd（用于 CSP 模式）
     inline void setDefaultKpKdForEcMaster(std::vector<MotorParam_t> &motor_data, const std::vector<uint8_t> &joint_ids);
+#endif
     bool calibrateMotor(int motor_id, int direction, bool save_offset = false);
     void calibrateBipedLoop();
     void calibrateWheelLoop();
@@ -141,6 +205,10 @@ class HardwarePlant
     bool th_running_ = false;
     bool hardware_ready_ = false;
     bool redundant_imu_ = false; // 冗余imu
+    // 主机侧PD模拟CST开关：开启后 CSP 模式在主机计算力矩，电机侧 Kp=Kd=0
+    std::atomic<bool> host_pd_as_cst_{false};
+    // 踝关节解算绕过开关：开启后 cmds2Cmdr/motor2joint 跳过 ankleSolver 运动学变换
+    bool bypass_ankle_solver_ = false;
     uint32_t num_joint = 0;
     uint32_t num_arm_joints = 0;
     uint32_t num_head_joints = 2;
@@ -160,11 +228,17 @@ class HardwarePlant
     
     // 电机状态管理器
     std::unique_ptr<MotorStatusManager> motor_status_manager_;
+    // Revo2 灵巧手控制器
+    std::unique_ptr<eef_controller::Revo2HandController> revo2_actuator_;
     int hardware_status_ = -1; // 0: 等待， -1： cali模式， 1： 准备好了
 
     // 添加访问器方法来获取私有成员
 public:
+#ifdef ENABLE_ECMASTER
     uint32_t getCountECMasters() const { return countECMasters; }
+#else
+    uint32_t getCountECMasters() const { return 0; }
+#endif
     
     // 访问静态ruiwo_actuator指针的方法
     static RuiwoActuatorBase* getRuiwoActuator();
@@ -231,6 +305,11 @@ private:
     std::mutex motor_joint_data_mtx_;
     SensorData_t sensor_data_joint;
 
+    mutable std::shared_mutex motor_snapshot_mtx_;
+    SensorData_t              last_motor_sensor_;
+    bool                      last_motor_sensor_valid_{false};
+    MotorCmdSnapshot          last_motor_cmd_;
+
     double dt_ = 1e-3;
     uint8_t control_mode_ = MOTOR_CONTROL_MODE_TORQUE;
     uint16_t num_actuated_ = 0;
@@ -253,7 +332,9 @@ private:
     std::vector<JointParam_t> joint_cmd;
     std::vector<JointParam_t> joint_cmd_old;
     std::vector<uint8_t> joint_ids;
+#ifdef ENABLE_ECMASTER
     std::unordered_map<int, int> ec_index_map_; // 构建索引映射表
+#endif
 
     ///////////////  Id Mapping ////////////
     struct JointId2MotorMapping {
@@ -308,8 +389,10 @@ private:
 
     std::string robot_module_;
 
+#ifdef ENABLE_ECMASTER
     // 实际EC电机数目
     uint32_t countECMasters = 0;
+#endif
     
     /* only used in half-up body mode */
     std::unique_ptr<std::array<double, 12>> stance_leg_joint_pos_ = nullptr;

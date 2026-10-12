@@ -55,7 +55,7 @@ add_library(canbus_sdk::canbus_sdk SHARED IMPORTED)
 
 set_target_properties(canbus_sdk::canbus_sdk PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;bmapi64;stdc++;pthread"
+  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;stdc++;pthread;bmapi64"
 )
 
 if(CMAKE_VERSION VERSION_LESS 2.8.12)

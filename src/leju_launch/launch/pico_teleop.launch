@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+  One-command Roban S17 Pico teleoperation launch.
+
+  Real robot:
+    roslaunch leju_launch real.launch          # one-command real-robot entry (recommended)
+    roslaunch leju_launch pico_teleop.launch   # same as above (simulation:=false default)
+
+  MuJoCo:
+    roslaunch leju_launch pico_teleop.launch \
+      simulation:=true enable_iceoryx_shm:=false enable_viewer:=true
+
+  The robot always starts on the controller manager's default controller
+  (AMP).  After Pico whole-body calibration and live-buffer warmup, use the
+  configured Pico binding (RG+A) to switch to heft_pico; RG+B returns to AMP.
+-->
+<launch>
+  <!-- Platform: this integration currently supports Roban S17 only. -->
+  <arg name="simulation" default="false"/>
+  <arg name="robot_version" default="17"/>
+  <arg name="coredump" default="false"/>
+  <arg name="with_coredump" value="--with-coredump" if="$(arg coredump)"/>
+  <arg name="with_coredump" value="" unless="$(arg coredump)"/>
+  <arg name="enable_iceoryx_shm" default="true"/>
+  <arg name="auto_start" default="false"/>
+
+  <arg name="controller_manager_config"
+       default="$(find leju-rl-controller)/config/$(arg robot_version)/controller_manager.yaml"/>
+  <arg name="teleop_config"
+       default="$(find leju-rl-controller)/config/$(arg robot_version)/teleop_bindings.yaml"/>
+  <arg name="urdf_path"
+       default="$(find leju_assets)/models/biped_s$(arg robot_version)/urdf/biped_s$(arg robot_version).urdf"/>
+  <arg name="mujoco_xml_file"
+       default="$(find leju_assets)/models/biped_s$(arg robot_version)/xml/scene_rl.xml"/>
+
+  <!-- Pico UDP/GMR frontend. -->
+  <arg name="pico_host" default="0.0.0.0"/>
+  <arg name="pico_port" default="12345"/>
+  <arg name="pico_fps" default="100"/>
+  <arg name="dds_domain_id" default="0"/>
+  <arg name="broadcast_name" default="ROBAN"/>
+  <arg name="enable_broadcast" default="true"/>
+  <arg name="enable_viewer" default="false"/>
+  <arg name="pico_gmr_venv"
+       default="$(env HOME)/.cache/leju_pico_gmr/venv"/>
+
+  <arg name="broadcast_arg" value="" if="$(arg enable_broadcast)"/>
+  <arg name="broadcast_arg" value="--no-broadcast" unless="$(arg enable_broadcast)"/>
+  <arg name="viewer_arg" value="--viewer" if="$(arg enable_viewer)"/>
+  <arg name="viewer_arg" value="" unless="$(arg enable_viewer)"/>
+
+  <!-- Keep the Python publisher and C++ subscribers on one DDS setup. -->
+  <arg name="cyclonedds_config"
+       value="$(find leju_launch)/config/cyclonedds_shm.xml"
+       if="$(arg enable_iceoryx_shm)"/>
+  <arg name="cyclonedds_config"
+       value="$(find leju_launch)/config/cyclonedds.xml"
+       unless="$(arg enable_iceoryx_shm)"/>
+  <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)"/>
+  <env name="ROBOT_VERSION" value="$(arg robot_version)"/>
+
+  <!-- Reuse the standard platform launch and explicitly select S17 configs. -->
+  <include file="$(find leju_launch)/launch/load_mujoco_sim.launch"
+           if="$(arg simulation)">
+    <arg name="coredump" value="$(arg coredump)"/>
+    <arg name="enable_iceoryx_shm" value="$(arg enable_iceoryx_shm)"/>
+    <arg name="controller_manager_config" value="$(arg controller_manager_config)"/>
+    <arg name="teleop_config" value="$(arg teleop_config)"/>
+    <arg name="urdf_path" value="$(arg urdf_path)"/>
+    <arg name="mujoco_xml_file" value="$(arg mujoco_xml_file)"/>
+    <arg name="auto_start" value="$(arg auto_start)"/>
+  </include>
+
+  <include file="$(find leju_launch)/launch/load_real.launch"
+           unless="$(arg simulation)">
+    <arg name="coredump" value="$(arg coredump)"/>
+    <arg name="enable_iceoryx_shm" value="$(arg enable_iceoryx_shm)"/>
+    <arg name="controller_manager_config" value="$(arg controller_manager_config)"/>
+    <arg name="teleop_config" value="$(arg teleop_config)"/>
+    <arg name="urdf_path" value="$(arg urdf_path)"/>
+    <arg name="auto_start" value="$(arg auto_start)"/>
+  </include>
+
+  <!-- One process replaces the old pico_comm + pico_retarget ROS nodes. -->
+  <node pkg="leju_launch" type="run_pico_gmr.sh" name="pico_gmr"
+        output="screen" respawn="true" respawn_delay="3"
+        args="--robot roban_s17 --host $(arg pico_host) --port $(arg pico_port) --fps $(arg pico_fps) --domain-id $(arg dds_domain_id) --broadcast-name $(arg broadcast_name) $(arg broadcast_arg) $(arg viewer_arg)"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)">
+    <env name="PICO_GMR_VENV" value="$(arg pico_gmr_venv)"/>
+  </node>
+</launch>

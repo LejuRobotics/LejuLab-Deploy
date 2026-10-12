@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  跨架构联合仿真用 DDS 配置：loopback 单播、禁多播。
+  QEMU 模拟的 aarch64 容器里 lo 接口多播不支持(set IP_MULTICAST_IF: Unsupported)，
+  故关多播、用 localhost 单播发现。x86 sim 容器与 aarch64 控制器容器都用这份，
+  两者 --net host 共享宿主 loopback 即可互相发现。
+-->
+<CycloneDDS>
+    <Domain Id="any">
+        <General>
+            <Interfaces>
+                <NetworkInterface name="lo" multicast="false" />
+            </Interfaces>
+            <AllowMulticast>false</AllowMulticast>
+        </General>
+        <Discovery>
+            <ParticipantIndex>auto</ParticipantIndex>
+            <Peers>
+                <Peer address="localhost"/>
+            </Peers>
+            <EnableTopicDiscoveryEndpoints>true</EnableTopicDiscoveryEndpoints>
+        </Discovery>
+    </Domain>
+</CycloneDDS>

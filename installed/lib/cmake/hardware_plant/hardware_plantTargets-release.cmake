@@ -5,36 +5,6 @@
 # Commands may need to know the format version.
 set(CMAKE_IMPORT_FILE_VERSION 1)
 
-# Import target "hardware_plant::xsens_mti_driver" for configuration "Release"
-set_property(TARGET hardware_plant::xsens_mti_driver APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-set_target_properties(hardware_plant::xsens_mti_driver PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libxsens_mti_driver.a"
-  )
-
-list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::xsens_mti_driver )
-list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::xsens_mti_driver "${_IMPORT_PREFIX}/lib/libxsens_mti_driver.a" )
-
-# Import target "hardware_plant::ec_master_main" for configuration "Release"
-set_property(TARGET hardware_plant::ec_master_main APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-set_target_properties(hardware_plant::ec_master_main PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libec_master_main.a"
-  )
-
-list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::ec_master_main )
-list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::ec_master_main "${_IMPORT_PREFIX}/lib/libec_master_main.a" )
-
-# Import target "hardware_plant::ec_app" for configuration "Release"
-set_property(TARGET hardware_plant::ec_app APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-set_target_properties(hardware_plant::ec_app PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libec_app.a"
-  )
-
-list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::ec_app )
-list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::ec_app "${_IMPORT_PREFIX}/lib/libec_app.a" )
-
 # Import target "hardware_plant::mathtools_hw" for configuration "Release"
 set_property(TARGET hardware_plant::mathtools_hw APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(hardware_plant::mathtools_hw PROPERTIES
@@ -68,7 +38,7 @@ list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::hipnuc_imu_receiver "${_IMPO
 # Import target "hardware_plant::dexhand_sdk" for configuration "Release"
 set_property(TARGET hardware_plant::dexhand_sdk APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(hardware_plant::dexhand_sdk PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C;CXX"
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libdexhand_sdk.a"
   )
 
@@ -105,6 +75,36 @@ set_target_properties(hardware_plant::ruiwo_actuatorCXXLib PROPERTIES
 
 list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::ruiwo_actuatorCXXLib )
 list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::ruiwo_actuatorCXXLib "${_IMPORT_PREFIX}/lib/libruiwo_actuatorCXXLib.so" )
+
+# Import target "hardware_plant::xsens_mti_driver" for configuration "Release"
+set_property(TARGET hardware_plant::xsens_mti_driver APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+set_target_properties(hardware_plant::xsens_mti_driver PROPERTIES
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libxsens_mti_driver.a"
+  )
+
+list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::xsens_mti_driver )
+list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::xsens_mti_driver "${_IMPORT_PREFIX}/lib/libxsens_mti_driver.a" )
+
+# Import target "hardware_plant::ec_master_main" for configuration "Release"
+set_property(TARGET hardware_plant::ec_master_main APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+set_target_properties(hardware_plant::ec_master_main PROPERTIES
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libec_master_main.a"
+  )
+
+list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::ec_master_main )
+list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::ec_master_main "${_IMPORT_PREFIX}/lib/libec_master_main.a" )
+
+# Import target "hardware_plant::ec_app" for configuration "Release"
+set_property(TARGET hardware_plant::ec_app APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+set_target_properties(hardware_plant::ec_app PROPERTIES
+  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
+  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libec_app.a"
+  )
+
+list(APPEND _IMPORT_CHECK_TARGETS hardware_plant::ec_app )
+list(APPEND _IMPORT_CHECK_FILES_FOR_hardware_plant::ec_app "${_IMPORT_PREFIX}/lib/libec_app.a" )
 
 # Commands beyond this point should not need to know the version.
 set(CMAKE_IMPORT_FILE_VERSION)

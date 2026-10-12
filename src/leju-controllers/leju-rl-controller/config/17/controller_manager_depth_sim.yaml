@@ -1,0 +1,13 @@
+loop_dt: 0.001
+default_controller: "depth_walk"
+
+controllers:
+  - name: "amp"
+    type: "GenericRLController"
+    config: "controllers/config_amp.yaml"
+    enabled: true
+
+  - name: "depth_walk"
+    type: "DepthWalkController"
+    config: "controllers/config_depth_walk.yaml"
+    enabled: true

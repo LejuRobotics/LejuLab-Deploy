@@ -1,0 +1,100 @@
+#########################################################
+# 手臂/头部 SocketCAN 独立测试配置
+# bcan2 (左臂+头) 和 bcan3 (右臂)
+# 经典 CAN 单帧协议 (手臂电机不支持 CAN FD)
+#########################################################
+canbus_interfaces:
+  bcan2:
+    type: SOCKETCAN
+    name: "bcan2"
+    nbitrate: 1000000
+    dbitrate: 1000000
+    nsamplepos: 80
+    dsamplepos: 80
+    enable: true
+  bcan3:
+    type: SOCKETCAN
+    name: "bcan3"
+    nbitrate: 1000000
+    dbitrate: 1000000
+    nsamplepos: 80
+    dsamplepos: 80
+    enable: true
+#########################################################
+# bcan2: 左臂 (4个电机) + 头 (2个电机)
+#########################################################
+bcan2_devices:
+  - name: Larm_joint_01
+    class: motor
+    device_id: 0x01
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: true
+    ignore: false
+  - name: Larm_joint_02
+    class: motor
+    device_id: 0x02
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Larm_joint_03
+    class: motor
+    device_id: 0x03
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Larm_joint_04
+    class: motor
+    device_id: 0x04
+    params: [0, 25, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: true
+    ignore: false
+  - name: Head_yaw
+    class: motor
+    device_id: 0x09
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Head_pitch
+    class: motor
+    device_id: 0x0A
+    params: [0, 10, 3, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+#########################################################
+# bcan3: 右臂 (4个电机)
+#########################################################
+bcan3_devices:
+  - name: Rarm_joint_01
+    class: motor
+    device_id: 0x05
+    params: [0, 25, 8, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_02
+    class: motor
+    device_id: 0x06
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false
+  - name: Rarm_joint_03
+    class: motor
+    device_id: 0x07
+    params: [0, 20, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: true
+    ignore: false
+  - name: Rarm_joint_04
+    class: motor
+    device_id: 0x08
+    params: [0, 25, 6, 0, 0, 0, 0]
+    ratio: 25
+    negtive: false
+    ignore: false

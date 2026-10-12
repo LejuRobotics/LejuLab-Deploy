@@ -51,9 +51,12 @@ class Quest3ArmInfoTransformer final {
   double getAvgRightLowerArmLength() const { return armLengthMeasurement_.getAvgRightLowerArmLength(); }
 
   struct VisualizationData {
+    /// 缩放后（IK 输入，躯干/ base_link 约定系）
     Eigen::Vector3d leftHandPos, rightHandPos, leftElbowPos, rightElbowPos;
     Eigen::Vector3d leftShoulderPos, rightShoulderPos, chestPos;
     Eigen::Quaterniond leftHandQuat, rightHandQuat;
+    /// 胸减+yaw 去除+bias+肩宽后、缩放前（与 IK 目标同躯干系）
+    Eigen::Vector3d leftHandPreScale, rightHandPreScale, leftElbowPreScale, rightElbowPreScale;
     bool leftSideReady = false, rightSideReady = false, isValid = false;
   };
 
@@ -67,7 +70,7 @@ class Quest3ArmInfoTransformer final {
   bool isRunning() const { return isRunning_; }
   void setRunning(bool running) { isRunning_ = running; }
   void updateJoystickData(float leftTrigger, float leftGrip, float rightTrigger, float rightGrip);
-
+  void resetInitChestYaw();
  private:
   ArmPose leftHandPose_, rightHandPose_, leftElbowPose_, rightElbowPose_;
   ArmPose leftShoulderPose_, rightShoulderPose_;
@@ -76,6 +79,11 @@ class Quest3ArmInfoTransformer final {
   Eigen::Vector3d chest_axis_agl_;
   bool isInitialized_;
   Eigen::Quaterniond yawOnlyQuat_;
+  double bodyYaw_ = std::numeric_limits<double>::quiet_NaN();  // 当前帧的 body yaw（肩部估算），NaN=回退到 chest
+  double initialShoulderYaw_ = 0.0;                            // 初始肩部方向角
+  bool shoulderYawInitialized_ = false;                         // 是否已记录初始朝向
+  bool firstCompute_ = true;  // 是否是第一次计算身体 yaw（肩部估算）
+  double bodyYawFilter = 0.0;  // 低通滤波后的 body yaw（肩部估算），NaN=回退到 chest
   Eigen::Vector3d chestPosition_;
   double bodyPitch_;
   Eigen::Vector3d leftShoulderRpyInRobot_, rightShoulderRpyInRobot_;
@@ -96,8 +104,11 @@ class Quest3ArmInfoTransformer final {
   HeadBodyPose headBodyPose_;
 
   bool computeHandPose(const PoseInfoList& input, const std::string& side);
+  /// 用左右肩部骨骼位置（index 0, 2）估算身体 yaw；返回 NaN 表示数据不可用
+  double computeBodyYawFromShoulders(const PoseInfoList& input);
   Eigen::Vector3d extractPosition(const PoseInfo& poseInfo) const;
   Eigen::Matrix3d poseInfo2Transform(const PoseInfo& poseInfo) const;
+  /// 与 quest3_utils.scale_arm_positions 一致：固定肩位，上臂/前臂按机器人与人体段长比例缩放
   std::pair<Eigen::Vector3d, Eigen::Vector3d> scaleArmPositions(
       const Eigen::Vector3d& shoulderAdaptivePos, const Eigen::Vector3d& elbowPos,
       const Eigen::Vector3d& handPos, const Eigen::Vector3d& humanShoulderOriginPos,
@@ -105,6 +116,7 @@ class Quest3ArmInfoTransformer final {
   bool validateInput(const PoseInfoList& input) const;
   Eigen::Quaterniond vrQuat2RobotQuat(const Eigen::Quaterniond& vrQuat, const std::string& side,
                                       double biasAngle = 0.0) const;
+  /// 与 motion_capture_ik / quest3_utils：肩宽自适应（含越过身体中线时的内收等）
   bool isOverChest(const Eigen::Vector3d& handPos, const std::string& side) const;
   void adaptShoulderWidthAdvanced(Eigen::Vector3d& shoulderPos, const Eigen::Vector3d& elbowPos,
                                   const Eigen::Vector3d& handPos,
@@ -123,6 +135,12 @@ class Quest3ArmInfoTransformer final {
                                       const Eigen::Vector3d& shoulderPos,
                                       const Eigen::Matrix3d& shoulderRot);
 
+  /// 与 motion_capture_ik/scripts/tools/quest3_utils.py 中手柄分支一致：
+  /// OK：双手扳机均 > 0.5，连续约 50 帧；停止(Shot)：双手扳机 < 0.5 且握把 > 0.8，连续约 50 帧。
+  void updateRunningGestureState();
+
+  int ok_gesture_counts_ = 0;
+  int shot_gesture_counts_ = 0;
 };
 
 }  // namespace ik

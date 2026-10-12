@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Platform: this integration currently supports Roban S17 only. -->
+  <arg name="simulation" default="false"/>
+  <arg name="robot_version" default="17"/>
+  <arg name="coredump" default="false"/>
+  <arg name="with_coredump" value="--with-coredump" if="$(arg coredump)"/>
+  <arg name="with_coredump" value="" unless="$(arg coredump)"/>
+  <arg name="enable_iceoryx_shm" default="true"/>
+  <arg name="auto_start" default="false"/>
+
+  <arg name="controller_manager_config"
+       default="$(find leju-rl-controller)/config/$(arg robot_version)/controller_manager.yaml"/>
+  <arg name="teleop_config"
+       default="$(find leju-rl-controller)/config/$(arg robot_version)/teleop_bindings.yaml"/>
+  <arg name="urdf_path"
+       default="$(find leju_assets)/models/biped_s$(arg robot_version)/urdf/biped_s$(arg robot_version).urdf"/>
+  <arg name="mujoco_xml_file"
+       default="$(find leju_assets)/models/biped_s$(arg robot_version)/xml/scene_rl.xml"/>
+
+  <!-- Independent Xsens body frontend; Pico joystick is an optional process. -->
+  <arg name="xsens_host" default="0.0.0.0"/>
+  <arg name="xsens_port" default="9763"/>
+  <arg name="xsens_bvh_port" default="9764"/>
+  <arg name="xsens_fps" default="100"/>
+  <arg name="xsens_domain_id" default="0"/>
+  <arg name="xsens_character_id" default="0"/>
+  <arg name="control_topic" default="/rt/pico/joysticks"/>
+  <arg name="heft_topic" default="/rt/pico/heft_reference"/>
+  <arg name="head_topic" default="/rt/head_trajectory"/>
+  <arg name="frame_buffer_len" default="3"/>
+  <arg name="cali_arm_pose_deg" default="90"/>
+  <arg name="pose_publish_hz" default="120"/>
+  <arg name="pose_queue_target_depth" default="10"/>
+  <arg name="pose_queue_max_size" default="15"/>
+  <arg name="pose_stale_timeout" default="0.2"/>
+  <arg name="enable_viewer" default="false"/>
+  <arg name="drift_comp" default="false"/>
+  <arg name="xsens_gmr_venv" default="$(eval optenv('XSENS_GMR_VENV', env('HOME') + '/.cache/leju_xsens_gmr/venv'))"/>
+  <arg name="enable_pico_joy" default="false"/>
+  <arg name="pico_host" default="0.0.0.0"/>
+  <arg name="pico_port" default="12345"/>
+  <arg name="pico_gmr_venv" default="$(eval optenv('PICO_GMR_VENV', env('HOME') + '/.cache/leju_pico_gmr/venv'))"/>
+  <arg name="broadcast_name" default="ROBAN"/>
+  <arg name="enable_broadcast" default="true"/>
+  <arg name="viewer_arg" value="--viewer" if="$(arg enable_viewer)"/>
+  <arg name="viewer_arg" value="" unless="$(arg enable_viewer)"/>
+  <arg name="drift_arg" value="--drift-comp" if="$(arg drift_comp)"/>
+  <arg name="drift_arg" value="" unless="$(arg drift_comp)"/>
+  <arg name="broadcast_arg" value="" if="$(arg enable_broadcast)"/>
+  <arg name="broadcast_arg" value="--no-broadcast" unless="$(arg enable_broadcast)"/>
+
+  <!-- Keep the Python publisher and C++ subscribers on one DDS setup. -->
+  <arg name="cyclonedds_config"
+       value="$(find leju_launch)/config/cyclonedds_shm.xml"
+       if="$(arg enable_iceoryx_shm)"/>
+  <arg name="cyclonedds_config"
+       value="$(find leju_launch)/config/cyclonedds.xml"
+       unless="$(arg enable_iceoryx_shm)"/>
+  <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)"/>
+  <env name="ROBOT_VERSION" value="$(arg robot_version)"/>
+
+  <!-- Reuse the standard platform launch and explicitly select S17 configs. -->
+  <include file="$(find leju_launch)/launch/load_mujoco_sim.launch"
+           if="$(arg simulation)">
+    <arg name="coredump" value="$(arg coredump)"/>
+    <arg name="enable_iceoryx_shm" value="$(arg enable_iceoryx_shm)"/>
+    <arg name="controller_manager_config" value="$(arg controller_manager_config)"/>
+    <arg name="teleop_config" value="$(arg teleop_config)"/>
+    <arg name="urdf_path" value="$(arg urdf_path)"/>
+    <arg name="mujoco_xml_file" value="$(arg mujoco_xml_file)"/>
+    <arg name="auto_start" value="$(arg auto_start)"/>
+  </include>
+
+  <include file="$(find leju_launch)/launch/load_real.launch"
+           unless="$(arg simulation)">
+    <arg name="coredump" value="$(arg coredump)"/>
+    <arg name="enable_iceoryx_shm" value="$(arg enable_iceoryx_shm)"/>
+    <arg name="controller_manager_config" value="$(arg controller_manager_config)"/>
+    <arg name="teleop_config" value="$(arg teleop_config)"/>
+    <arg name="urdf_path" value="$(arg urdf_path)"/>
+    <arg name="auto_start" value="$(arg auto_start)"/>
+  </include>
+
+  <node pkg="leju_launch" type="run_xsens_gmr.sh" name="xsens_gmr"
+        output="screen" respawn="true" respawn_delay="3"
+        args="--host $(arg xsens_host) --port $(arg xsens_port) --bvh-port $(arg xsens_bvh_port) --fps $(arg xsens_fps) --domain-id $(arg xsens_domain_id) --character-id $(arg xsens_character_id) --control-topic '$(arg control_topic)' --heft-topic $(arg heft_topic) --frame-buffer-len $(arg frame_buffer_len) --cali-arm-pose-deg $(arg cali_arm_pose_deg) --pose-publish-hz $(arg pose_publish_hz) --pose-queue-target-depth $(arg pose_queue_target_depth) --pose-queue-max-size $(arg pose_queue_max_size) --pose-stale-timeout $(arg pose_stale_timeout) $(arg viewer_arg) $(arg drift_arg) --head-topic '$(arg head_topic)'"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)">
+    <env name="XSENS_GMR_VENV" value="$(arg xsens_gmr_venv)"/>
+    <env name="XSENS_REPLACE_STALE" value="1"/>
+  </node>
+  <node pkg="leju_launch" type="run_pico_joy.sh" name="pico_joy"
+        if="$(eval arg('enable_pico_joy') and arg('control_topic') != '')" output="screen" respawn="true" respawn_delay="3"
+        args="--host $(arg pico_host) --port $(arg pico_port) --domain-id $(arg xsens_domain_id) --joy-topic '$(arg control_topic)' --broadcast-name $(arg broadcast_name) $(arg broadcast_arg)"
+        launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)">
+    <env name="PICO_GMR_VENV" value="$(arg pico_gmr_venv)"/>
+  </node>
+</launch>

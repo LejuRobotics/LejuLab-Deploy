@@ -1,0 +1,34 @@
+/**
+ * @file HeftReference.idl
+ * @brief HEFT 实时参考帧消息定义
+ *
+ * Pico/GMR 前端 (leju_pico_gmr) 以 100Hz 发布，
+ * leju-rl-controller 的 LiveHeftReferenceProvider 订阅并缓冲重采样。
+ *
+ * 约定：
+ * - root_quat 为 wxyz 顺序（与 MotionTrajectory / HEFT 训练 CSV 一致）
+ * - q 为 HEFT 训练关节顺序（21 维）：
+ *   waist_yaw, leg_l1..l6, leg_r1..r6, zarm_l1..l4, zarm_r1..r4
+ *   数值为 MuJoCo 训练坐标（不做 joint_direction 换向，换向由控制器完成）
+ * - calibration_epoch 每次（重新）校准递增；订阅端 epoch 变化时清空缓冲
+ */
+module leju {
+  module msgs {
+    @final
+    struct HeftReference {
+      int32 header_sec;          // 发布时间戳 - 秒
+      uint32 header_nanosec;     // 发布时间戳 - 纳秒
+      uint32 schema_version;     // 消息 schema 版本（当前 1）
+      string robot_version;      // 目标机器人（"roban_s17"）
+      uint64 seq;                // 单调递增序号（乱序/重复检测）
+      uint32 calibration_epoch;  // 校准代数（重校准后递增）
+      int64 capture_timestamp_ms;// Pico 采集时间戳 (ms)
+      boolean valid;             // 校准完成且数据有效
+      boolean calibrated;        // GMR 校准已完成
+      double root_pos[3];        // 根位置 xyz (m)
+      double root_quat[4];       // 根四元数 wxyz（单位范数）
+      sequence<double> q;        // 21 关节位置 (rad, HEFT 顺序)
+      sequence<double> qd;       // 可选 21 关节速度 (rad/s)，可为空
+    };
+  };
+};

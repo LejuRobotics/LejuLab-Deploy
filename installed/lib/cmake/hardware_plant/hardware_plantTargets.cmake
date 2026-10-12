@@ -16,7 +16,7 @@ set(CMAKE_IMPORT_FILE_VERSION 1)
 set(_targetsDefined)
 set(_targetsNotDefined)
 set(_expectedTargets)
-foreach(_expectedTarget hardware_plant::xsens_mti_driver hardware_plant::ec_master_main hardware_plant::ec_app hardware_plant::mathtools_hw hardware_plant::lejuclaw hardware_plant::hipnuc_imu_receiver hardware_plant::dexhand_sdk hardware_plant::canbus_sdk hardware_plant::motorevo_controller hardware_plant::ruiwo_actuatorCXXLib hardware_plant::xsens-lcm-types-lib)
+foreach(_expectedTarget hardware_plant::mathtools_hw hardware_plant::lejuclaw hardware_plant::hipnuc_imu_receiver hardware_plant::dexhand_sdk hardware_plant::canbus_sdk hardware_plant::motorevo_controller hardware_plant::ruiwo_actuatorCXXLib hardware_plant::xsens_mti_driver hardware_plant::xsens-lcm-types-lib hardware_plant::ec_master_main hardware_plant::ec_app)
   list(APPEND _expectedTargets ${_expectedTarget})
   if(NOT TARGET ${_expectedTarget})
     list(APPEND _targetsNotDefined ${_expectedTarget})
@@ -50,12 +50,76 @@ if(_IMPORT_PREFIX STREQUAL "/")
   set(_IMPORT_PREFIX "")
 endif()
 
+# Create imported target hardware_plant::mathtools_hw
+add_library(hardware_plant::mathtools_hw SHARED IMPORTED)
+
+set_target_properties(hardware_plant::mathtools_hw PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/Math;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_LIBRARIES "Eigen3::Eigen"
+)
+
+# Create imported target hardware_plant::lejuclaw
+add_library(hardware_plant::lejuclaw STATIC IMPORTED)
+
+set_target_properties(hardware_plant::lejuclaw PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/leju_claw_driver;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_DIRECTORIES "${_IMPORT_PREFIX}/lib"
+  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;stdc++;pthread;bmapi64;hardware_plant::motorevo_controller;hardware_plant::canbus_sdk"
+)
+
+# Create imported target hardware_plant::hipnuc_imu_receiver
+add_library(hardware_plant::hipnuc_imu_receiver SHARED IMPORTED)
+
+set_target_properties(hardware_plant::hipnuc_imu_receiver PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/hipnuc_imu/src;/usr/include/eigen3;${_IMPORT_PREFIX}/include"
+)
+
+# Create imported target hardware_plant::dexhand_sdk
+add_library(hardware_plant::dexhand_sdk STATIC IMPORTED)
+
+set_target_properties(hardware_plant::dexhand_sdk PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/dexhand_sdk;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_DIRECTORIES "${_IMPORT_PREFIX}/lib"
+  INTERFACE_LINK_LIBRARIES "bc_stark_sdk;m;pthread;rt;dl;hardware_plant::canbus_sdk"
+)
+
+# Create imported target hardware_plant::canbus_sdk
+add_library(hardware_plant::canbus_sdk SHARED IMPORTED)
+
+set_target_properties(hardware_plant::canbus_sdk PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;stdc++;pthread;bmapi64"
+)
+
+# Create imported target hardware_plant::motorevo_controller
+add_library(hardware_plant::motorevo_controller SHARED IMPORTED)
+
+set_target_properties(hardware_plant::motorevo_controller PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/motorevo_controller;${_IMPORT_PREFIX}/include"
+)
+
+# Create imported target hardware_plant::ruiwo_actuatorCXXLib
+add_library(hardware_plant::ruiwo_actuatorCXXLib SHARED IMPORTED)
+
+set_target_properties(hardware_plant::ruiwo_actuatorCXXLib PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/ruiwo_controller_cxx;${_IMPORT_PREFIX}/include/ruiwo_controller_cxx/include;${_IMPORT_PREFIX}/include/leju_claw_driver;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;stdc++;pthread;bmapi64"
+)
+
 # Create imported target hardware_plant::xsens_mti_driver
 add_library(hardware_plant::xsens_mti_driver STATIC IMPORTED)
 
 set_target_properties(hardware_plant::xsens_mti_driver PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/xsens_ros_mti_driver/src;${_IMPORT_PREFIX}/include/xsens_ros_mti_driver/lib/xspublic;${_IMPORT_PREFIX}/include"
   INTERFACE_LINK_LIBRARIES "xscontroller;xscommon;xstypes;pthread;dl;lcm;hardware_plant::xsens-lcm-types-lib"
+)
+
+# Create imported target hardware_plant::xsens-lcm-types-lib
+add_library(hardware_plant::xsens-lcm-types-lib INTERFACE IMPORTED)
+
+set_target_properties(hardware_plant::xsens-lcm-types-lib PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/xsens_ros_mti_driver/lcmtypes;${_IMPORT_PREFIX}/include"
+  INTERFACE_LINK_LIBRARIES "lcm::lcm-coretypes"
 )
 
 # Create imported target hardware_plant::ec_master_main
@@ -72,70 +136,6 @@ add_library(hardware_plant::ec_app STATIC IMPORTED)
 set_target_properties(hardware_plant::ec_app PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/EC_Master/Common;${_IMPORT_PREFIX}/include/EC_Master/SDK/INC;${_IMPORT_PREFIX}/include/EC_Master/SDK/INC/Linux;${_IMPORT_PREFIX}/include/EC_Master/Sharelib/Common;${_IMPORT_PREFIX}/include/EC_Master/Sharelib/EcMasterDemo;${_IMPORT_PREFIX}/include/EC_Master/Sharelib/Linux;${_IMPORT_PREFIX}/include"
   INTERFACE_LINK_LIBRARIES "libAtemRasSrv.a;libEcMaster.a;libemllI8254x.so;-pthread;-ldl"
-)
-
-# Create imported target hardware_plant::mathtools_hw
-add_library(hardware_plant::mathtools_hw SHARED IMPORTED)
-
-set_target_properties(hardware_plant::mathtools_hw PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/Math;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "Eigen3::Eigen"
-)
-
-# Create imported target hardware_plant::lejuclaw
-add_library(hardware_plant::lejuclaw STATIC IMPORTED)
-
-set_target_properties(hardware_plant::lejuclaw PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/leju_claw_driver;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_DIRECTORIES "${_IMPORT_PREFIX}/lib"
-  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;bmapi64;stdc++;pthread;hardware_plant::motorevo_controller;hardware_plant::canbus_sdk"
-)
-
-# Create imported target hardware_plant::hipnuc_imu_receiver
-add_library(hardware_plant::hipnuc_imu_receiver SHARED IMPORTED)
-
-set_target_properties(hardware_plant::hipnuc_imu_receiver PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/hipnuc_imu/src;/usr/include/eigen3;${_IMPORT_PREFIX}/include"
-)
-
-# Create imported target hardware_plant::dexhand_sdk
-add_library(hardware_plant::dexhand_sdk STATIC IMPORTED)
-
-set_target_properties(hardware_plant::dexhand_sdk PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/dexhand_sdk;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_DIRECTORIES "${_IMPORT_PREFIX}/lib"
-  INTERFACE_LINK_LIBRARIES "bc_stark_sdk;serialport;m;pthread;rt;dl;hardware_plant::canbus_sdk"
-)
-
-# Create imported target hardware_plant::canbus_sdk
-add_library(hardware_plant::canbus_sdk SHARED IMPORTED)
-
-set_target_properties(hardware_plant::canbus_sdk PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;bmapi64;stdc++;pthread"
-)
-
-# Create imported target hardware_plant::motorevo_controller
-add_library(hardware_plant::motorevo_controller SHARED IMPORTED)
-
-set_target_properties(hardware_plant::motorevo_controller PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/motorevo_controller;${_IMPORT_PREFIX}/include"
-)
-
-# Create imported target hardware_plant::ruiwo_actuatorCXXLib
-add_library(hardware_plant::ruiwo_actuatorCXXLib SHARED IMPORTED)
-
-set_target_properties(hardware_plant::ruiwo_actuatorCXXLib PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/ruiwo_controller_cxx;${_IMPORT_PREFIX}/include/ruiwo_controller_cxx/include;${_IMPORT_PREFIX}/include/leju_claw_driver;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "yaml-cpp;stdc++fs;usb-1.0;bmapi64;stdc++;pthread"
-)
-
-# Create imported target hardware_plant::xsens-lcm-types-lib
-add_library(hardware_plant::xsens-lcm-types-lib INTERFACE IMPORTED)
-
-set_target_properties(hardware_plant::xsens-lcm-types-lib PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/xsens_ros_mti_driver/lcmtypes;${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "lcm::lcm-coretypes"
 )
 
 if(CMAKE_VERSION VERSION_LESS 3.0.0)

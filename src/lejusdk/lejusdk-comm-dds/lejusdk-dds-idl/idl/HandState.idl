@@ -1,0 +1,18 @@
+// Dexterous-hand feedback for both six-channel hands.
+module leju {
+  module msgs {
+    @final
+    struct HandState {
+      int32 header_sec;
+      uint32 header_nanosec;
+      boolean left_valid;
+      boolean right_valid;
+      uint32 left_sample_age_ms;
+      uint32 right_sample_age_ms;
+      sequence<double> position;
+      sequence<double> velocity;
+      sequence<double> current;
+      sequence<uint8> state;
+    };
+  };
+};

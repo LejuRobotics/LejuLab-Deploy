@@ -1,0 +1,22 @@
+# RK3588 真交叉编译镜像（x86 宿主原生跑 aarch64-linux-gnu-gcc-11，非 QEMU 模拟）
+# sysroot 由 extract_sysroot.sh 从板子提取后烘入，镜像自包含。
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# cmake 用 Ubuntu 自带 3.22（与板子 cmake 3.22.1 一致，便于及早暴露板子上会遇到的问题）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    crossbuild-essential-arm64 \
+    gcc-11-aarch64-linux-gnu g++-11-aarch64-linux-gnu \
+    cmake ninja-build pkg-config \
+    git ca-certificates file \
+    && rm -rf /var/lib/apt/lists/*
+
+# sysroot 在前（体积大、变动少）→ 后续改 toolchain 不会让这层 COPY 失效
+# 从板子提取的 sysroot（含系统库/头、/usr/local、drake）——烘入镜像，自包含
+COPY sysroot/ /opt/rk3588-sysroot/
+
+# toolchain file（变动较频繁，放在 sysroot 之后）
+COPY toolchain-aarch64.cmake /opt/toolchain-aarch64.cmake
+
+WORKDIR /workspace

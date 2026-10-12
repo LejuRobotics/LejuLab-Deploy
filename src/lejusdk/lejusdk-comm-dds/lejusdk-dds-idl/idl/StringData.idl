@@ -1,0 +1,12 @@
+// String data structure
+// Used to transmit arbitrary string data for flexible data exchange
+module leju {
+  module msgs {
+    @final
+    struct StringData {
+      int32 header_sec;          // Timestamp seconds
+      uint32 header_nanosec;     // Timestamp nanoseconds
+      string data;              // String data
+    };
+  };
+};

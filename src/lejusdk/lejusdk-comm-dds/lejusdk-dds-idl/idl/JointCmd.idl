@@ -1,0 +1,17 @@
+// Joint command data structure
+// Used to send robot joint control commands, including target position, velocity, torque, and PID parameters
+module leju {
+  module msgs {
+    @final
+    struct JointCmd {
+      int32 header_sec;
+      uint32 header_nanosec;
+      sequence<double> q;
+      sequence<double> v;
+      sequence<double> tau;
+      sequence<double> kp;
+      sequence<double> kd;
+      sequence<uint8>  modes;
+    };
+  };
+};

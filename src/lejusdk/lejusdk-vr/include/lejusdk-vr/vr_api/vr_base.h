@@ -23,6 +23,7 @@ namespace vr {
  * - 关节指令发布/订阅（手臂、头部、腰部）
  * - 速度指令发布
  * - 控制器切换与模式设置
+ * - 运行和控制器原始状态查询
  *
  * 子类（KuavoVRAPI、RobanVRAPI）通过指定 RobotVersion 来区分机器人类型。
  */
@@ -110,6 +111,13 @@ class VRBaseAPI {
    */
   bool publishQuestJoystickData(const QuestJoystickData& data);
 
+  /**
+   * @brief 发布 Quest 连接状态心跳
+   * @param data 状态字符串（"connected"）
+   * @return true 成功，false 失败
+   */
+  bool publishQuestConnected(const std::string& data);
+
   // 指令订阅
 
   /**
@@ -154,15 +162,23 @@ class VRBaseAPI {
    */
   void subscribeQuestJoystickData(QuestJoystickDataCallback callback);
 
+  /**
+   * @brief 订阅 tact 播放命令（NX bridge 通过 topic 传动作名）
+   * @param callback 收到动作名时的回调函数，参数为不含 .tact 后缀的动作名
+   */
+  void subscribeTactCommand(TactCmdCallback callback);
+
   // 控制器服务
 
   /**
    * @brief 切换控制器
    * @param controller_name 目标控制器名称
+   * @param[out] message 服务端返回的消息（成功或失败原因），可为 nullptr
    * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
    * @return true 成功，false 失败
    */
   bool switchController(const std::string& controller_name,
+                        std::string* message = nullptr,
                         int timeout_ms = 3000);
 
   /**
@@ -197,6 +213,60 @@ class VRBaseAPI {
    */
   bool getControllerState(ControllerState& state, int timeout_ms = 3000);
 
+  /**
+   * @brief 获取 runtime 原始状态
+   * @param[out] state 返回的 runtime 状态
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool getRuntimeState(RuntimeState& state, int timeout_ms = 3000);
+
+  /**
+   * @brief 获取 motion 原始状态
+   * @param[out] state 返回的 motion 状态
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool getMotionState(MotionState& state, int timeout_ms = 3000);
+
+  /**
+   * @brief 发送 runtime start 请求
+   * @param[out] message 服务端返回的消息，可为 nullptr
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool startRuntime(std::string* message = nullptr, int timeout_ms = 3000);
+
+  /**
+   * @brief 发送 runtime stop 请求
+   * @param[out] message 服务端返回的消息，可为 nullptr
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool stopRuntime(std::string* message = nullptr, int timeout_ms = 3000);
+
+  /**
+   * @brief 发送 motion start 请求
+   * @param name motion 名称，可为空
+   * @param[out] message 服务端返回的消息，可为 nullptr
+   * @param timeout_ms RPC 超时时间（毫秒），默认 3000ms
+   * @return true 成功，false 失败
+   */
+  bool startMotion(const std::string& name = "",
+                   std::string* message = nullptr,
+                   int timeout_ms = 3000);
+
+  /**
+   * @brief 播放 tact 动作（客户端，独立于 startMotion 的 CSV motion）
+   * @param name tact 动作名（不含 .tact 后缀）
+   * @param[out] message 服务端返回消息
+   * @param timeout_ms RPC 超时
+   * @return 是否成功
+   */
+  bool playTact(const std::string& name = "",
+                std::string* message = nullptr,
+                int timeout_ms = 3000);
+
   // RPC 服务端（控制器端使用）
 
   /**
@@ -224,10 +294,46 @@ class VRBaseAPI {
   void registerSetWaistModeHandler(SetModeHandler handler);
 
   /**
-   * @brief 注册获取控制器状态的处理函数
-   * @param handler 处理函数，返回控制器状态
+   * @brief 注册获取 runtime 原始状态的处理函数
+   * @param handler 处理函数，返回 runtime 原始状态
    */
-  void registerGetStateHandler(GetStateHandler handler);
+  void registerGetRuntimeStateHandler(GetRuntimeStateHandler handler);
+
+  /**
+   * @brief 注册获取 controller 原始状态的处理函数
+   * @param handler 处理函数，返回 controller 原始状态
+   */
+  void registerGetControllerStateHandler(GetControllerStateHandler handler);
+
+  /**
+   * @brief 注册获取 motion 原始状态的处理函数
+   * @param handler 处理函数，返回 motion 原始状态
+   */
+  void registerGetMotionStateHandler(GetMotionStateHandler handler);
+
+  /**
+   * @brief 注册 runtime start 处理函数
+   * @param handler 处理函数，返回是否成功及消息
+   */
+  void registerStartRuntimeHandler(TriggerHandler handler);
+
+  /**
+   * @brief 注册 runtime stop 处理函数
+   * @param handler 处理函数，返回是否成功及消息
+   */
+  void registerStopRuntimeHandler(TriggerHandler handler);
+
+  /**
+   * @brief 注册 motion start 处理函数
+   * @param handler 处理函数，输入为 motion 名称，返回是否成功及消息
+   */
+  void registerStartMotionHandler(SetStringHandler handler);
+
+  /**
+   * @brief 注册 play tact 处理函数（独立于 StartMotion 的 CSV motion）
+   * @param handler 处理函数，输入为 tact 动作名，返回是否成功及消息
+   */
+  void registerPlayTactHandler(SetStringHandler handler);
 
   /**
    * @brief 获取机器人版本

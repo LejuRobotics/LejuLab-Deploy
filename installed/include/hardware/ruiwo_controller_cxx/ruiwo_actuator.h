@@ -5,8 +5,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include <atomic>
 #include <iterator>
+#include <atomic>
 #include "ruiwo_actuator_base.h"
 #include <iostream>
 
@@ -96,7 +96,12 @@ struct RuiwoMotorConfig_t {
 class RuiWoActuator : public RuiwoActuatorBase
 {
 public:
-    RuiWoActuator(std::string unused = "", bool is_cali = false);
+    /**
+     * @param single_motor_mode 单电机标定专用: 跳过启动阶段整体使能/go_to_zero, 所有电机保持
+     *                          失能静止; calibrateSingleMotor() 只对操作者选中的那一个电机
+     *                          单独做 清多圈->使能->标零->失能
+     */
+    RuiWoActuator(std::string unused = "", bool is_cali = false, bool single_motor_mode = false);
     ~RuiWoActuator();
     
     /**
@@ -154,6 +159,8 @@ public:
     void changeEncoderZeroRound(int index, double direction) override;
     void adjustZeroPosition(int index, double offset) override;
     std::vector<double> getMotorZeroPoints() override;
+    // 单独标定一个电机: 当前位置设为零点并立即持久化, 不影响其它电机
+    bool calibrateSingleMotor(int index) override;
     
     /**
      * @brief 设置电机目标位置
@@ -166,7 +173,9 @@ public:
     void set_positions(const std::vector<uint8_t> &index,
         const std::vector<double> &positions,
         const std::vector<double> &torque,
-        const std::vector<double> &velocity) override;
+        const std::vector<double> &velocity,
+        const std::vector<double> &kp_pos = {},
+        const std::vector<double> &kd_pos = {}) override;
 
     /**
      * @brief 设置多个关节力矩（CST 模式）
@@ -305,9 +314,12 @@ private:
 
     bool target_update;
     std::atomic<bool> torque_only_mode_{false};  // CST 模式标志：kp=0, kd=0
+    std::atomic<bool> target_has_cmd_gains_{false};  // 本次 cmd 是否携带逐周期 kp/kd 覆盖
     std::vector<float> target_positions;
     std::vector<float> target_velocity;
     std::vector<float> target_torque;
+    std::vector<float> target_kp_pos;  // 逐周期 kp 覆盖（仅当 target_has_cmd_gains_ 为真时有效）
+    std::vector<float> target_kd_pos;
 
     std::vector<float> current_positions;
     std::vector<float> current_torque;
@@ -321,6 +333,7 @@ private:
     bool multi_turn_encoder_mode = false;
     int teach_pendant_mode = 0;
     bool is_cali_ = false;
+    bool single_motor_mode_ = false;  // 单电机标定专用: 跳过启动阶段整体使能/go_to_zero
 
     std::vector<int> ratio = {36, 36, 36, 10, 10, 10, 36, 36, 36, 10, 10, 10, 36, 36};
 

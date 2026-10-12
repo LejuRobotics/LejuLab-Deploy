@@ -1,0 +1,164 @@
+HumanoidRobotCfg:
+  inference_engine: onnxruntime
+  loop_dt: 0.001
+  # 双策略：按 IMU body_x·gravity 自动选 prone/supine（对齐 kuavo FallStand）
+  prone_policy_path: ../policy/s17_prone_38000.onnx
+  supine_policy_path: ../policy/s17_supine_31000_0825.onnx
+  # policy_path: ../policy/s17_supine_20000_0720.onnx  # 单策略回退时使用
+  # 瘫软：未 prepare/未起播时全身零力矩（对齐 kuavo FALL_DOWN 态），仅倒地起身控制器开启
+  limp_when_idle: true
+  motion:
+    # 对齐 kuavo fallStandMaxJointVelocity：插值时长 = max|Δq| / prep_max_joint_velocity
+    prep_max_joint_velocity: 1.5
+    default_motion: fall_stand
+    motions:
+      - name: fall_stand
+        prone_file: ../motion_data/Prone_s17_V17_stable_foot_hand_fric.csv
+        supine_file: ../motion_data/Supine_s17_V17_stable_foot_hand_fric_0825.csv
+        # file: ../motion_data/Supine_s17_V17_stable_foot_hand_fric_0720.csv
+  env:
+    policy_dt: 0.02
+    robot:
+      residual_action: true
+      joint_names: [waist_yaw_joint, leg_l1_joint, leg_l2_joint, leg_l3_joint, leg_l4_joint,
+        leg_l5_joint, leg_l6_joint, leg_r1_joint, leg_r2_joint, leg_r3_joint, leg_r4_joint,
+        leg_r5_joint, leg_r6_joint, zarm_l1_joint, zarm_l2_joint, zarm_l3_joint, zarm_l4_joint,
+        zarm_r1_joint, zarm_r2_joint, zarm_r3_joint, zarm_r4_joint]
+      joint_direction: [-1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      joint_default_pos: [0.0 ,  
+                        -0.695,
+                        -0.13 ,
+                        -0.47 ,
+                        0.866 ,
+                        -0.333,
+                        0.0   ,
+                        0.695 ,
+                        0.13  ,
+                        0.47  ,
+                        0.866,
+                        -0.333,
+                          0.0 ,
+                        0.2   ,
+                        0.16  ,
+                        -0.4  ,
+                        -0.5  ,
+                        0.2   ,
+                        -0.16 ,
+                        0.4   ,
+                        -0.5  ,   ]
+      joint_torque_limit: [80.0,
+                          150.0,
+                          150.0,
+                          70.0 ,
+                          150.0,
+                          74.0 ,
+                          74.0 ,
+                          150.0,
+                          150.0,
+                          70.0 ,
+                          150.0,
+                          74.0 ,
+                          74.0 ,
+                          14.1 ,
+                          37.0 ,
+                          37.0 ,
+                          37.0 ,
+                          14.1 ,
+                          37.0 ,
+                          37.0 ,
+                          37.0 ]
+      actuator_kp: [100,
+                    100,
+                    100,
+                    100,
+                    150,
+                    20 ,
+                    20 ,
+                    100,
+                    100,
+                    100,
+                    150,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ,
+                    20 ]
+      actuator_kd: [2.0,
+                    2.0,
+                    2.0,
+                    2.0,
+                    2.0,
+                    1.0,
+                    1.0,
+                    2.0,
+                    2.0,
+                    2.0,
+                    2.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0,
+                    1.0]
+      actuator_control_mode: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0]
+      action_scale: [ 
+                      0.2    ,
+                      0.25   ,
+                      0.08   ,
+                      0.08   ,
+                      0.2    ,
+                      0.3    ,
+                      0.2    ,
+                      0.25   ,
+                      0.08   ,
+                      0.08   ,
+                      0.2    ,
+                      0.3    ,
+                      0.2    ,
+                      0.17625,
+                      0.4625 ,
+                      0.4625 ,
+                      0.4625 ,
+                      0.17625,
+                      0.4625 ,
+                      0.4625 ,
+                      0.4625 ]
+    observations:
+      history_length: 1
+      stack_order: classic
+      terms:
+        motion_command:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        motion_target_height:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        motion_anchor_ori_b:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        projected_gravity:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        base_ang_vel:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        joint_pos:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        joint_vel:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]
+        actions:
+          scale: 1.0
+          clip: [-5000.0, 5000.0]

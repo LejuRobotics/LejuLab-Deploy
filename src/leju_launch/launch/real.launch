@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!--
+  One-command Roban S17 Pico teleoperation on the REAL robot.
+
+  Usage:
+    roslaunch leju_launch real.launch
+
+  This is the real-hardware counterpart of the MuJoCo command:
+    roslaunch leju_launch pico_teleop.launch \
+      simulation:=true enable_iceoryx_shm:=false enable_viewer:=true
+
+  It is a thin wrapper over pico_teleop.launch with the real-robot defaults:
+    simulation:=false          -> load_real.launch + pico_gmr node
+    enable_iceoryx_shm:=true   -> shared-memory DDS (RouDi runs as a systemd
+                                  service, see setup_cyclonedds_config.sh)
+    enable_viewer:=false       -> no MuJoCo viewer
+
+  Overridable args (same knobs as pico_teleop.launch):
+    robot_version:=17 coredump:=false auto_start:=false
+    pico_host:=0.0.0.0 pico_port:=12345 pico_fps:=100 dds_domain_id:=0
+    broadcast_name:=ROBAN enable_broadcast:=true
+    pico_gmr_venv:=$(env HOME)/.cache/leju_pico_gmr/venv
+
+  Prerequisites on the robot:
+    - RouDi shared-memory service installed & running
+        src/leju_launch/scripts/setup_cyclonedds_config.sh
+    - Pico/GMR venv installed
+        src/leju_launch/scripts/setup_pico_gmr_env.sh
+    - Pico headset streaming UDP to $(arg pico_host):$(arg pico_port)
+
+  Flow: the robot boots on the controller manager's default controller
+  (AMP). After Pico whole-body calibration (RT+B / LT+B) and live-buffer
+  warmup, switch to heft_pico with RG+A; RG+B returns to AMP.
+-->
+<launch>
+  <!-- Pass-through knobs (defaults mirror pico_teleop.launch). -->
+  <arg name="robot_version" default="17"/>
+  <arg name="coredump" default="false"/>
+  <arg name="auto_start" default="false"/>
+  <arg name="pico_host" default="0.0.0.0"/>
+  <arg name="pico_port" default="12345"/>
+  <arg name="pico_fps" default="100"/>
+  <arg name="dds_domain_id" default="0"/>
+  <arg name="broadcast_name" default="ROBAN"/>
+  <arg name="enable_broadcast" default="true"/>
+  <arg name="pico_gmr_venv" default="$(env HOME)/.cache/leju_pico_gmr/venv"/>
+
+  <include file="$(find leju_launch)/launch/pico_teleop.launch">
+    <!-- Real-robot: hardware launch + shared-memory DDS, no viewer. -->
+    <arg name="simulation" value="false"/>
+    <arg name="enable_iceoryx_shm" value="true"/>
+    <arg name="enable_viewer" value="false"/>
+    <arg name="robot_version" value="$(arg robot_version)"/>
+    <arg name="coredump" value="$(arg coredump)"/>
+    <arg name="auto_start" value="$(arg auto_start)"/>
+    <arg name="pico_host" value="$(arg pico_host)"/>
+    <arg name="pico_port" value="$(arg pico_port)"/>
+    <arg name="pico_fps" value="$(arg pico_fps)"/>
+    <arg name="dds_domain_id" value="$(arg dds_domain_id)"/>
+    <arg name="broadcast_name" value="$(arg broadcast_name)"/>
+    <arg name="enable_broadcast" value="$(arg enable_broadcast)"/>
+    <arg name="pico_gmr_venv" value="$(arg pico_gmr_venv)"/>
+  </include>
+</launch>

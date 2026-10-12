@@ -1,0 +1,15 @@
+// IMU sensor data structure
+// Used to transmit inertial measurement unit data, including gyroscope, accelerometer, and quaternion attitude information
+module leju {
+  module msgs {
+    @final
+    struct ImuData {
+      int32 header_sec;
+      uint32 header_nanosec;
+      double gyro[3];
+      double acc[3];
+      double free_acc[3];
+      double quat[4];
+    };
+  };
+};

@@ -52,6 +52,9 @@ class RobotData {
    */
   bool getImuData(ImuData& imu) const;
 
+  // Atomically copy the latest state and IMU cache for one control tick.
+  bool getSynchronizedData(RobotState& state, ImuData& imu) const;
+
   // ==================== 状态查询 ====================
   /**
    * @brief 检查数据是否就绪

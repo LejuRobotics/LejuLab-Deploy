@@ -1,5 +1,6 @@
 #include "leju-rl-controller/motion/motion_trajectory.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -183,6 +184,13 @@ array_t MotionTrajectory::getJointPos() const {
   return joint_pos_.row(current_frame_);
 }
 
+array_t MotionTrajectory::getFirstFrameJointPos() const {
+  if (!loaded_ || num_frames_ <= 0) {
+    return array_t();
+  }
+  return joint_pos_.row(0);
+}
+
 array_t MotionTrajectory::getJointVel() const {
   if (!loaded_) {
     return array_t();
@@ -208,6 +216,71 @@ Eigen::Quaterniond MotionTrajectory::getBodyQuat() const {
                             body_quat_(current_frame_, 3));
 }
 
+array_t MotionTrajectory::getJointPosAtOffset(int frame_offset) const {
+  if (!loaded_) return array_t();
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  return joint_pos_.row(frame);
+}
+
+array_t MotionTrajectory::getJointVelAtOffset(int frame_offset) const {
+  if (!loaded_) return array_t();
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  if (frame == num_frames_ - 1) return array_t::Zero(num_joints_);
+  return joint_vel_.row(frame);
+}
+
+array_t MotionTrajectory::getRecordedJointVelAtOffset(int frame_offset) const {
+  if (!loaded_) return array_t();
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  return joint_vel_.row(frame);
+}
+
+Eigen::Vector3d MotionTrajectory::getBodyPosAtOffset(int frame_offset) const {
+  if (!loaded_) return Eigen::Vector3d::Zero();
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  return body_pos_.row(frame).transpose();
+}
+
+Eigen::Vector3d MotionTrajectory::getBodyLinVelAtOffset(
+    int frame_offset, double frame_dt) const {
+  if (!loaded_ || num_frames_ <= 1 || frame_dt <= 0.0) {
+    return Eigen::Vector3d::Zero();
+  }
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  if (frame == 0) {
+    return (body_pos_.row(1) - body_pos_.row(0)).transpose() / frame_dt;
+  }
+  if (frame == num_frames_ - 1) {
+    return (body_pos_.row(frame) - body_pos_.row(frame - 1)).transpose() / frame_dt;
+  }
+  return (body_pos_.row(frame + 1) - body_pos_.row(frame - 1)).transpose() /
+         (2.0 * frame_dt);
+}
+
+Eigen::Vector3d MotionTrajectory::getBodyAngVelAtOffset(
+    int frame_offset, double frame_dt) const {
+  if (!loaded_ || num_frames_ <= 1 || frame_dt <= 0.0) {
+    return Eigen::Vector3d::Zero();
+  }
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  const int frame0 = (frame == num_frames_ - 1) ? frame - 1 : frame;
+  const int frame1 = frame0 + 1;
+  Eigen::Quaterniond q0(body_quat_(frame0, 0), body_quat_(frame0, 1),
+                         body_quat_(frame0, 2), body_quat_(frame0, 3));
+  Eigen::Quaterniond q1(body_quat_(frame1, 0), body_quat_(frame1, 1),
+                         body_quat_(frame1, 2), body_quat_(frame1, 3));
+  Eigen::Quaterniond delta = (q0.normalized().inverse() * q1.normalized()).normalized();
+  if (delta.w() < 0.0) delta.coeffs() *= -1.0;
+  return (2.0 / frame_dt) * delta.vec();
+}
+
+Eigen::Quaterniond MotionTrajectory::getBodyQuatAtOffset(int frame_offset) const {
+  if (!loaded_) return Eigen::Quaterniond::Identity();
+  const int frame = std::clamp(current_frame_ + frame_offset, 0, num_frames_ - 1);
+  return Eigen::Quaterniond(body_quat_(frame, 0), body_quat_(frame, 1),
+                            body_quat_(frame, 2), body_quat_(frame, 3));
+}
+
 Eigen::VectorXd MotionTrajectory::getCurrentCommand() const {
   if (!loaded_) {
     return Eigen::VectorXd();
@@ -227,6 +300,37 @@ void MotionTrajectory::next() {
 
 void MotionTrajectory::reset() {
   current_frame_ = 0;
+}
+
+array_t MotionTrajectory::getFrameJointPos(int frame) const {
+  if (!loaded_ || num_frames_ <= 0) {
+    return array_t();
+  }
+  return joint_pos_.row(clampFrame(frame));
+}
+
+array_t MotionTrajectory::getFrameJointVel(int frame) const {
+  if (!loaded_ || num_frames_ <= 0) {
+    return array_t();
+  }
+  return joint_vel_.row(clampFrame(frame));
+}
+
+Eigen::Vector3d MotionTrajectory::getFrameBodyPos(int frame) const {
+  if (!loaded_ || num_frames_ <= 0) {
+    return Eigen::Vector3d::Zero();
+  }
+  return body_pos_.row(clampFrame(frame)).transpose();
+}
+
+Eigen::Quaterniond MotionTrajectory::getFrameBodyQuat(int frame) const {
+  if (!loaded_ || num_frames_ <= 0) {
+    return Eigen::Quaterniond::Identity();
+  }
+  const int f = clampFrame(frame);
+  // [w, x, y, z]
+  return Eigen::Quaterniond(body_quat_(f, 0), body_quat_(f, 1),
+                            body_quat_(f, 2), body_quat_(f, 3));
 }
 
 }  // namespace leju

@@ -33,7 +33,7 @@ HumanoidRobotCfg:
 | 配置文件 | 推理引擎 |
 |----------|----------|
 | config/14/config_amp.yaml | onnxruntime |
-| config/14/config_mimic_prone.yaml | onnxruntime |
+| config/14/config_mimic2.yaml | onnxruntime |
 | config/14/config_mimic_charleston_dance.yaml | onnxruntime |
 | config/14/config_mimic_HPNY_dance.yaml | onnxruntime |
 | config/46/config_amp.yaml | openvino |

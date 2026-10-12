@@ -1,6 +1,7 @@
 #include "leju-ik/OneStageIKEndEffector.h"
 
 #include <chrono>
+#include <stdexcept>
 
 namespace leju {
 namespace ik {
@@ -116,10 +117,14 @@ void OneStageIKEndEffector::setConstraints(drake::multibody::InverseKinematics& 
                          link6Weight * Eigen::Matrix3d::Identity());
     }
     if (PoseConstraintList.size() > POSE_DATA_LIST_INDEX_LEFT_VIRTUAL_THUMB) {
-      ik.AddPositionCost(plant_->world_frame(),
-                         PoseConstraintList[POSE_DATA_LIST_INDEX_LEFT_VIRTUAL_THUMB].position,
-                         plant_->GetFrameByName("zarm_l7_virtual_thumb_link"), Eigen::Vector3d::Zero(),
-                         virtualThumbWeight * Eigen::Matrix3d::Identity());
+      try {
+        ik.AddPositionCost(plant_->world_frame(),
+                           PoseConstraintList[POSE_DATA_LIST_INDEX_LEFT_VIRTUAL_THUMB].position,
+                           plant_->GetFrameByName("zarm_l7_virtual_thumb_link"), Eigen::Vector3d::Zero(),
+                           virtualThumbWeight * Eigen::Matrix3d::Identity());
+      } catch (const std::logic_error&) {
+        // Virtual thumb frame absent in this model; skip the cost (graceful degradation).
+      }
     }
   }
 
@@ -143,10 +148,14 @@ void OneStageIKEndEffector::setConstraints(drake::multibody::InverseKinematics& 
                          link6Weight * Eigen::Matrix3d::Identity());
     }
     if (PoseConstraintList.size() > POSE_DATA_LIST_INDEX_RIGHT_VIRTUAL_THUMB) {
-      ik.AddPositionCost(plant_->world_frame(),
-                         PoseConstraintList[POSE_DATA_LIST_INDEX_RIGHT_VIRTUAL_THUMB].position,
-                         plant_->GetFrameByName("zarm_r7_virtual_thumb_link"), Eigen::Vector3d::Zero(),
-                         virtualThumbWeight * Eigen::Matrix3d::Identity());
+      try {
+        ik.AddPositionCost(plant_->world_frame(),
+                           PoseConstraintList[POSE_DATA_LIST_INDEX_RIGHT_VIRTUAL_THUMB].position,
+                           plant_->GetFrameByName("zarm_r7_virtual_thumb_link"), Eigen::Vector3d::Zero(),
+                           virtualThumbWeight * Eigen::Matrix3d::Identity());
+      } catch (const std::logic_error&) {
+        // Virtual thumb frame absent in this model; skip the cost (graceful degradation).
+      }
     }
   }
 

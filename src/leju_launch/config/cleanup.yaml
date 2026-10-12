@@ -1,0 +1,24 @@
+# Auto cleanup configuration
+# Runs at launch startup to clean old logs, MCAP recordings and coredumps
+# Paths are hardcoded in cleanup.sh: ~/.ros/lejulab/{stdout,mcap,coredumps}
+
+cleanup:
+  # Total size limit (GB) for all directories combined.
+  # After removing expired entries, if total still exceeds this limit,
+  # the oldest entries across all directories are deleted until under limit.
+  max_total_size: 30
+
+  # stdout logs (~/.ros/lejulab/stdout/)
+  # Each launch creates a timestamped directory with stdout.log
+  stdout:
+    retention_days: 30
+
+  # MCAP recordings (~/.ros/lejulab/mcap/)
+  # DDS message recordings, can be large (up to 500MB x 8 splits per session)
+  mcap:
+    retention_days: 10
+
+  # Coredump files (~/.ros/lejulab/coredumps/)
+  # Core dumps generated when coredump:=true is set in launch
+  coredumps:
+    retention_days: 10

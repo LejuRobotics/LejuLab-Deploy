@@ -1,0 +1,123 @@
+HumanoidRobotCfg:
+  inference_engine: "onnxruntime"
+  loop_dt: 0.001
+  # policy_path: "../policy/upstair/model_09_2026-08-17_14-44-32_215000.onnx"
+
+  # policy_path: "../policy/upstair/model_bendi_2026-08-18_11-53-51_221000.onnx"
+  # policy_path: "../policy/upstair/model_15_2026-08-18_20-12-12_242000.onnx"
+  # policy_path: "../policy/upstair/model_09_2026-08-17_14-44-32_221000.onnx"
+  
+  # policy_path: "../policy/upstair/model_bendi_2026-08-28_11-25-49_227000.onnx"
+  # policy_path: "../policy/upstair/model_bendi_2026-08-28_11-25-49_227400.onnx"
+  # policy_path: "../policy/upstair/model_09_2026-08-28_18-13-10_244000.onnx"
+  
+  # policy_path: "../policy/upstair/model_bendi_2026-09-01_19-35-30_235000.onnx"
+  # 0904
+  policy_path: "../policy/upstair/model_238000.onnx"
+  # policy_path: "../policy/upstair/model_13_2026-09-02_14-27-07_239000.onnx"
+  
+  
+  depth:
+    # 上位机负责将 Gemini 330 原始深度处理为 64x36、米制归一化帧；
+    # 下位机直接消费该 Float64Array，不再重复缩放、修复空洞或归一化。
+    # 真机60Hz不降帧，使用43帧缓存并按 [0,6,...,42] 取8帧；MuJoCo
+    # 原有64x36米制帧保持30Hz、22帧缓存和 [0,3,...,21]。
+    input_topic: "rt/depth_camera/frame_normalized_36x64"
+    input_data_type: "float64"
+    input_width: 64
+    input_height: 36
+    input_unit: "meters"
+    input_preprocessed: true
+    input_frame_decimation: 1
+    width: 64
+    height: 36
+    history_frames: 8
+    # Match the source MuJoCo depth_history_array path: 22 frames at 30 Hz,
+    # selecting every third frame over approximately 0.7 seconds.
+    source_buffer_frames: 22
+    selected_indices: [0, 3, 6, 9, 12, 15, 18, 21]
+    max_depth_m: 2.5
+    timeout_sec: 0.10
+    min_valid_ratio: 0.05
+    # MuJoCo 仿真深度噪声标准差 [m]，由 leju-mujoco-sim 读取。真机相机不用这项。
+    # 0 关闭噪声。改完后重启仿真进程生效。
+    noise_std_m: 0.01
+
+  model_contract:
+    single_observation_dim: 18510
+    frame_stack: 5
+    input_dim: 92550
+    output_dim: 25
+    action_dim: 21
+    gait_frequency_index: 21
+    velocity_estimate_start: 22
+    velocity_estimate_dim: 3
+
+  env:
+    policy_dt: 0.02
+    # S17 场景 home 关节为零位，而深度策略以 default_joint_pos 为中心。
+    # 先用安全 CSP 过渡到该姿态，再开始策略推理；AMP 配置不受影响。
+    startup_pose_duration_sec: 0.5
+    startup_pose_max_wait_sec: 5.0
+    startup_pose_position_tolerance: 0.015
+    startup_pose_velocity_tolerance: 0.05
+    # Keep the same complete software-PD semantics as AMP in the target
+    # simulator.  The source q=0 + hardware-PD path remains available for
+    # explicit compatibility experiments, but is not safe as the default
+    # target actuator because it introduces a second velocity feedback loop.
+    source_mujoco_executor: false
+    cmd_stance_debounce: 5
+    robot:
+      enable_arm_controller: true
+      enable_waist_controller: false
+      joint_names:
+        ["waist_yaw_joint",
+         "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint", "leg_l5_joint", "leg_l6_joint",
+         "leg_r1_joint", "leg_r2_joint", "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint",
+         "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
+         "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"]
+      joint_direction:
+        # S17/Roban waist motor sign is opposite to the waist-first policy
+        # convention. This matches config_amp.yaml and the source ROS
+        # DepthWalkController is_roban_ output conversion.
+        [-1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.]
+      joint_default_pos:
+        [0., -0.285, -0.0194, -0.201, 0.404, -0.221, 0.,
+         0.285, 0.0194, 0.201, 0.404, -0.221, 0.,
+         0., 0.05, 0., -0.2, 0., -0.05, 0., -0.2]
+      # S17 MuJoCo 资产的头部中立姿态（zhead_1/zhead_2 joint q=0）。
+      # 深度控制器不让头部跟随瞬时状态漂移。
+      head_default_pos: [0., 0.]
+      joint_torque_limit:
+        [80., 150., 150., 70., 150., 74., 74.,
+         150., 150., 70., 150., 74., 74.,
+         14.1, 37., 37., 37., 14.1, 37., 37., 37.]
+      actuator_kp:
+        [40.179, 90.179, 150.098, 40.179, 150.098, 34.25, 34.25,
+         90.179, 150.098, 40.179, 150.098, 34.25, 34.25,
+         14.25, 14.25, 14.25, 14.25, 14.25, 14.25, 14.25, 14.25]
+      actuator_kd:
+        [2.557, 3.557, 8.308, 3.557, 8.308, 1.907, 1.907,
+         3.557, 8.308, 3.557, 8.308, 1.907, 1.907,
+         0.907, 0.907, 0.907, 0.907, 0.907, 0.907, 0.907, 0.907]
+      actuator_control_mode:
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      action_scale:
+        [0.25, 0.25, 0.25, 0.25, 0.35, 0.25, 0.25,
+         0.25, 0.25, 0.25, 0.35, 0.25, 0.25,
+         0.25, 0.05, 0.05, 0.25, 0.25, 0.05, 0.05, 0.25]
+
+    # 通用加载器需要合法的基础观测声明；DepthWalkController 会使用固定的
+    # 92550 维专用观测覆盖此缓冲，不会走 GenericRLController 的观测拼接。
+    observations:
+      history_length: 1
+      stack_order: "classic"
+      terms:
+        base_ang_vel: {scale: 1., clip: [-10000., 10000.]}
+
+    command_range:
+      lin_vel_x: [-0.5, 1.0]
+      lin_vel_y: [-0.0, 0.0]
+      ang_vel_z: [-0.6, 0.6]
+    leg_bias: 0.5
+    stance_ratio: 0.5
