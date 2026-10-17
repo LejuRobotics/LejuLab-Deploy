@@ -14,6 +14,8 @@ include(GNUInstallDirs)
 find_package(catkin QUIET COMPONENTS lejusdk-utils)
 set(_USING_CATKIN ${catkin_FOUND})
 
+find_package(Eigen3 REQUIRED)
+
 if(_USING_CATKIN)
   catkin_package(
     INCLUDE_DIRS include
@@ -24,7 +26,6 @@ if(_USING_CATKIN)
 endif()
 
 find_package(drake CONFIG REQUIRED)
-find_package(Eigen3 REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 include_directories(

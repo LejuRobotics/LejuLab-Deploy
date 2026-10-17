@@ -215,12 +215,25 @@ install_service() {
         local user_lejuconfig
         user_lejuconfig="$(getent passwd "${SUDO_USER}" | cut -d: -f6)/.config/lejuconfig"
         if [ -d "${user_lejuconfig}" ]; then
-            for f in CanbusWiringType.ini ImuType.ini canbus_device_cofig.yaml hipimuEulerOffset.csv; do
+            for f in CanbusWiringType.ini ImuType.ini hipimuEulerOffset.csv; do
                 if [ -f "${user_lejuconfig}/${f}" ] && [ ! -f "/root/.config/lejuconfig/${f}" ]; then
                     cp "${user_lejuconfig}/${f}" "/root/.config/lejuconfig/${f}"
                     echo "已同步配置: /root/.config/lejuconfig/${f}"
                 fi
             done
+
+            # CANBUS 配置与运行时保持相同优先级，只同步选中的文件，不迁移或改名。
+            local canbus_config_name="canbus_device_config.yaml"
+            if [ ! -f "${user_lejuconfig}/${canbus_config_name}" ] && [ -f "${user_lejuconfig}/canbus_device_cofig.yaml" ]; then
+                canbus_config_name="canbus_device_cofig.yaml"
+                echo "警告: 使用历史错误文件名 ${user_lejuconfig}/${canbus_config_name}"
+            elif [ -f "${user_lejuconfig}/canbus_device_config.yaml" ] && [ -f "${user_lejuconfig}/canbus_device_cofig.yaml" ]; then
+                echo "警告: 检测到新旧两份 CANBUS 配置，将同步正确文件名 canbus_device_config.yaml"
+            fi
+            if [ -f "${user_lejuconfig}/${canbus_config_name}" ] && [ ! -f "/root/.config/lejuconfig/${canbus_config_name}" ]; then
+                cp "${user_lejuconfig}/${canbus_config_name}" "/root/.config/lejuconfig/${canbus_config_name}"
+                echo "已同步配置: /root/.config/lejuconfig/${canbus_config_name}"
+            fi
         fi
     fi
 

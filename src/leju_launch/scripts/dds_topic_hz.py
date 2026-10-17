@@ -14,7 +14,20 @@ from cyclonedds.domain import DomainParticipant
 from cyclonedds.sub import DataReader
 from cyclonedds.topic import Topic
 
-from dds_leju_types import Float64Array
+from dds_leju_types import Float64Array, UInt16Array
+
+
+def _topic_type_for(topic: str, requested: str = "auto"):
+    """Select the DDS payload type, keeping raw-camera compatibility."""
+    if requested == "float64" or (
+        requested == "auto"
+        and topic in {
+            "rt/depth_camera/frame_normalized_36x64",
+            "rt/depth_camera/frame_meters_36x64",
+        }
+    ):
+        return Float64Array
+    return UInt16Array
 
 
 def _preload_cyclonedds() -> None:
@@ -36,14 +49,20 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "topic",
         nargs="?",
-        default="rt/depth_camera/frame_mm_240x424",
-        help="DDS topic name (default: rt/depth_camera/frame_mm_240x424)",
+        default="rt/depth_camera/frame_normalized_36x64",
+        help="DDS topic name (default: rt/depth_camera/frame_normalized_36x64)",
     )
     parser.add_argument(
         "--expected-len",
         type=int,
-        default=424 * 240,
-        help="Expected Float64Array.data length (0 = skip check, default: 101760)",
+        default=None,
+        help="Expected data length (0 = skip check; inferred from --type)",
+    )
+    parser.add_argument(
+        "--type",
+        choices=("auto", "float64", "uint16"),
+        default="auto",
+        help="DDS payload type (default: infer from topic)",
     )
     parser.add_argument(
         "--duration",
@@ -57,7 +76,14 @@ def _parse_args() -> argparse.Namespace:
         default=1.0,
         help="Print rate every N seconds (default: 1.0)",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.expected_len is None:
+        args.expected_len = (
+            64 * 36
+            if _topic_type_for(args.topic, args.type) is Float64Array
+            else 480 * 270
+        )
+    return args
 
 
 def main() -> int:
@@ -66,11 +92,13 @@ def main() -> int:
 
     topic_name = args.topic
     participant = DomainParticipant(0)
-    reader = DataReader(participant, Topic(participant, topic_name, Float64Array))
+    topic_type = _topic_type_for(topic_name, args.type)
+    reader = DataReader(participant, Topic(participant, topic_name, topic_type))
 
     print(f"subscribed to {topic_name}")
+    print(f"DDS payload type: {topic_type.__name__}")
     if args.expected_len > 0:
-        print(f"expected Float64Array.data length: {args.expected_len}")
+        print(f"expected {topic_type.__name__}.data length: {args.expected_len}")
     print("Ctrl+C to stop")
 
     count = 0

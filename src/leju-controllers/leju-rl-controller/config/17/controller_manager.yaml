@@ -1,5 +1,8 @@
 loop_dt: 0.001
 default_controller: "amp"
+# tact 正常播放结束后保持手臂姿态；false 恢复 Auto 回正。
+tact_player:
+  hold_after_tact: false
 # 控制器切换期间插值用的 kp/kd（确保能跟踪到位）
 switch_interpolation:
   arm_kp: [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0]
@@ -12,6 +15,16 @@ controllers:
   - name: "amp"
     type: "GenericRLController"
     config: "controllers/config_amp.yaml"
+    enabled: true
+
+  - name: "waq_walk"
+    type: "WaqWalkController"
+    config: "controllers/config_waq_walk.yaml"
+    enabled: true
+
+  - name: "sonic"
+    type: "GenericRLController"
+    config: "config_sonic.yaml"
     enabled: true
 
   - name: "depth_walk"
@@ -31,10 +44,10 @@ controllers:
     config: "controllers/config_mimic_fall_stand.yaml"
     enabled: true
 
-  # - name: "mimic_dance"
-  #   type: "GenericRLController"
-  #   config: "controllers/config_mimic_dance.yaml"
-  #   enabled: true
+  - name: "mimic_dance"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance.yaml"
+    enabled: true
 
   - name: "mimic_dance_lading"
     type: "GenericRLController"
@@ -83,4 +96,14 @@ controllers:
     config: "controllers/config_mimic_dance_ezuoju.yaml"
     music: "dance_ezuoju.wav"
     music_delay: 1.0
+    enabled: true
+
+  - name: "heft"
+    type: "HeftRLController"
+    config: "controllers/config_heft.yaml"
+    enabled: true
+
+  - name: "heft_pico"
+    type: "HeftRLController"
+    config: "controllers/config_heft.yaml"
     enabled: true

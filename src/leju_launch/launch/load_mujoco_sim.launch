@@ -6,12 +6,13 @@
   <arg name="with_coredump" value="" unless="$(arg coredump)"/>
 
   <!-- iceoryx 共享内存开关 -->
-  <arg name="enable_iceoryx_shm" default="true"/>
-  <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds_shm.xml" if="$(arg enable_iceoryx_shm)"/>
+  <arg name="enable_iceoryx_shm" default="false"/>
+  <arg name="cyclonedds_config" value="/etc/cyclonedds/cyclonedds_shm.xml" if="$(arg enable_iceoryx_shm)"/>
   <arg name="cyclonedds_config" value="$(find leju_launch)/config/cyclonedds.xml" unless="$(arg enable_iceoryx_shm)"/>
   <env name="CYCLONEDDS_URI" value="file://$(arg cyclonedds_config)" />
   <arg name="controller_manager_config"
        default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml"/>
+  <env name="ROBOT_VERSION" value="$(optenv ROBOT_VERSION 46)" />
 
   <!-- URDF path for arm gravity compensation (optional) -->
   <arg name="urdf_path" default="$(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/urdf/biped_s$(optenv ROBOT_VERSION 46).urdf"/>
@@ -20,6 +21,8 @@
 
   <!-- Argument for MuJoCo XML file -->
   <arg name="mujoco_xml_file" default="$(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/xml/scene_rl.xml"/>
+  <arg name="depth_config"
+       default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controllers/config_depth_walk.yaml"/>
 
   <!-- Optional: Custom teleop bindings config -->
   <arg name="teleop_config" default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/teleop_bindings.yaml"/>
@@ -34,7 +37,7 @@
 
   <!-- Load MuJoCo simulation -->
   <node name="leju_mujoco_sim" pkg="leju-mujoco-sim" type="leju-mujoco-sim" output="screen"
-        args="$(arg mujoco_xml_file)"
+        args="$(arg mujoco_xml_file) --depth-config $(arg depth_config)"
         launch-prefix="$(find leju_launch)/scripts/start_node.sh $(arg with_coredump)"
         required="true"/>
 

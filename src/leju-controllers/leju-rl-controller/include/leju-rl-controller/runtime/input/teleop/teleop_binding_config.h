@@ -129,6 +129,12 @@ class TeleopBindingConfig {
   const DeviceBindingConfig& getQuestConfig() const { return quest_config_; }
 
   /**
+   * @brief 获取 Pico 设备绑定配置
+   * @return Pico 设备绑定配置
+   */
+  const DeviceBindingConfig& getPicoConfig() const { return pico_config_; }
+
+  /**
    * @brief 检查是否已加载配置
    * @return 是否已加载
    */
@@ -138,6 +144,7 @@ class TeleopBindingConfig {
   TeleopConfig teleop_config_;       ///< 速度配置
   DeviceBindingConfig joy_config_;   ///< Joy 设备绑定配置
   DeviceBindingConfig quest_config_; ///< Quest 设备绑定配置
+  DeviceBindingConfig pico_config_;  ///< Pico 设备绑定配置
   bool loaded_ = false;
 };
 

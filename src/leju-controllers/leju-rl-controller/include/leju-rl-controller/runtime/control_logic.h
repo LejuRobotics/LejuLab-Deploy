@@ -277,6 +277,13 @@ class ControlLogic {
   uint64_t last_applied_waist_target_seq_ = 0;
   uint64_t last_applied_hand_target_seq_ = 0;
 
+  // 手部目标缓存 + 100Hz 定时重发 /rt/hand_cmd（命令固定频率重发，
+  // 无新目标超时后停止重发，保持最后目标）
+  bool has_cached_hand_target_ = false;
+  std::vector<double> cached_hand_position_;
+  double last_hand_cmd_publish_time_s_ = 0.0;   // 上次 100Hz 重发时间（steady）
+  double last_hand_target_update_time_s_ = 0.0; // 最近一次有效手目标更新时间（steady）
+
   /// 深蹲守备期间 exit_posture 边沿 log 已打（避免每控制周期刷屏）
   /// exit_posture 仅停高度；守备解除后需用户再次按遥控器退出姿态模式
   bool squat_exit_posture_deferred_logged_ = false;

@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "leju-rl-controller/controllers/generic_rl_controller.h"
+#include "leju-rl-controller/controllers/depth_stance_gate.h"
 #include "leju-rl-controller/depth/depth_observation_provider.h"
 #include "kuavo_solver/ankle_solver.h"
 
@@ -17,6 +18,15 @@ class DepthWalkController final : public GenericRLController {
   bool initialize() override;
   void reset() override;
   bool depthReady() const;
+
+  /// 激活就绪：深度模型/深度历史就绪才允许切换（通用钩子）
+  bool isActivationReady(std::string& reason) const override {
+    if (!depthReady()) {
+      reason = "depth model/depth history is not ready";
+      return false;
+    }
+    return true;
+  }
 
  protected:
   bool loadConfig(const std::string& config_path) override;
@@ -47,6 +57,7 @@ class DepthWalkController final : public GenericRLController {
   double phase_ = 0.0;
   int phase_stand_flag_ = 2;
   int phase_turns_ = 5;
+  depth::DepthStanceGate stance_gate_;
   // Source DepthWalkController fills all five frame-stack entries before its
   // first inference. Keep the action cache at zero during the same warm-up.
   std::atomic<int> observation_warmup_count_{0};

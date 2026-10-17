@@ -107,6 +107,7 @@ struct TeleopBinding {
 enum class TeleopDeviceType : uint8_t {
   kJoy = 0,            ///< 手柄
   kQuest,              ///< Quest VR
+  kPico,               ///< Pico VR（leju_pico_gmr DDS）
 };
 
 /**

@@ -8,7 +8,7 @@
 velocity_limits:
   stick_deadzone: 0.05
   linear_x: 1.0
-  linear_y: 1.00            # amp_hand_controller 解禁 Y 方向速度
+  linear_y: 0.5          # amp_hand_controller 解禁 Y 方向速度
   angular_z: 1.0
   trigger_threshold: 0.50   # LT/RT 扳机按下判定阈值 [0,1]
 
@@ -28,9 +28,24 @@ joy_bindings:
       type: SwitchController
       args:
         name: amp
-  # A 键：暂空（无绑定）
-  # B 键：暂空（无绑定）
-  # Y 键：暂空（无绑定）
+  # Y 键：切换控制器 WAQ（按下响应）
+  - buttons: ["LB", "DPAD_LEFT"]
+    action:
+      type: SwitchController
+      args:
+        name: waq_walk
+  # A 键：切到 HEFT CSV；已在 HEFT 时按序切换下一条轨迹并起播
+  - buttons: ["A"]
+    action:
+      type: SwitchController
+      args:
+        name: heft
+        auto_start_motion: true
+  - buttons: ["B"]
+    action:
+      type: SwitchController
+      args:
+        name: heft_pico
 
   # -------------------------------------------------------------------------
   # 舞蹈（RB + 面键，松开响应）
@@ -62,6 +77,13 @@ joy_bindings:
       type: SwitchController
       args:
         name: mimic_dance_qqxinjiang
+        auto_start_motion: true
+  # Y：进入 Sonic；已在 Sonic 时按动作序列轮播下一条
+  - buttons: ["Y"]
+    action:
+      type: SwitchController
+      args:
+        name: sonic
         auto_start_motion: true
   - buttons: ["LT", "RT", "A"]     # 恶作剧（舞蹈）
     edge: release
@@ -212,3 +234,33 @@ joy_bindings:
 quest_bindings:
   # 可用按键：LEFT_TRIGGER, RIGHT_TRIGGER, LEFT_GRIP, RIGHT_GRIP,
   #           LEFT_FIRST, LEFT_SECOND, RIGHT_FIRST, RIGHT_SECOND
+
+# ============================================================================
+# Pico VR 控制器绑定（leju_pico_gmr 经 /rt/pico/joysticks 发布）
+# ============================================================================
+# 可用按键（与 Quest 相同的语法）：
+#   LEFT_TRIGGER(LT), RIGHT_TRIGGER(RT), LEFT_GRIP(LG), RIGHT_GRIP(RG),
+#   LEFT_FIRST(X), LEFT_SECOND(Y), RIGHT_FIRST(A), RIGHT_SECOND(B)
+#
+# 注意：以下组合被前端 leju_pico_gmr 内部占用，请勿在此绑定：
+#   RT+B = 半身校准, LT+B = 全身校准,
+#   RT+Y = 冻结（前端 yaw + C++ 冻结消费）, RT+X = 恢复推流
+#   LT+Y = 开始录 HEFT policy 50Hz CSV（C++ sampleWindow）, LT+X = 停止并落盘
+## 内置（非 yaml）：
+#   LT/RT 正扳机 → 左/右灵巧手整体抓握 [0,100]
+#   LG/RG 侧扳机 → 左/右 ThumbAux(index 1) 内扣至 50（可与 LT/RT 同时按）
+#   RG+A / RG+B 仍用于控制器切换，混按时跳过右手拇指内扣
+#
+# 沿用旧 kuavo 管线语义：RG+A = 切到 heft_pico，RG+B = 切回 amp
+# 北通手柄对应：joy_bindings 里 B → heft_pico，X → amp
+pico_bindings:
+  - buttons: ["RIGHT_GRIP", "RIGHT_FIRST"]     # RG+A → 切到 Pico 遥操作 HEFT
+    action:
+      type: SwitchController
+      args:
+        name: heft_pico
+  - buttons: ["RIGHT_GRIP", "RIGHT_SECOND"]    # RG+B → 切回 AMP（安全控制器）
+    action:
+      type: SwitchController
+      args:
+        name: amp

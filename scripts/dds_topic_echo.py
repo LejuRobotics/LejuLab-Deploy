@@ -262,21 +262,37 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--domain", type=int, default=0, help="DDS domain ID (default: 0)")
     parser.add_argument(
         "--dds-config",
-        help="CycloneDDS XML path; defaults to the repository non-SHM listener config",
+        help=(
+            "CycloneDDS XML path; defaults to CYCLONEDDS_URI, then the installed "
+            "/etc SHM config, then repository configs"
+        ),
     )
     return parser.parse_args()
 
 
 def configure_dds(config_arg: Optional[str]) -> str:
     repo_root = Path(__file__).resolve().parent.parent
-    config = Path(config_arg).expanduser() if config_arg else (
-        repo_root / "src/leju_launch/config/cyclonedds.xml"
-    )
+    config: Optional[Path] = None
+    if config_arg:
+        config = Path(config_arg).expanduser()
+    else:
+        env_uri = os.environ.get("CYCLONEDDS_URI", "")
+        if env_uri.startswith("file://"):
+            env_config = Path(env_uri[len("file://"):]).expanduser()
+            if env_config.is_file():
+                config = env_config
+
+        if config is None:
+            candidates = (
+                Path("/etc/cyclonedds/cyclonedds_shm.xml"),
+                repo_root / "src/leju_launch/config/cyclonedds_shm.xml",
+                repo_root / "src/leju_launch/config/cyclonedds.xml",
+            )
+            config = next((path for path in candidates if path.is_file()), candidates[-1])
+
     if not config.is_file():
         raise FileNotFoundError(f"CycloneDDS config not found: {config}")
     uri = f"file://{config.resolve()}"
-    # The PyPI CycloneDDS wheel does not support this project's iceoryx
-    # <SharedMemory> extension, so the echo process deliberately uses UDP.
     os.environ["CYCLONEDDS_URI"] = uri
     if os.environ.get("CYCLONEDDS_HOME"):
         print(f"CYCLONEDDS_HOME={os.environ['CYCLONEDDS_HOME']}", flush=True)
@@ -376,7 +392,8 @@ def main() -> int:
                 break
             if not had_samples:
                 now = time.monotonic()
-                if now >= quiet_until and not warned_quiet:
+                if (not any(received.values()) and now >= quiet_until
+                        and not warned_quiet):
                     warned_quiet = True
                     print(
                         "warning: no samples received within 3s - check that the "

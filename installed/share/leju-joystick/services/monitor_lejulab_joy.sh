@@ -71,39 +71,65 @@ export LEJULAB_WS_ROOT
 export LD_LIBRARY_PATH="${BUILD_DIR}/src/leju-joystick:${BUILD_DIR}/src/lejusdk/lejusdk-vr:${LEJULAB_WS_ROOT}/installed/lib:${LD_LIBRARY_PATH:-}"
 
 child_pid=""
+joystick_pid=""
 stop_requested=0
+
+# 结束一个子进程(存在才 kill, 并回收), 供 cleanup 与循环复用
+kill_child() {
+    local pid="$1"
+    [ -n "${pid}" ] || return 0
+    if kill -0 "${pid}" 2>/dev/null; then
+        kill "${pid}" 2>/dev/null || true
+        wait "${pid}" 2>/dev/null || true
+    fi
+}
 
 cleanup() {
     stop_requested=1
-    if [ -n "${child_pid}" ] && kill -0 "${child_pid}" 2>/dev/null; then
-        kill "${child_pid}" 2>/dev/null || true
-        wait "${child_pid}" 2>/dev/null || true
-    fi
+    kill_child "${joystick_pid}"
+    kill_child "${child_pid}"
+    joystick_pid=""
+    child_pid=""
 }
 
 trap cleanup SIGINT SIGTERM
 
 while true; do
+    joystick_pid=""
+    child_pid=""
+
     "${JOYSTICK_BIN}" --headless &
     joystick_pid=$!
 
     "${AUTOSTART_MANAGER_BIN}" &
     child_pid=$!
 
-    if wait "${child_pid}"; then
-        exit_code=0
-    else
-        exit_code=$?
-    fi
+    # 同时监管两个子进程: 任一退出即跳出, 统一清理后整体重启。
+    # 修复点: 原实现只 wait autostart_manager, 导致 leju-joystick 单独崩溃
+    # 时永不重启(stand 站立依赖 leju-joystick, 后果是遥控器 stand 无响应)。
+    stop_restart=0
+    while :; do
+        if ! kill -0 "${joystick_pid}" 2>/dev/null; then
+            if [ "${stop_requested}" -ne 0 ]; then
+                stop_restart=1
+                break
+            fi
+            echo "[monitor_lejulab_joy] leju-joystick exited, restarting joystick and autostart_manager"
+            kill_child "${child_pid}";  child_pid=""
+            kill_child "${joystick_pid}"; joystick_pid=""
+            break
+        fi
+        if ! kill -0 "${child_pid}" 2>/dev/null; then
+            echo "[monitor_lejulab_joy] autostart_manager exited, restarting joystick and autostart_manager"
+            kill_child "${joystick_pid}"; joystick_pid=""
+            kill_child "${child_pid}";  child_pid=""
+            break
+        fi
+        sleep 0.5
+    done
 
-    kill "${joystick_pid}" 2>/dev/null || true
-    wait "${joystick_pid}" 2>/dev/null || true
-    child_pid=""
-
-    if [ "${stop_requested}" -ne 0 ]; then
+    if [ "${stop_restart}" -ne 0 ]; then
         exit 0
     fi
-
-    echo "[monitor_lejulab_joy] autostart_manager 退出，2 秒后重启 (exit=${exit_code})"
     sleep 2
 done

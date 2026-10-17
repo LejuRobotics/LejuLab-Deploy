@@ -187,7 +187,8 @@ ExternalInterface::~ExternalInterface() {
 bool ExternalInterface::initialize(const RobotVersion& version,
                                    TriggerBuffer& trigger_buffer,
                                    ControllerManager& controller_manager,
-                                   Lifecycle& lifecycle) {
+                                   Lifecycle& lifecycle,
+                                   bool hold_after_tact) {
   if (initialized_) {
     return true;
   }
@@ -283,7 +284,7 @@ bool ExternalInterface::initialize(const RobotVersion& version,
       &cmd_buffer_, trigger_buffer_, arm_joint_count_,
       GetTactWaistIndex(version, waist_joint_count_),
       GetTactHandIndex(version),
-      GetTactActionDir());
+      GetTactActionDir(), 0.001, hold_after_tact);
 
   // tact 状态 1Hz 发布（路径 A：自建 participant + TopicPublisher + Loop）。
   // 仿 main.cpp:259-266 audio publisher 先例。BestEffort QoS（状态类，避免 write 阻塞）。
@@ -308,6 +309,12 @@ bool ExternalInterface::initialize(const RobotVersion& version,
         return playTactAsMotionFallback(name);
       });
 
+  controller_manager_->setTactCompletionHandler(
+      [this](uint64_t generation, ArmControlMode mode, std::string& message) {
+        return tact_player_ && tact_player_->applyCompletion(generation, [&]() {
+          return controller_manager_->setArmMode(mode, message, false);
+        });
+      });
   // 注册手臂冻结回调：LB+B keep_pose 时通知 TactPlayer 冻结
   controller_manager_->setArmFreezeCallback([this]() {
     if (tact_player_ && tact_player_->IsPlaying()) {
@@ -344,6 +351,9 @@ void ExternalInterface::shutdown() {
   tact_state_participant_.reset();
 
   posture_height_sub_.reset();
+  if (controller_manager_) {
+    controller_manager_->setTactCompletionHandler({});
+  }
   if (tact_player_) {
     tact_player_->Stop();
     tact_player_.reset();

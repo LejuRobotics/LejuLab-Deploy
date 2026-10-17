@@ -5,22 +5,34 @@
 set -euo pipefail
 
 # ── Path resolution ──────────────────────────────────────────────────
-# 路径解析支持两种模式:
-#   1. 源码模式（开发者）: 从 build_cmake/ 找可执行
-#   2. 安装模式（aarch64 闭源发布产物）: setup.bash 注入 LEJULAB_INSTALL_ROOT，
-#      从其 bin/ 找可执行（PATH 也已注入，第 3 重 fallback 自动命中）
+# 路径解析支持三种模式:
+#   1. 纯 CMake 源码模式: build/src/<pkg>/<bin> 或 build_cmake/src/<pkg>/<bin>
+#   2. Catkin 源码模式: devel/lib/<pkg>/<bin>（catkin build 产物不在 PATH 上）
+#   3. 安装模式（aarch64 闭源发布产物）: setup.bash 注入 LEJULAB_INSTALL_ROOT，
+#      从其 bin/ 找可执行（PATH 也已注入，最后一重 fallback 自动命中）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="${LEJULAB_PROJECT_ROOT:-$(cd "${SCRIPT_DIR}/../../.." && pwd)}"
 SRC_DIR="${PROJECT_DIR}/src"
-# 自动探测构建目录：优先环境变量，其次 build/，最后 build_cmake/
+# 自动探测构建目录：
+#   1. 环境变量 BUILD_DIR
+#   2. 含 leju-hardware 可执行文件的目录（优先 build_cmake/，再 build/）
+#   3. 存在的构建目录（优先 build_cmake/，再 build/）
+# 避免仅因 build/ 空目录存在就忽略真正的 build_cmake/ 产物。
 if [[ -n "${BUILD_DIR:-}" ]]; then
     : # 已由环境变量指定，直接使用
+elif [[ -x "${PROJECT_DIR}/build_cmake/src/leju-hardware/leju-hardware" ]]; then
+    BUILD_DIR="${PROJECT_DIR}/build_cmake"
+elif [[ -x "${PROJECT_DIR}/build/src/leju-hardware/leju-hardware" ]]; then
+    BUILD_DIR="${PROJECT_DIR}/build"
+elif [[ -d "${PROJECT_DIR}/build_cmake" ]]; then
+    BUILD_DIR="${PROJECT_DIR}/build_cmake"
 elif [[ -d "${PROJECT_DIR}/build" ]]; then
     BUILD_DIR="${PROJECT_DIR}/build"
 else
     BUILD_DIR="${PROJECT_DIR}/build_cmake"
 fi
 INSTALL_DIR="${INSTALL_DIR:-${LEJULAB_INSTALL_ROOT:-${PROJECT_DIR}/installed}}"
+DEVEL_DIR="${DEVEL_DIR:-${CATKIN_DEVEL_PREFIX:-${PROJECT_DIR}/devel}}"
 
 # ── Defaults ─────────────────────────────────────────────────────────
 COREDUMP=false
@@ -156,26 +168,50 @@ find_package() {
     echo "${SRC_DIR}/${pkg}"
 }
 
-# Resolve binary path from build or install dir
+# Resolve binary path from CMake build, catkin devel, or install dir.
+# $1 (pkg) may be a source-relative path (e.g. leju-controllers/leju-rl-controller
+# or lejusdk/lejusdk-recorder/recorder); catkin emits devel/lib/<package.xml name>/.
 find_binary() {
     local pkg="$1"
     local bin="$2"
 
-    # 1. Build tree (for development)
+    # 1. Pure-CMake build tree (build/src/<pkg>/<bin>)
     local build_path="${BUILD_DIR}/src/${pkg}/${bin}"
     if [[ -x "${build_path}" ]]; then
         echo "${build_path}"
         return
     fi
 
-    # 2. Install tree (for deployment)
+    # 2. Catkin devel tree (devel/lib/<catkin_pkg>/<bin>)
+    local devel_path=""
+    local candidate="${DEVEL_DIR}/lib/${pkg}/${bin}"
+    if [[ -x "${candidate}" ]]; then
+        devel_path="${candidate}"
+    else
+        local rest="${pkg}"
+        while [[ -n "${rest}" ]]; do
+            candidate="${DEVEL_DIR}/lib/${rest##*/}/${bin}"
+            if [[ -x "${candidate}" ]]; then
+                devel_path="${candidate}"
+                break
+            fi
+            [[ "${rest}" == */* ]] || break
+            rest="${rest%/*}"
+        done
+    fi
+    if [[ -n "${devel_path}" ]]; then
+        echo "${devel_path}"
+        return
+    fi
+
+    # 3. Install tree (for deployment)
     local install_path="${INSTALL_DIR}/bin/${bin}"
     if [[ -x "${install_path}" ]]; then
         echo "${install_path}"
         return
     fi
 
-    # 3. Fallback: PATH
+    # 4. Fallback: PATH
     if command -v "${bin}" &>/dev/null; then
         command -v "${bin}"
         return
@@ -183,6 +219,7 @@ find_binary() {
 
     echo "ERROR: binary '${bin}' not found in:" >&2
     echo "  build:   ${build_path}" >&2
+    echo "  devel:   ${DEVEL_DIR}/lib/<pkg>/${bin}" >&2
     echo "  install: ${install_path}" >&2
     echo "  PATH:    (not found)" >&2
     exit 1

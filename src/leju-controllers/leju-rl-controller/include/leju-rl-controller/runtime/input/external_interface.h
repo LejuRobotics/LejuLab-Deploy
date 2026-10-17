@@ -69,7 +69,8 @@ class ExternalInterface : public InputSource {
   bool initialize(const RobotVersion& version,
                   TriggerBuffer& trigger_buffer,
                   ControllerManager& controller_manager,
-                  Lifecycle& lifecycle);
+                  Lifecycle& lifecycle,
+                  bool hold_after_tact = false);
 
   /**
    * @brief 关闭

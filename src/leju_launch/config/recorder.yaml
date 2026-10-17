@@ -30,6 +30,9 @@ dds:
     - "/.*/motion_frame"
     - "/.*/policy_inference_frequency_hz"
     - "/.*/velocity_cmd_to_policy"
+    - "/rl_controller/heft/.*"
+    - "/rt/pico/heft_reference"
+    - "/rt/pico/bone_poses"
 
 # Output Configuration
 output:

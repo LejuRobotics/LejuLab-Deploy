@@ -13,7 +13,8 @@ namespace runtime {
 enum class InputPriority : int {
   kJoy = 0,       ///< Joy 手柄
   kQuest = 1,     ///< Quest VR 手柄
-  kExternal = 2,  ///< 外部接口
+  kPico = 2,      ///< Pico VR 手柄（leju_pico_gmr DDS）
+  kExternal = 3,  ///< 外部接口
 };
 
 /**

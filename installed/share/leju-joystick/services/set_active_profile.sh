@@ -435,6 +435,120 @@ PY
 }
 
 # ---------------------------------------------------------------------------
+# patch_user_dance_teleop  - 前端导入舞蹈后更新现场手柄配置
+#   只覆盖 A/Y 两个单键绑定，保留其余现场配置；变更前把上一版保存为 .bak。
+# ---------------------------------------------------------------------------
+patch_user_dance_teleop() {
+    local config_user="${SUDO_USER:-root}"
+    local config_home=""
+
+    # 桌面端通过 lab 用户执行 sudo，运行时配置也由该用户持有。root 直接调用时，
+    # 回退到工作区属主，兼容现场手工部署命令。
+    if [ "${config_user}" = "root" ]; then
+        local ws_root
+        ws_root="$(resolve_ws_root)"
+        local ws_owner
+        ws_owner="$(stat -c '%U' "${ws_root}")"
+        if [ -n "${ws_owner}" ] && [ "${ws_owner}" != "root" ]; then
+            config_user="${ws_owner}"
+        fi
+    fi
+
+    config_home="$(getent passwd "${config_user}" | cut -d: -f6)"
+    if [ -z "${config_home}" ]; then
+        echo "error: cannot resolve HOME for teleop config user ${config_user}" >&2
+        return 1
+    fi
+
+    local target="${config_home}/.config/lejuconfig/teleop_bindings.yaml"
+    if [ ! -s "${target}" ]; then
+        echo "error: runtime teleop config not found: ${target}" >&2
+        return 1
+    fi
+
+    python3 - "${target}" <<'PY'
+import os
+import shutil
+import stat
+import sys
+import tempfile
+from pathlib import Path
+
+import yaml
+
+target = Path(sys.argv[1])
+with target.open(encoding="utf-8") as stream:
+    document = yaml.safe_load(stream)
+if not isinstance(document, dict) or not isinstance(document.get("joy_bindings"), list):
+    raise SystemExit(f"runtime teleop YAML must contain joy_bindings: {target}")
+
+bindings = document["joy_bindings"]
+replacements = {
+    ("A",): {
+        "buttons": ["A"],
+        "action": {
+            "type": "MotionCommand",
+            "args": {"op": "Start", "name": ""},
+        },
+    },
+    ("Y",): {
+        "buttons": ["Y"],
+        "action": {
+            "type": "SwitchController",
+            "args": {"name": "mimic_user", "auto_start_motion": False},
+        },
+    },
+}
+
+# 在原位置替换第一条同键绑定并删除重复项；原配置没有该键时追加。
+seen = set()
+updated = []
+for item in bindings:
+    buttons = tuple(item.get("buttons", [])) if isinstance(item, dict) else ()
+    if buttons not in replacements:
+        updated.append(item)
+        continue
+    if buttons not in seen:
+        updated.append(replacements[buttons])
+        seen.add(buttons)
+for buttons in (("A",), ("Y",)):
+    if buttons not in seen:
+        updated.append(replacements[buttons])
+document["joy_bindings"] = updated
+
+output = yaml.safe_dump(document, allow_unicode=True, sort_keys=False)
+check = yaml.safe_load(output)
+if not isinstance(check, dict) or not isinstance(check.get("joy_bindings"), list):
+    raise SystemExit("generated teleop YAML failed validation")
+
+current = target.read_text(encoding="utf-8")
+if current == output:
+    print(f"teleop bindings unchanged: {target}")
+    raise SystemExit(0)
+
+mode = stat.S_IMODE(target.stat().st_mode)
+backup = Path(str(target) + ".bak")
+shutil.copy2(target, backup)
+
+fd, tmp_name = tempfile.mkstemp(prefix=".teleop_bindings.", dir=str(target.parent))
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as stream:
+        stream.write(output)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.chmod(tmp_name, mode)
+    os.chown(tmp_name, target.stat().st_uid, target.stat().st_gid)
+    os.replace(tmp_name, target)
+finally:
+    if os.path.exists(tmp_name):
+        os.unlink(tmp_name)
+
+print(f"teleop bindings backup: {backup}")
+print(f"teleop bindings updated: A=Start, Y=mimic_user ({target})")
+PY
+}
+
+# ---------------------------------------------------------------------------
 # import_dance_profile  - 前端导入舞蹈文件主流程（user_dance 挂载模式）
 #   不替换 current；current 始终指向 deploy 部署的 base profile。
 #   1. 校验导入目录 (.yaml + .csv + .onnx)
@@ -443,7 +557,8 @@ PY
 #   4. 原子替换 profiles/<name>
 #   5. (re)point current/user_dance -> profiles/<name>
 #   6. 就地修补 base controller_manager.yaml 追加 mimic_user (config: user_dance/config_mimic.yaml)
-#   7. 记录 user_dance 元数据
+#   7. 备份并更新现场 teleop_bindings.yaml 的 A/Y 绑定
+#   8. 记录 user_dance 元数据
 # ---------------------------------------------------------------------------
 import_dance_profile() {
     local import_from_dir="$1"
@@ -524,7 +639,10 @@ import_dance_profile() {
     # --- Step 5: 就地修补 base controller_manager.yaml 追加 mimic_user ---
     patch_controller_manager "${base_dir}/controller_manager.yaml"
 
-    # --- Step 6: 记录 user_dance 元数据 ---
+    # --- Step 6: 备份并更新运行时手柄绑定（仓库默认配置保持不变） ---
+    patch_user_dance_teleop
+
+    # --- Step 7: 记录 user_dance 元数据 ---
     write_user_dance_metadata "${profile_name}" "${managed_target_dir}" "${source_name}"
 
     echo "imported user dance: ${profile_name} -> ${managed_target_dir}"

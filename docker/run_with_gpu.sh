@@ -118,7 +118,6 @@ if [[ $(docker ps -aq -f ancestor=${IMAGE_NAME} -f name=${CONTAINER_NAME}) ]]; t
 else
     echo "Creating a new container '${CONTAINER_NAME}' based on image '${IMAGE_NAME}' ..."
 	docker run -it --net host --gpus all \
-		--runtime nvidia \
         --name $CONTAINER_NAME \
 		--privileged \
 		-v /dev:/dev \

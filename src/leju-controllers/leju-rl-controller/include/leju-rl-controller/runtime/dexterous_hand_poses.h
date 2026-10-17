@@ -11,11 +11,11 @@ inline constexpr std::size_t kDexterousHandDof = 6;
 inline constexpr std::array<double, kDexterousHandDof> kDefaultOpenHandPose{
     60.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-// LB+X 的全开/全闭 toggle 姿态。
+// LB+X 全开 toggle 姿态（分段握拳第 0 段与张开终点）。
 inline constexpr std::array<double, kDexterousHandDof> kFullyOpenHandPose{
     0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-inline constexpr std::array<double, kDexterousHandDof> kFullyClosedHandPose{
-    100.0, 100.0, 100.0, 100.0, 100.0, 100.0};
+// 注：LB+X 握拳终点不再单独定义，与倒地起身/搬运共用
+// kTransportClosedHandPose（{75,75,100,100,100,100}，真机验证安全值）。
 
 // 搬运模式分阶段握拳和退出释放姿态。
 inline constexpr std::array<double, kDexterousHandDof> kTransportFourFingerGripPose{

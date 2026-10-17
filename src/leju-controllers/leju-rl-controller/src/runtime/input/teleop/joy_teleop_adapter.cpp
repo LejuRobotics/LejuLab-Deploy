@@ -17,6 +17,16 @@
 namespace leju {
 namespace runtime {
 
+namespace {
+
+// LB+X 分段握拳时序。为提升手感，比倒地起身/搬运（TransportFallStandScheduler
+// 的 kHandResetDelaySec=1.0 / kFourFingerGripDelaySec=0.5）更快，已解耦不共享。
+constexpr double kHandPreGripDelaySec = 0.5;    // 全开/拇指预位 → 四指闭合
+constexpr double kHandFourFingerDelaySec = 0.3; // 四指闭合 → 拇指收（握拳终点）
+constexpr double kHandOpenLockSec = 0.5;        // 张开锁定窗口：拇指从 75 完全回位至 0，镜像 kHandPreGripDelaySec
+
+}  // namespace
+
 // ============================================================================
 // 构造/析构
 // ============================================================================
@@ -124,8 +134,12 @@ void JoyTeleopAdapter::onJoyData(const JoyData& joy, const JoyData::Buttons& pre
     handleArmUnlock(current_combo, triggers);
 
     // LB+X 灵巧手抓握 toggle
-    handleHandGripToggle(current_combo);
+    handleHandGripToggle(current_combo, current_time);
   }
+
+  // 推进 LB+X 分段握拳序列（置于组合键处理之后，保证同帧 toggle 张开先清
+  // 待发阶段，再判断是否补发下一段，避免"先握拳再张开"回勾）。
+  tickHandGripSequencer(current_time);
 
   // 仅依据本帧产生的 START/切 AMP 事件启动保护；后续计数也只发生在 Joy 回调。
   armVelocityNeutralGuard(triggers);
@@ -386,7 +400,8 @@ void JoyTeleopAdapter::handleArmUnlock(const ComboKey& current_combo,
   }
 }
 
-void JoyTeleopAdapter::handleHandGripToggle(const ComboKey& current_combo) {
+void JoyTeleopAdapter::handleHandGripToggle(const ComboKey& current_combo,
+                                            double current_time) {
   if (!has_prev_state_) {
     return;
   }
@@ -394,17 +409,61 @@ void JoyTeleopAdapter::handleHandGripToggle(const ComboKey& current_combo) {
   const bool was = (ComboKeyToString(prev_combo_) == kHandGripCombo);
   const bool now = (ComboKeyToString(current_combo) == kHandGripCombo);
   if (now && !was) {
-    hand_grip_toggled_ = !hand_grip_toggled_;
-    leju::HandCmd cmd;
-    const auto& pose = hand_grip_toggled_ ? kFullyClosedHandPose : kFullyOpenHandPose;
-    for (std::size_t i = 0; i < kDexterousHandDof; ++i) {
-      cmd.position[i] = pose[i];
-      cmd.position[kDexterousHandDof + i] = pose[i];
+    // 动作执行中（握拳序列或张开锁定窗口）忽略再按，避免打断半程动作或
+    // 拇指未回位即反向握拳卡滞；待当前动作完成后再接受下一指令。
+    if (hand_grip_stage_ != HandGripStage::kIdle) {
+      RL_LOGI("JoyTeleopAdapter: LB+X ignored, hand action in progress (stage=%d)",
+              static_cast<int>(hand_grip_stage_));
+      return;
     }
-    cmd.timestamp = leju::common::GetUnixTimestampS();
-    leju::GlobalRobot::getInstance().publishHandCmd(cmd);
-    RL_LOGI("JoyTeleopAdapter: LB+X 灵巧手 %s", hand_grip_toggled_ ? "闭合" : "张开");
+    hand_grip_toggled_ = !hand_grip_toggled_;
+    if (hand_grip_toggled_) {
+      // 分段握拳（与倒地起身同构）：先回全开/拇指预位，再由
+      // tickHandGripSequencer 依次补发四指闭合与拇指收，避免拇指/食指
+      // 同时全速进入交会区造成机械干涉。
+      publishHandPose(kFullyOpenHandPose);
+      hand_grip_stage_ = HandGripStage::kWaitFourFingers;
+      hand_grip_stage_at_ = current_time + kHandPreGripDelaySec;
+    } else {
+      // 张开：立即全开并进入张开锁定窗口，窗口内忽略再按，
+      // 待拇指完全回位后再接受握拳，防止反向卡滞。
+      publishHandPose(kFullyOpenHandPose);
+      hand_grip_stage_ = HandGripStage::kOpening;
+      hand_grip_stage_at_ = current_time + kHandOpenLockSec;
+    }
+    RL_LOGI("JoyTeleopAdapter: LB+X dexterous hand %s",
+            hand_grip_toggled_ ? "closed" : "opened");
   }
+}
+
+void JoyTeleopAdapter::tickHandGripSequencer(double now) {
+  if (hand_grip_stage_ == HandGripStage::kIdle || now < hand_grip_stage_at_) {
+    return;
+  }
+  if (hand_grip_stage_ == HandGripStage::kWaitFourFingers) {
+    publishHandPose(kTransportFourFingerGripPose);
+    hand_grip_stage_ = HandGripStage::kWaitThumbs;
+    hand_grip_stage_at_ = now + kHandFourFingerDelaySec;
+    return;
+  }
+  if (hand_grip_stage_ == HandGripStage::kWaitThumbs) {
+    // 到达握拳终点（与倒地起身 kTransportClosedHandPose 一致），此后接受张开。
+    hand_grip_stage_ = HandGripStage::kIdle;
+    publishHandPose(kTransportClosedHandPose);
+    return;
+  }
+  // kOpening：张开锁定窗口结束，动作完成，此后接受握拳。
+  hand_grip_stage_ = HandGripStage::kIdle;
+}
+
+void JoyTeleopAdapter::publishHandPose(const HandPoseArray& pose) {
+  leju::HandCmd cmd;
+  for (std::size_t i = 0; i < kDexterousHandDof; ++i) {
+    cmd.position[i] = pose[i];
+    cmd.position[kDexterousHandDof + i] = pose[i];
+  }
+  cmd.timestamp = leju::common::GetUnixTimestampS();
+  leju::GlobalRobot::getInstance().publishHandCmd(cmd);
 }
 
 void JoyTeleopAdapter::processSystemButtons(const JoyData& joy,

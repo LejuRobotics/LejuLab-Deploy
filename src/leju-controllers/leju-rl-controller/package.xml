@@ -49,13 +49,14 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>lejusdk-dds-idl</depend>
   <depend>lejusdk-lowlevel</depend>
   <depend>lejusdk-utils</depend>
   <depend>lejusdk-vr</depend>
-  <depend>lejusdk-dds-idl</depend>
   <depend>lejusdk-topic-pubsub</depend>
   <depend>leju-hardware</depend>
   <depend>pinocchio</depend>
+  <depend>libopencv-dev</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -209,6 +209,32 @@ class ControllerBase {
   }
 
   /**
+   * @brief 激活就绪检查（ControllerManager::requestSwitch 切换前调用）
+   * @param[out] reason 不就绪时的原因说明（日志用）
+   * @return 就绪返回 true（默认恒就绪）
+   *
+   * 需要外部数据流的控制器（depth 深度图、HEFT live 参考等）覆写此方法，
+   * 避免在数据未就绪时被切换激活。
+   */
+  virtual bool isActivationReady(std::string& reason) const {
+    (void)reason;
+    return true;
+  }
+
+  /**
+   * @brief 数据流退化时的回退请求（ControllerManager::update 轮询）
+   * @param[out] to 回退目标控制器名称
+   * @return 需要回退返回 true（默认 false）
+   *
+   * 依赖外部数据流的控制器在持续丢流时通过此接口请求平滑切换到
+   * 安全控制器（如 amp），走正常 requestSwitch 双推理过渡。
+   */
+  virtual bool requestsFallback(std::string& to) const {
+    (void)to;
+    return false;
+  }
+
+  /**
    * @brief 开始播放 motion（用于舞蹈/动作播放控制器）
    * @return 成功返回 true，不支持则返回 false
    *

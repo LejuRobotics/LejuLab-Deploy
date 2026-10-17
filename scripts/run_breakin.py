@@ -13,7 +13,8 @@
   sudo python3 scripts/run_breakin.py --version 17 --setup-can -- --rounds 100
   sudo python3 scripts/run_breakin.py --version 14 -- --leg-only
 
-v17 默认从 ~/.config/lejuconfig/canbus_device_cofig.yaml 读腿/腰电机 id 与 kp/kd
+v17 默认优先从 ~/.config/lejuconfig/canbus_device_config.yaml 读腿/腰电机 id 与 kp/kd，
+不存在时兼容历史错误名 canbus_device_cofig.yaml
 (可用 --device-config 覆盖, --no-device-config 关闭)。完整参数见 docs/canfd-breakin-guide.md。
 """
 from __future__ import annotations
@@ -28,7 +29,8 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = SCRIPT_DIR.parent
 
-DEFAULT_DEVICE_CONFIG = Path.home() / ".config/lejuconfig/canbus_device_cofig.yaml"
+DEFAULT_DEVICE_CONFIG = Path.home() / ".config/lejuconfig/canbus_device_config.yaml"
+LEGACY_DEVICE_CONFIG = Path.home() / ".config/lejuconfig/canbus_device_cofig.yaml"
 
 REL_BIN = ("src/leju-hardware/lejusdk-hw/src/hardware_plant/lib/"
            "motorevo_controller/examples/canfd_breakin")
@@ -51,6 +53,18 @@ def info(m):    print(_c("0;36", m))
 def ok(m):      print(_c("0;32", m))
 def warn(m):    print(_c("1;33", m))
 def err(m):     print(_c("0;31", m), file=sys.stderr)
+
+
+def default_device_config() -> Path:
+    """Use the runtime's config-first selection without migrating either file."""
+    if DEFAULT_DEVICE_CONFIG.is_file():
+        if LEGACY_DEVICE_CONFIG.is_file():
+            warn(f"检测到新旧两份 CANBUS 配置，将使用正确文件名 {DEFAULT_DEVICE_CONFIG}")
+        return DEFAULT_DEVICE_CONFIG
+    if LEGACY_DEVICE_CONFIG.is_file():
+        warn(f"使用历史错误文件名 {LEGACY_DEVICE_CONFIG}")
+        return LEGACY_DEVICE_CONFIG
+    return DEFAULT_DEVICE_CONFIG
 
 
 # ---------- 定位二进制 ----------
@@ -199,7 +213,7 @@ def main() -> int:
                     help="机器人版本对应的磨线配置 (默认 17)")
     ap.add_argument("--config", help="直接指定 YAML 配置 (覆盖 --version)")
     ap.add_argument("--binary", help="直接指定 canfd_breakin 二进制路径")
-    ap.add_argument("--device-config", help="部署 canbus 配置路径 (默认 ~/.config/lejuconfig/canbus_device_cofig.yaml)")
+    ap.add_argument("--device-config", help="部署 canbus 配置路径 (默认优先使用 canbus_device_config.yaml，兼容旧名 cofig)")
     ap.add_argument("--no-device-config", action="store_true", help="不使用部署配置, 用 yaml 内手写拓扑")
     ap.add_argument("--setup-can", action="store_true",
                     help="启动前用 ip link 拉起所需 CAN 总线")
@@ -235,7 +249,7 @@ def main() -> int:
         if args.device_config:
             device_config = Path(args.device_config).expanduser()
         elif args.version in VERSION_USES_DEVICE_CONFIG:
-            device_config = DEFAULT_DEVICE_CONFIG
+            device_config = default_device_config()
 
     # ---- 确定要操作的 CAN 总线 ----
     if device_config and device_config.is_file():

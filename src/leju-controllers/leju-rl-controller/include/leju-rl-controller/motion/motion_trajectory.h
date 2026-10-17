@@ -51,7 +51,7 @@ class MotionTrajectory {
   array_t getFirstFrameJointPos() const;
 
   /**
-   * @brief 获取当前帧的关节速度
+   * @brief 获取当前帧的关节速度（末帧保持时返回零速度）
    */
   array_t getJointVel() const;
 
@@ -64,6 +64,20 @@ class MotionTrajectory {
    * @brief 获取当前帧的基座四元数
    */
   Eigen::Quaterniond getBodyQuat() const;
+
+  /// @brief 获取相对当前帧指定偏移处的数据（越界时钳制到首/末帧）
+  array_t getJointPosAtOffset(int frame_offset) const;
+  /// @brief 获取偏移帧速度；钳制到末帧时返回零速度（旧静态保持语义）
+  array_t getJointVelAtOffset(int frame_offset) const;
+  /// @brief 获取 CSV 中记录的偏移帧速度；钳制到末帧时保留末帧记录值
+  array_t getRecordedJointVelAtOffset(int frame_offset) const;
+  Eigen::Vector3d getBodyPosAtOffset(int frame_offset) const;
+  Eigen::Vector3d getBodyLinVelAtOffset(int frame_offset,
+                                        double frame_dt) const;
+  /// @brief 由相邻姿态估计偏移帧角速度；末帧使用后向差分
+  Eigen::Vector3d getBodyAngVelAtOffset(int frame_offset,
+                                        double frame_dt) const;
+  Eigen::Quaterniond getBodyQuatAtOffset(int frame_offset) const;
 
   /**
    * @brief 获取当前帧的命令（joint_pos + joint_vel 拼接）
@@ -106,9 +120,20 @@ class MotionTrajectory {
    */
   double getReferenceYaw() const { return reference_yaw_; }
 
+  array_t getFrameJointPos(int frame) const;
+  array_t getFrameJointVel(int frame) const;
+  Eigen::Vector3d getFrameBodyPos(int frame) const;
+  Eigen::Quaterniond getFrameBodyQuat(int frame) const;
+
  private:
   bool parseHeader(const std::string& header_line, char delimiter);
   double quaternionToYaw(const Eigen::Quaterniond& q) const;
+
+  int clampFrame(int frame) const {
+    if (frame < 0) return 0;
+    if (frame >= num_frames_) return num_frames_ - 1;
+    return frame;
+  }
 
   bool loaded_ = false;
   int num_frames_ = 0;

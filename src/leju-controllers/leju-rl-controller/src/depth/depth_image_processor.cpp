@@ -2,8 +2,180 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <vector>
+
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/photo.hpp>
 
 namespace leju::depth {
+namespace {
+
+cv::Mat RemoveWhiteSpots(const cv::Mat& depth, double depth_diff,
+                         double white_threshold, int max_spot_size,
+                         double surrounding_black_ratio) {
+  cv::Mat result = depth.clone();
+  cv::Mat white_mask;
+  cv::compare(depth, white_threshold, white_mask, cv::CMP_GT);
+  cv::Mat labels;
+  cv::Mat stats;
+  cv::Mat centroids;
+  const int component_count = cv::connectedComponentsWithStats(
+      white_mask, labels, stats, centroids, 8, CV_32S);
+  if (component_count <= 1) return result;
+
+  std::vector<double> depth_sums(component_count, 0.0);
+  std::vector<int> pixel_counts(component_count, 0);
+  for (int y = 0; y < depth.rows; ++y) {
+    for (int x = 0; x < depth.cols; ++x) {
+      const int label = labels.at<int>(y, x);
+      if (label > 0) {
+        depth_sums[label] += depth.at<float>(y, x);
+        ++pixel_counts[label];
+      }
+    }
+  }
+  std::vector<double> component_means(component_count, 0.0);
+  for (int label = 1; label < component_count; ++label) {
+    component_means[label] =
+        depth_sums[label] / (static_cast<double>(pixel_counts[label]) + 1e-7);
+  }
+
+  cv::Mat labels_u16;
+  labels.convertTo(labels_u16, CV_16U);
+  cv::Mat dilated_labels;
+  cv::dilate(labels_u16, dilated_labels,
+             cv::Mat::ones(3, 3, CV_8U));
+  std::vector<int> border_counts(component_count, 0);
+  std::vector<int> black_counts(component_count, 0);
+  for (int y = 0; y < depth.rows; ++y) {
+    for (int x = 0; x < depth.cols; ++x) {
+      if (labels.at<int>(y, x) != 0) continue;
+      const int label = static_cast<int>(dilated_labels.at<uint16_t>(y, x));
+      if (label <= 0 || label >= component_count) continue;
+      ++border_counts[label];
+      if (depth.at<float>(y, x) < component_means[label] - depth_diff) {
+        ++black_counts[label];
+      }
+    }
+  }
+
+  std::vector<uint8_t> remove(component_count, 0);
+  for (int label = 1; label < component_count; ++label) {
+    const double ratio = border_counts[label] == 0
+                             ? 0.0
+                             : static_cast<double>(black_counts[label]) /
+                                   border_counts[label];
+    if (stats.at<int>(label, cv::CC_STAT_AREA) < max_spot_size &&
+        ratio >= surrounding_black_ratio) {
+      remove[label] = 1;
+    }
+  }
+  for (int y = 0; y < depth.rows; ++y) {
+    for (int x = 0; x < depth.cols; ++x) {
+      const int label = labels.at<int>(y, x);
+      if (label > 0 && remove[label]) result.at<float>(y, x) = 0.0f;
+    }
+  }
+  return result;
+}
+
+bool ProcessRealCameraFrame(const DepthFrame& frame,
+                            const DepthProcessorConfig& config,
+                            ProcessedDepth& out) {
+  cv::Mat depth(frame.height, frame.width, CV_32F);
+  for (int y = 0; y < frame.height; ++y) {
+    for (int x = 0; x < frame.width; ++x) {
+      float value =
+          frame.pixels[static_cast<size_t>(y * frame.width + x)] / 1000.0f;
+      if (!std::isfinite(value) || value < 0.0f) value = 0.0f;
+      depth.at<float>(y, x) = value;
+    }
+  }
+
+  cv::resize(depth, depth, cv::Size(frame.width / 2, frame.height / 2),
+             0.0, 0.0, cv::INTER_NEAREST);
+  depth = RemoveWhiteSpots(depth, 0.25, 2.5, 1024, 0.5);
+  depth = RemoveWhiteSpots(depth, 0.5, 1.0, 1024, 0.5);
+
+  cv::Mat mask;
+  cv::compare(depth, 0.0, mask, cv::CMP_EQ);
+  if (cv::countNonZero(mask) > 0) {
+    cv::dilate(mask, mask, cv::Mat::ones(2, 2, CV_8U));
+  }
+  cv::resize(depth, depth,
+             cv::Size(config.output_width, config.output_height),
+             0.0, 0.0, cv::INTER_NEAREST);
+  cv::resize(mask, mask,
+             cv::Size(config.output_width, config.output_height),
+             0.0, 0.0, cv::INTER_NEAREST);
+
+  cv::Mat valid_mask;
+  cv::compare(depth, 0.0, valid_mask, cv::CMP_GT);
+  const int valid_count = cv::countNonZero(valid_mask);
+  if (valid_count == 0) {
+    out.error = "depth image has no valid pixels";
+    return false;
+  }
+  double minimum_raw = 0.0;
+  double maximum_raw = 0.0;
+  cv::minMaxLoc(depth, &minimum_raw, &maximum_raw, nullptr, nullptr,
+                valid_mask);
+  const float minimum = static_cast<float>(minimum_raw);
+  const float maximum = static_cast<float>(maximum_raw);
+  const float span = maximum - minimum;
+  cv::Mat gray(depth.size(), CV_8U, cv::Scalar(0));
+  for (int y = 0; y < depth.rows; ++y) {
+    for (int x = 0; x < depth.cols; ++x) {
+      if (valid_mask.at<uint8_t>(y, x) == 0) continue;
+      const float scaled = span > 0.0f
+                               ? (depth.at<float>(y, x) - minimum) /
+                                     span * 255.0f
+                               : 0.0f;
+      gray.at<uint8_t>(y, x) = static_cast<uint8_t>(
+          std::clamp(scaled, 0.0f, 255.0f));
+    }
+  }
+
+  cv::Mat inpainted_gray;
+  cv::inpaint(gray, mask, inpainted_gray, 2.0, cv::INPAINT_NS);
+  cv::Mat inpainted(depth.size(), CV_32F);
+  for (int y = 0; y < depth.rows; ++y) {
+    for (int x = 0; x < depth.cols; ++x) {
+      if (valid_mask.at<uint8_t>(y, x) != 0) {
+        inpainted.at<float>(y, x) = depth.at<float>(y, x);
+      } else {
+        inpainted.at<float>(y, x) =
+            inpainted_gray.at<uint8_t>(y, x) / 255.0f * span + minimum;
+      }
+    }
+  }
+
+  cv::Mat filtered;
+  if (config.gaussian_blur) {
+    cv::GaussianBlur(inpainted, filtered, cv::Size(3, 3), 1.0, 1.0,
+                     cv::BORDER_DEFAULT);
+  } else {
+    filtered = inpainted;
+  }
+  out.width = config.output_width;
+  out.height = config.output_height;
+  out.pixels.resize(static_cast<size_t>(out.width * out.height));
+  for (int y = 0; y < out.height; ++y) {
+    for (int x = 0; x < out.width; ++x) {
+      const float value = std::clamp(filtered.at<float>(y, x), 0.0f,
+                                     config.max_depth_m);
+      out.pixels[static_cast<size_t>(y * out.width + x)] =
+          value / config.max_depth_m;
+    }
+  }
+  out.valid_ratio = static_cast<double>(valid_count) /
+                    static_cast<double>(out.pixels.size());
+  return true;
+}
+
+}  // namespace
 
 DepthImageProcessor::DepthImageProcessor(DepthProcessorConfig config)
     : config_(config) {}
@@ -17,6 +189,18 @@ ProcessedDepth DepthImageProcessor::process(const DepthFrame& frame) const {
     out.error = "invalid input dimensions";
     return out;
   }
+
+  const bool supported_real_camera_size =
+      (frame.width == 424 && frame.height == 240) ||
+      (frame.width == 480 && frame.height == 270);
+  const bool is_real_camera =
+      supported_real_camera_size && frame.unit == DepthUnit::kMillimeters;
+  if (is_real_camera) {
+    if (!ProcessRealCameraFrame(frame, config_, out)) return out;
+    out.valid = true;
+    return out;
+  }
+
   const int left = std::clamp(config_.crop_left, 0, frame.width - 1);
   const int right = std::clamp(config_.crop_right, 0, frame.width - left - 1);
   const int top = std::clamp(config_.crop_top, 0, frame.height - 1);
@@ -44,8 +228,6 @@ ProcessedDepth DepthImageProcessor::process(const DepthFrame& frame) const {
           value / config_.max_depth_m;
     }
   }
-  // 源端在 Gaussian 前对零值空洞做 inpaint。采用三次快照邻域传播，
-  // 仅填充至少有 3 个有效邻居的空洞，边界/全空帧仍保持 0。
   for (int pass = 0; pass < 3; ++pass) {
     const auto before = out.pixels;
     for (int y = 0; y < out.height; ++y) {
@@ -73,9 +255,6 @@ ProcessedDepth DepthImageProcessor::process(const DepthFrame& frame) const {
   }
   if (config_.gaussian_blur) {
     const auto before = out.pixels;
-    // cv2.GaussianBlur(..., (3,3), sigma=1) is the source setting.  The
-    // separable [1,2,1]/4 kernel is numerically equivalent up to the
-    // border policy; clamp-to-edge keeps depth values valid at boundaries.
     for (int y = 0; y < out.height; ++y) {
       for (int x = 0; x < out.width; ++x) {
         float value = 0.0f;
