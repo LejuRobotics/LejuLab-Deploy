@@ -126,11 +126,13 @@ struct MotionCommand {
   bool valid = false;       ///< 是否有效
   bool cmd_stance_valid = false;  ///< 是否携带 cmd_stance 覆盖
   int cmd_stance_mode = 0;        ///< 0=行走, 1=站立/下蹲/弯腰
+  bool posture_height_held_for_waist = false;  ///< LT 保持下蹲高度时允许同时控腰
 
   void setZero() {
     linear_x = linear_y = angular_z = 0.0;
     cmd_stance_valid = false;
     cmd_stance_mode = 0;
+    posture_height_held_for_waist = false;
   }
 
   /**

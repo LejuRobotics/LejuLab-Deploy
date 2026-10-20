@@ -130,6 +130,9 @@ class TactPlayer {
 
   bool IsPlaying() const { return playing_.load(); }
 
+  // stand-only 行走钳制后：本段播放不再写 tact 腰目标，并切腰回 Auto（仅一次）。
+  void abandonWaistForThisPlayback();
+
   // 状态模型 getter（线程安全，供阶段 C 的 1Hz Loop 跨线程读取）。
   // state_/error_code_ 为 atomic；last_name_/error_message_ 由 state_mutex_ 保护。
   int getState() const;
@@ -162,6 +165,7 @@ class TactPlayer {
   // PlaybackLoop 直接读取，消除 100Hz→1000Hz 的台阶效应
   std::vector<vr::tact_player::JointTrajectorySample> precomputed_samples_;
   bool precomputed_has_waist_ = false;
+  std::atomic<bool> waist_abandoned_this_playback_{false};
 
   std::atomic<bool> playing_{false};
   std::atomic<bool> stop_requested_{false};

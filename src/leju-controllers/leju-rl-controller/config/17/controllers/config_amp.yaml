@@ -10,7 +10,8 @@ HumanoidRobotCfg:
     policy_dt: 0.02
     robot:
       enable_arm_controller: true
-      enable_waist_controller: false
+      # 按住 LT，右摇杆左右单独转腰（±85°）；允许同时行走
+      enable_waist_controller: true
       enable_amp_arm_enhance_v17: true
       enable_back_enhance_v17: true
       enable_standup_enhance_v17: true
@@ -244,6 +245,13 @@ HumanoidRobotCfg:
       enabled: true
       squat_height: -0.15   # 下蹲高度 [m]，负值=下蹲；真机标定区间约 0.1~0.2
       duration_sec: 1.5     # 下蹲保持时长 [s]，之后退出
+
+    waist_controller_v17:
+      enable_waist_controller_v17_stand_only: false # 允许 LT 手柄或 kExternal 在行走时控制腰
+      # 外部腰控（LT 手柄或 kExternal）时：腰关节位置观测 = 实测 × virtual_waist_pos_scale；
+      enable_virtual_waist_enhance: true
+      virtual_waist_pos_scale: 0.0   # 外控腰时腰关节位置观测相对实测的比例，1.0 为不缩放
+      virtual_waist_pitch_comp_max_deg: -0.5   # 外控腰 pitch 补偿 [deg]，|腰|到85°时达该值；负号与正号方向相反
 
   velocity_input_manager:
     timeout_sec: 1.0

@@ -257,6 +257,13 @@ class ControllerBase {
   WaistController* getWaistController() { return waist_controller_.get(); }
 
   /**
+   * @brief 用电机空间腰 yaw 覆盖策略输出（CSP + 配置 kp/kd）
+   * @param motor_q 腰 yaw 目标，电机空间 [rad]
+   * @return 当前控制器有腰关节且 cmd 维度匹配时返回 true
+   */
+  bool overrideWaistYawCommand(RobotCmd& cmd, double motor_q) const;
+
+  /**
    * @brief 获取手臂关节索引（在 cmd.q 中的位置）
    * @return 手臂关节索引数组
    */

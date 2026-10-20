@@ -322,6 +322,11 @@ bool ExternalInterface::initialize(const RobotVersion& version,
       tact_player_->Freeze();
     }
   });
+  controller_manager_->setTactWaistAbandonCallback([this]() {
+    if (tact_player_ && tact_player_->IsPlaying()) {
+      tact_player_->abandonWaistForThisPlayback();
+    }
+  });
   // 接收手柄发送高度指令
   posture_height_sub_ = std::make_unique<leju::dds_common::TopicSubscriber<leju::msgs::Float64>>(
       dds_participant_,

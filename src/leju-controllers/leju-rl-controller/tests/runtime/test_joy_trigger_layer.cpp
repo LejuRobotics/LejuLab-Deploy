@@ -675,6 +675,116 @@ TEST(JoyTriggerLayer_F6, RtFreezesSquatHeightInPostureMode) {
   EXPECT_DOUBLE_EQ(adapter.frozen_squat_cmd_, squat_before_rt);
 }
 
+TEST(JoyTriggerLayer_F6, LtWaistControlTemporarilyHoldsSquat) {
+  TriggerBuffer tb;
+  JoyTeleopAdapter adapter(&tb);
+  LoadConfig(adapter, kEdgeYaml);
+  EnableAmpHandPosture(adapter);
+
+  const JoyData neutral = MakeJoy(0, 0, 0, 0, 0, 0, {});
+  const JoyData squat = MakeJoy(0, 0, 0, 1.0f, 0, 0, {});
+  const JoyData lt_waist = MakeJoy(0, 0, -1.0f, 0, 0.8f, 0, {});
+
+  Feed(adapter, tb, neutral, neutral);
+  Feed(adapter, tb, squat, neutral);
+  const double squat_height = adapter.getSnapshot().cmd_vel.angular_z;
+  ASSERT_LT(squat_height, -0.01);
+
+  Feed(adapter, tb, lt_waist, squat);
+  EXPECT_TRUE(adapter.posture_control_mode_);
+  EXPECT_EQ(adapter.getSnapshot().cmd_vel.cmd_stance_mode, 1);
+  EXPECT_TRUE(adapter.getSnapshot().cmd_vel.posture_height_held_for_waist);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, squat_height);
+
+  Feed(adapter, tb, lt_waist, lt_waist);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, squat_height);
+
+  Feed(adapter, tb, neutral, lt_waist);
+  EXPECT_TRUE(adapter.posture_control_mode_);
+  EXPECT_FALSE(adapter.getSnapshot().cmd_vel.posture_height_held_for_waist);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+}
+
+TEST(JoyTriggerLayer_F6, DpadLeftRightDoNotHoldSquatHeight) {
+  TriggerBuffer tb;
+  JoyTeleopAdapter adapter(&tb);
+  LoadConfig(adapter, kEdgeYaml);
+  EnableAmpHandPosture(adapter);
+
+  const JoyData neutral = MakeJoy(0, 0, 0, 0, 0, 0, {});
+  const JoyData squat = MakeJoy(0, 0, 0, 1.0f, 0, 0, {});
+  const JoyData left = MakeJoy(0, 0, 0, 0, 0, 0, {"DPAD_LEFT"});
+  const JoyData right = MakeJoy(0, 0, 0, 0, 0, 0, {"DPAD_RIGHT"});
+
+  Feed(adapter, tb, neutral, neutral);
+  Feed(adapter, tb, squat, neutral);
+  ASSERT_LT(adapter.getSnapshot().cmd_vel.angular_z, -0.01);
+
+  Feed(adapter, tb, left, squat);
+  EXPECT_EQ(adapter.getSnapshot().cmd_vel.cmd_stance_mode, 1);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+  EXPECT_FALSE(adapter.getSnapshot().cmd_vel.posture_height_held_for_waist);
+
+  Feed(adapter, tb, right, left);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+  EXPECT_FALSE(adapter.getSnapshot().cmd_vel.posture_height_held_for_waist);
+}
+
+// ============================================================================
+// F7: 站立时 LT + 右摇杆留给腰，不转身、不进下蹲
+// ============================================================================
+
+TEST(JoyTriggerLayer_F7, LtRightStickDoesNotTurnWhenStanding) {
+  TriggerBuffer tb;
+  JoyTeleopAdapter adapter(&tb);
+  LoadConfig(adapter, kEdgeYaml);
+  EnableAmpHandPosture(adapter);
+
+  JoyData neutral = MakeJoy(0, 0, 0, 0, 0, 0, {});
+  JoyData lt_yaw = MakeJoy(0, 0, 1.0f, 0, 0.8f, 0, {});
+
+  Feed(adapter, tb, neutral, neutral);
+  Feed(adapter, tb, lt_yaw, neutral);
+
+  EXPECT_FALSE(adapter.posture_control_mode_);
+  EXPECT_EQ(adapter.getSnapshot().cmd_vel.cmd_stance_mode, 0);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, 0.0);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+}
+
+TEST(JoyTriggerLayer_F7, LtRightStickStillTurnsWhileWalking) {
+  TriggerBuffer tb;
+  JoyTeleopAdapter adapter(&tb);
+  LoadConfig(adapter, kEdgeYaml);
+  EnableAmpHandPosture(adapter);
+
+  JoyData neutral = MakeJoy(0, 0, 0, 0, 0, 0, {});
+  JoyData walk_turn = MakeJoy(0, -0.8f, 1.0f, 0, 0.8f, 0, {});
+
+  Feed(adapter, tb, neutral, neutral);
+  Feed(adapter, tb, walk_turn, neutral);
+
+  EXPECT_FALSE(adapter.posture_control_mode_);
+  EXPECT_LT(adapter.getSnapshot().cmd_vel.angular_z, -0.1);
+}
+
+TEST(JoyTriggerLayer_F7, LtRightStickDoesNotEnterPosture) {
+  TriggerBuffer tb;
+  JoyTeleopAdapter adapter(&tb);
+  LoadConfig(adapter, kEdgeYaml);
+  EnableAmpHandPosture(adapter);
+
+  JoyData neutral = MakeJoy(0, 0, 0, 0, 0, 0, {});
+  JoyData lt_squat = MakeJoy(0, 0, 0, 1.0f, 0.8f, 0, {});
+
+  Feed(adapter, tb, neutral, neutral);
+  Feed(adapter, tb, lt_squat, neutral);
+
+  EXPECT_FALSE(adapter.posture_control_mode_);
+  EXPECT_EQ(adapter.getSnapshot().cmd_vel.cmd_stance_mode, 0);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+}
+
 // ============================================================================
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);

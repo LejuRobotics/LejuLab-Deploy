@@ -181,6 +181,18 @@ void TactPlayer::SetWaistMode(const std::string& mode_name) {
   }
 }
 
+void TactPlayer::abandonWaistForThisPlayback() {
+  if (!precomputed_has_waist_) {
+    return;
+  }
+  bool expected = false;
+  if (!waist_abandoned_this_playback_.compare_exchange_strong(expected, true)) {
+    return;
+  }
+  RL_LOGI("TactPlayer: stand-only clamp during playback, abandon tact waist for this session");
+  SetWaistMode("kAuto");
+}
+
 bool TactPlayer::Play(const std::string& name,
                       const std::vector<double>& init_arm_pos,
                       const std::vector<double>& init_waist_pos,
@@ -354,6 +366,7 @@ bool TactPlayer::Play(const std::string& name,
   frozen_.store(false);
   const uint64_t generation = ++generation_;
   active_generation_.store(generation);
+  waist_abandoned_this_playback_.store(false);
   playing_.store(true);
   // 状态模型：成功启动播放，覆盖上次终态
   error_code_.store(kTactOk);
@@ -444,7 +457,7 @@ void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns, uint64_t generat
     arm_cmd.acc = sample.acc;
     cmd_buffer_->writeArmTarget(arm_cmd);
 
-    if (sample.has_waist) {
+    if (sample.has_waist && !waist_abandoned_this_playback_.load()) {
       ExternalJointTarget waist_cmd;
       waist_cmd.q = {-sample.waist_q};
       waist_cmd.v = {-sample.waist_v};
@@ -477,7 +490,7 @@ void TactPlayer::PlaybackLoop(int64_t target_execution_time_ns, uint64_t generat
     }
     // hold_after_tact 仅保持手臂，不锁定腰部；正常完成/Stop 后腰部仍恢复 Auto。
     // 带腰部动作的 tact 不保证全身姿态或末端位置保持，抓持场景需确认腰部恢复的影响。
-    if (precomputed_has_waist_) {
+    if (precomputed_has_waist_ && !waist_abandoned_this_playback_.load()) {
       SetWaistMode("kAuto");
     }
   } else {

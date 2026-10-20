@@ -27,6 +27,9 @@ namespace {
 struct HoldPoseForceLink {
   HoldPoseForceLink() { ForceLinkHoldPoseController(); }
 } g_hold_pose_force_link;
+
+constexpr double kWaistLateralCommandThreshold = 0.3;
+constexpr double kWaistLateralGateFilterTimeConstantSec = 0.1;
 }  // namespace
 
 bool IsFallenPose(const ImuData& imu, double threshold_deg) {
@@ -189,6 +192,7 @@ bool ControllerManager::initialize(const std::string& config_file, const std::st
         std::lock_guard<std::mutex> lock(joy_mutex_);
         constexpr float kHeadJoyRtThreshold = 0.50f;
         constexpr float kDeadzone = 0.15f;
+        constexpr float kWaistStickDeadzone = 0.05f;
         constexpr float kHeadSpeed = 0.03f;
         constexpr float kHeadReturnSpeedRadPerSec = 1.5f;
         constexpr float kYawMax = static_cast<float>(M_PI_2);
@@ -206,6 +210,15 @@ bool ControllerManager::initialize(const std::string& config_file, const std::st
         last_head_joy_update_ = now;
 
         const bool rt_now = joy->axes.right_trigger >= kHeadJoyRtThreshold;
+        const float waist_lx =
+            std::abs(joy->axes.left_x) > kWaistStickDeadzone ? joy->axes.left_x : 0.0f;
+        const float waist_ly =
+            std::abs(joy->axes.left_y) > kWaistStickDeadzone ? joy->axes.left_y : 0.0f;
+        waist_lt_held_ = joy->axes.left_trigger >= kHeadJoyRtThreshold;
+        waist_rt_held_ = rt_now;
+        waist_left_neutral_ = (waist_lx == 0.0f && waist_ly == 0.0f);
+        waist_stick_x_ =
+            std::abs(joy->axes.right_x) > kDeadzone ? joy->axes.right_x : 0.0f;
         const bool was_active = head_joy_active_;
         head_joy_active_ = rt_now;
 
@@ -267,7 +280,22 @@ bool ControllerManager::addController(const std::string& name,
   std::lock_guard<std::recursive_mutex> lock(controllers_mutex_);
   controllers_.push_back({name, config_path, std::move(controller), {}, 0.0});
   RL_LOGI("Added controller: %s", name.c_str());
+  propagateTactWaistAbandonCallback();
   return true;
+}
+
+void ControllerManager::setTactWaistAbandonCallback(TactWaistAbandonCallback callback) {
+  tact_waist_abandon_callback_ = std::move(callback);
+  propagateTactWaistAbandonCallback();
+}
+
+void ControllerManager::propagateTactWaistAbandonCallback() {
+  std::lock_guard<std::recursive_mutex> lock(controllers_mutex_);
+  for (const auto& entry : controllers_) {
+    if (auto* generic = dynamic_cast<GenericRLController*>(entry.controller.get())) {
+      generic->setTactWaistAbandonCallback(tact_waist_abandon_callback_);
+    }
+  }
 }
 
 std::string ControllerManager::getControllerConfigPath(
@@ -566,6 +594,119 @@ void ControllerManager::stop() {
   std::cout.flush();
 }
 
+void ControllerManager::updateWaistJoyTarget(ControllerBase* controller,
+                                            const RobotState& state,
+                                            const runtime::MotionCommand& cmd_vel) {
+  bool lt = false;
+  bool rt = false;
+  bool left_neutral = false;
+  float stick_x = 0.0f;
+  {
+    std::lock_guard<std::mutex> lock(joy_mutex_);
+    lt = waist_lt_held_;
+    rt = waist_rt_held_;
+    left_neutral = waist_left_neutral_;
+    stick_x = waist_stick_x_;
+  }
+
+  const auto now = std::chrono::steady_clock::now();
+  float dt = 0.01f;
+  if (waist_joy_time_initialized_) {
+    dt = static_cast<float>(
+        std::chrono::duration<double>(now - last_waist_joy_update_).count());
+    dt = std::clamp(dt, 0.001f, 0.05f);
+  } else {
+    waist_joy_time_initialized_ = true;
+  }
+  last_waist_joy_update_ = now;
+  waist_joy_update_dt_ = dt;
+  // 用互斥处理前的侧移请求更新门控；策略里的 filtered_velocity_cmd_
+  // 在腰控接管后会被清零，不能用来判断是否正在请求侧移。
+  const double previous_lateral_cmd =
+      waist_gate_smoothed_cmd_y_.load(std::memory_order_relaxed);
+  const double lateral_alpha =
+      dt / (kWaistLateralGateFilterTimeConstantSec + dt);
+  const double smoothed_lateral_cmd = previous_lateral_cmd +
+      lateral_alpha * (cmd_vel.linear_y - previous_lateral_cmd);
+  waist_gate_smoothed_cmd_y_.store(smoothed_lateral_cmd,
+                                  std::memory_order_relaxed);
+
+  constexpr float kWaistSpeedRadPerSec = 1.0f;
+  constexpr float kWaistReturnSpeedRadPerSec = 1.5f;
+  constexpr float kWaistYawLimitRad = 85.0f * static_cast<float>(M_PI) / 180.0f;
+
+  auto* waist = controller ? controller->getWaistController() : nullptr;
+  auto* generic = dynamic_cast<GenericRLController*>(controller);
+  const bool walking_waist_allowed = generic &&
+                                     generic->robotVersion().start_with(1, 7) &&
+                                     !generic->externalWaistRequiresStand();
+  const bool posture = cmd_vel.cmd_stance_valid && cmd_vel.cmd_stance_mode == 1;
+  const bool motion = generic && generic->isMotionPlaying();
+  const bool external = waist && waist->getMode() == WaistControlMode::kExternal;
+  const bool transitioning = transition_.state == SwitchState::kTransitioning;
+  const bool gesture = lt && !rt && (walking_waist_allowed || left_neutral);
+  const bool command_idle = cmd_vel.isNearZero();
+  const bool lateral_requested =
+      std::abs(smoothed_lateral_cmd) > kWaistLateralCommandThreshold;
+  const bool settled = generic && generic->isJoyWaistStandAllowed();
+  const int waist_motor_id = controller && !controller->getWaistJointIds().empty()
+                                 ? controller->getWaistJointIds()[0] : -1;
+  const bool waist_feedback_valid = waist_motor_id >= 0 &&
+      waist_motor_id < static_cast<int>(state.q.size()) &&
+      std::isfinite(state.q[waist_motor_id]);
+  const bool waist_posture_held = posture && cmd_vel.posture_height_held_for_waist;
+  const bool gate_open = gesture && (!posture || waist_posture_held) &&
+                         (walking_waist_allowed || command_idle) && waist &&
+                         (!lateral_requested || waist_joy_active_ || waist_return_active_) &&
+                         waist_feedback_valid && !external && !motion && !transitioning;
+  const bool can_drive = gate_open &&
+                         (walking_waist_allowed || settled || waist_joy_active_);
+
+  if (can_drive) {
+    waist_handoff_active_ = false;
+    if (!waist_joy_active_) {
+      // Walking policy can leave the waist away from zero. Start at its
+      // measured motor angle so CSP takes over without a position step.
+      waist_joy_yaw_ = std::clamp(static_cast<float>(state.q[waist_motor_id]),
+                                 -kWaistYawLimitRad, kWaistYawLimitRad);
+      RL_LOGI("Waist joy start: LT + right stick, limit ±85 deg");
+    }
+    waist_joy_active_ = true;
+    waist_return_active_ = false;
+    waist_joy_yaw_ -= stick_x * kWaistSpeedRadPerSec * dt;
+    waist_joy_yaw_ = std::clamp(waist_joy_yaw_, -kWaistYawLimitRad, kWaistYawLimitRad);
+  } else if ((waist_joy_active_ || waist_return_active_) && waist && !external &&
+             !motion && !transitioning) {
+    if (waist_joy_active_) {
+      RL_LOGI("Waist joy release: return to 0");
+    }
+    waist_joy_active_ = false;
+    waist_return_active_ = true;
+    const float max_delta = kWaistReturnSpeedRadPerSec * dt;
+    if (std::abs(waist_joy_yaw_) <= max_delta) {
+      waist_joy_yaw_ = 0.0f;
+      waist_return_active_ = false;
+      waist_handoff_active_ = true;
+      RL_LOGI("Waist joy returned to 0");
+    } else {
+      waist_joy_yaw_ -= std::copysign(max_delta, waist_joy_yaw_);
+    }
+  } else if (waist_joy_active_ || waist_return_active_) {
+    RL_LOGI("Waist joy aborted");
+    waist_joy_active_ = false;
+    waist_return_active_ = false;
+    waist_handoff_active_ = false;
+    waist_joy_yaw_ = 0.0f;
+  } else if (waist_handoff_active_ &&
+             (!waist || !waist_feedback_valid || external || motion || transitioning)) {
+    waist_handoff_active_ = false;
+  }
+
+  if (generic) {
+    generic->setJoyWaistObservationHold(waist_joy_active_ || waist_return_active_);
+  }
+}
+
 RobotCmd ControllerManager::update(const RobotState& state,
                                    const ImuData& imu_state,
                                    const runtime::CommandBuffer::Snapshot& command) {
@@ -680,6 +821,21 @@ RobotCmd ControllerManager::update(const RobotState& state,
   // 控制器切换过渡期间不响应速度指令，保持站立状态确保切换安全
   if (transition_.state == SwitchState::kTransitioning) {
     vel_cmd.setZero();
+  }
+
+  // LT + 右摇杆左右：积分腰 yaw。控腰期间不再把右摇杆解释成转身。
+  updateWaistJoyTarget(controller, state, command.cmd_vel);
+  const auto* generic = dynamic_cast<GenericRLController*>(controller);
+  const bool waist_controls_lateral = generic &&
+      generic->robotVersion().start_with(1, 7) &&
+      (waist_joy_active_ || waist_return_active_ ||
+       (controller->getWaistController() &&
+        controller->getWaistController()->getMode() == WaistControlMode::kExternal));
+  if (waist_controls_lateral) {
+    vel_cmd.linear_y = 0.0;
+    if (!command.cmd_vel.cmd_stance_valid || command.cmd_vel.cmd_stance_mode == 0) {
+      vel_cmd.angular_z = 0.0;
+    }
   }
 
   // RT + 右摇杆控制头部时，禁用行走角速度；posture 模式下 angular_z 为下蹲高度，需保留
@@ -857,6 +1013,29 @@ RobotCmd ControllerManager::update(const RobotState& state,
         cmd.q[head_start + 1] = head_pitch_out;
         head_out_yaw_ = head_yaw_out;
         head_out_pitch_ = head_pitch_out;
+      }
+    }
+
+    if (waist_joy_active_ || waist_return_active_) {
+      controller->overrideWaistYawCommand(cmd, static_cast<double>(waist_joy_yaw_));
+    } else if (waist_handoff_active_ && !controller->getWaistJointIds().empty()) {
+      const int waist_motor_id = controller->getWaistJointIds()[0];
+      if (waist_motor_id >= 0 && waist_motor_id < static_cast<int>(cmd.q.size()) &&
+          std::isfinite(cmd.q[waist_motor_id])) {
+        // 回零后继续限速追随策略目标，避免撤销 CSP 覆盖时目标瞬间跳变。
+        const double policy_yaw = cmd.q[waist_motor_id];
+        constexpr double kWaistHandoffSpeedRadPerSec = 0.4;
+        const double max_delta =
+            kWaistHandoffSpeedRadPerSec * waist_joy_update_dt_;
+        const double diff = policy_yaw - waist_joy_yaw_;
+        waist_joy_yaw_ += static_cast<float>(
+            std::clamp(diff, -max_delta, max_delta));
+        controller->overrideWaistYawCommand(cmd, static_cast<double>(waist_joy_yaw_));
+        if (std::abs(diff) <= max_delta) {
+          waist_handoff_active_ = false;
+        }
+      } else {
+        waist_handoff_active_ = false;
       }
     }
 
@@ -1381,6 +1560,20 @@ void ControllerManager::setWaistTarget(const vr::JointTrajectoryPoint& cmd) {
   if (!waist_ctrl) return;
 
   Eigen::VectorXd q = Eigen::Map<const Eigen::VectorXd>(cmd.q.data(), cmd.q.size());
+  if (auto* generic = dynamic_cast<GenericRLController*>(controller)) {
+    if (generic->externalWaistRequiresStand() &&
+        !generic->isJoyWaistStandAllowed()) {
+      if (tact_waist_abandon_callback_) {
+        tact_waist_abandon_callback_();
+      }
+      return;
+    }
+    // Roban17：VR/外部腰 yaw 与手柄控腰共用 ±85° 限幅。
+    if (generic->robotVersion().start_with(1, 7) && q.size() > 0) {
+      constexpr double kVrWaistYawLimitRad = 85.0 * M_PI / 180.0;
+      q[0] = std::clamp(q[0], -kVrWaistYawLimitRad, kVrWaistYawLimitRad);
+    }
+  }
   waist_ctrl->setExternalTarget(q);
 }
 
@@ -1559,6 +1752,24 @@ bool ControllerManager::setWaistMode(WaistControlMode mode, std::string& message
   if (!waist_ctrl) {
     message = "Waist controller not available";
     return false;
+  }
+
+  if (mode == WaistControlMode::kExternal) {
+    if (auto* generic = dynamic_cast<GenericRLController*>(controller)) {
+      if (generic->robotVersion().start_with(1, 7) &&
+          std::abs(waist_gate_smoothed_cmd_y_.load(std::memory_order_relaxed)) >
+              kWaistLateralCommandThreshold) {
+        message = "External waist unavailable during lateral movement";
+        RL_LOGW("ControllerManager: %s", message.c_str());
+        return false;
+      }
+      if (generic->externalWaistRequiresStand() &&
+          !generic->isJoyWaistStandAllowed()) {
+        message = "External waist only allowed while standing";
+        RL_LOGW("ControllerManager: %s", message.c_str());
+        return false;
+      }
+    }
   }
 
   waist_ctrl->setMode(mode);

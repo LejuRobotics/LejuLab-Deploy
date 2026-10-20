@@ -1444,6 +1444,32 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
       RL_LOGI("Elbow action scale limit: %s",
               enable_elbow_scale_ ? "enabled" : "disabled");
     }
+    const YAML::Node waist_v17 = cfg["env"]["waist_controller_v17"];
+    const YAML::Node waist_v17_cfg =
+        (waist_v17 && waist_v17.IsMap()) ? waist_v17 : robot;
+    if (waist_v17_cfg["enable_waist_controller_v17_stand_only"]) {
+      enable_waist_controller_v17_stand_only_ =
+          waist_v17_cfg["enable_waist_controller_v17_stand_only"].as<bool>();
+      RL_LOGI("External waist stand-only clamp: %s",
+              enable_waist_controller_v17_stand_only_ ? "enabled" : "disabled");
+    }
+    if (waist_v17_cfg["enable_virtual_waist_enhance"]) {
+      enable_virtual_waist_enhance_ =
+          waist_v17_cfg["enable_virtual_waist_enhance"].as<bool>();
+      RL_LOGI("Virtual waist observation: %s",
+              enable_virtual_waist_enhance_ ? "enabled" : "disabled");
+    }
+    if (waist_v17_cfg["virtual_waist_pos_scale"]) {
+      virtual_waist_pos_scale_ =
+          std::max(0.0, waist_v17_cfg["virtual_waist_pos_scale"].as<double>());
+      RL_LOGI("Virtual waist joint-pos scale: %.3f", virtual_waist_pos_scale_);
+    }
+    if (waist_v17_cfg["virtual_waist_pitch_comp_max_deg"]) {
+      virtual_waist_pitch_comp_max_deg_ =
+          waist_v17_cfg["virtual_waist_pitch_comp_max_deg"].as<double>();
+      RL_LOGI("Virtual waist pitch compensation max: %+.1f deg at ±%.0f deg yaw",
+              virtual_waist_pitch_comp_max_deg_, kVirtualWaistPitchCompFullYawDeg_);
+    }
     if (robot["enable_back_enhance_v17"]) {
       enable_back_enhance_v17_ = robot["enable_back_enhance_v17"].as<bool>();
       RL_LOGI("Back enhance (v17): %s",
@@ -2241,8 +2267,33 @@ void GenericRLController::updateWaistCommand(RobotCmd& cmd) {
     return;
   }
 
-  // 调用基类实现
-  ControllerBase::updateWaistCommand(cmd);
+  // 站立钳制：非站立时不让 kExternal 覆盖腰，腰角交回策略。
+  const bool external_waist_clamped =
+      enable_waist_controller_v17_stand_only_ && waist_controller_ &&
+      waist_controller_->getMode() == WaistControlMode::kExternal &&
+      !isJoyWaistStandAllowed();
+  if (!prev_external_waist_clamped_ && external_waist_clamped &&
+      tact_waist_abandon_callback_) {
+    tact_waist_abandon_callback_();
+  }
+  if (prev_external_waist_clamped_ && !external_waist_clamped &&
+      waist_controller_ &&
+      waist_controller_->getMode() == WaistControlMode::kExternal &&
+      !waist_joint_names_.empty()) {
+    Eigen::VectorXd measured_waist(waist_joint_names_.size());
+    for (int i = 0; i < static_cast<int>(waist_joint_names_.size()); ++i) {
+      const int motor_id = waist_joint_ids_[i];
+      const int policy_idx = waist_policy_start_idx_ + i;
+      measured_waist[i] =
+          joint_direction_[policy_idx] * current_state_.q[motor_id];
+    }
+    waist_controller_->resetExternalFilterTo(measured_waist);
+  }
+  prev_external_waist_clamped_ = external_waist_clamped;
+
+  if (!external_waist_clamped) {
+    ControllerBase::updateWaistCommand(cmd);
+  }
 
   //更新策略计算的参考关节位置
   updateBlendReferenceCmd(cmd);
@@ -2452,6 +2503,7 @@ array_t GenericRLController::getPolicyJointPos() const {
   }
   // return joint_direction_ * (policy_q - default_joint_pos_);  // old impl
   array_t result = joint_direction_ * policy_q - default_joint_pos_;
+  applyVirtualWaistObservation(result);
   // use_virtual_arm_obs：外部手臂接管时手臂关节观测置零（含下蹲）
   if (enable_amp_arm_enhance_ && isExternalArmControlActive() &&
       !isVirtualArmObsBlockedByLowCmd() && arm_policy_start_idx_ >= 0) {
@@ -2482,6 +2534,45 @@ array_t GenericRLController::getPolicyJointVel() const {
     }
   }
   return result;
+}
+
+bool GenericRLController::isExternalWaistControlActive() const {
+  if (joy_waist_obs_hold_) {
+    return true;
+  }
+  if (!waist_controller_ ||
+      waist_controller_->getMode() != WaistControlMode::kExternal) {
+    return false;
+  }
+  if (enable_waist_controller_v17_stand_only_ && !isJoyWaistStandAllowed()) {
+    return false;
+  }
+  return true;
+}
+
+void GenericRLController::applyVirtualWaistObservation(array_t& result) const {
+  if (!enable_virtual_waist_enhance_ || !isExternalWaistControlActive()) {
+    return;
+  }
+  for (const auto& name : waist_joint_names_) {
+    const int idx = findPolicyJointIndex(name);
+    if (idx >= 0 && idx < static_cast<int>(result.size())) {
+      result[idx] *= virtual_waist_pos_scale_;
+    }
+  }
+}
+
+bool GenericRLController::isJoyWaistStandAllowed() const {
+  if (getCmdStanceMode() != 0) {
+    return false;
+  }
+  if (filtered_velocity_cmd_.size() < 3) {
+    return false;
+  }
+  constexpr double kSettle = 0.11;
+  return std::abs(filtered_velocity_cmd_[0]) < kSettle &&
+         std::abs(filtered_velocity_cmd_[1]) < kSettle &&
+         std::abs(filtered_velocity_cmd_[2]) < kSettle;
 }
 
 bool GenericRLController::isValidPolicyMotorIdx(int policy_idx) const {
@@ -2926,6 +3017,21 @@ void GenericRLController::updateVelocityCommandCache() {
 
   applySquatPostureDefense();
   updateStandUpRisingState();
+
+  // 腰转角超过 25° 时，转身角速度命令直接置零（姿态模式下 [2] 是下蹲高度，不改）。
+  if (cmd_stance_mode == 0 && filtered_velocity_cmd_.size() >= 3 &&
+      !waist_joint_ids_.empty()) {
+    const int motor_id = waist_joint_ids_[0];
+    if (motor_id >= 0 &&
+        motor_id < static_cast<int>(current_state_.q.size())) {
+      constexpr double kWaistYawAngVelCutoffDeg = 25.0;
+      const double yaw_deg =
+          std::abs(current_state_.q[motor_id]) * 180.0 / M_PI;
+      if (yaw_deg > kWaistYawAngVelCutoffDeg) {
+        filtered_velocity_cmd_[2] = 0.0;
+      }
+    }
+  }
 }
 
 void GenericRLController::updateStandUpRisingState() {
@@ -3023,16 +3129,41 @@ bool GenericRLController::isDeepSquatGuardActive() const {
          knee_r > squat_posture_defense_.height_threshold;
 }
 
-/// 获取 IMU 角速度 [gx, gy, gz]
+/// 获取角速度观测；外控腰时转回腰下坐标系，并扣除腰关节自身的 yaw 角速度。
 array_t GenericRLController::getBaseAngVel() const {
   array_t result(3);
   result << current_imu_.gyro[0], current_imu_.gyro[1], current_imu_.gyro[2];
+
+  if (enable_virtual_waist_enhance_ && isExternalWaistControlActive() &&
+      !waist_joint_ids_.empty()) {
+    const int motor_id = waist_joint_ids_[0];
+    if (motor_id >= 0 &&
+        motor_id < static_cast<int>(current_state_.q.size()) &&
+        motor_id < static_cast<int>(current_state_.v.size())) {
+      const double waist_yaw = current_state_.q[motor_id];
+      if (std::abs(waist_yaw) > 1e-6) {
+        const Eigen::Vector3d gyro(current_imu_.gyro[0], current_imu_.gyro[1],
+                                   current_imu_.gyro[2]);
+        const Eigen::Vector3d rotated_gyro =
+            Eigen::AngleAxisd(waist_yaw, Eigen::Vector3d::UnitZ()) * gyro;
+        result[0] = rotated_gyro.x();
+        result[1] = rotated_gyro.y();
+      }
+      // IMU 位于腰上方，其 yaw 角速度包含机身和腰关节的相对转速。
+      // 策略需要腰下机身的 yaw 角速度，否则左转腰会被误当成机身左转。
+      result[2] -= current_state_.v[motor_id];
+    }
+  }
   return result;
 }
 
 bool GenericRLController::isExternalArmControlActive() const {
   if (!enable_amp_arm_enhance_ || !enable_arm_controller_ || !arm_controller_) {
     return false;
+  }
+  // 切回 kAuto 时 getMode() 已经是 kAuto，但电机仍在插值。虚拟观测保持到插值结束。
+  if (arm_controller_->isModeTransitioning()) {
+    return true;
   }
   return arm_controller_->getMode() != ArmControlMode::kAuto;
 }
@@ -3409,6 +3540,25 @@ array_t GenericRLController::getProjectedGravity() const {
   Eigen::Quaterniond quat(current_imu_.quat[0], current_imu_.quat[1],
                           current_imu_.quat[2], current_imu_.quat[3]);
   Eigen::Vector3d projected_gravity = quat.inverse() * g_hat;
+  bool virtual_waist_frame = false;
+
+  // 外控腰：IMU 在腰上方，先把重力投影按实测腰转角绕 z 转回腰动之前的姿态。
+  if (enable_virtual_waist_enhance_ && isExternalWaistControlActive() &&
+      !waist_joint_ids_.empty()) {
+    const int motor_id = waist_joint_ids_[0];
+    if (motor_id >= 0 &&
+        motor_id < static_cast<int>(current_state_.q.size())) {
+      virtual_waist_frame = true;
+      const double waist_yaw = current_state_.q[motor_id];
+      if (std::abs(waist_yaw) > 1e-6) {
+        projected_gravity =
+            Eigen::AngleAxisd(waist_yaw, Eigen::Vector3d::UnitZ()) *
+            projected_gravity;
+      }
+    }
+  }
+  // 闭环测量使用腰下坐标系的原始重力，避开后续手臂 pitch 和 roll 补偿。
+  const Eigen::Vector3d roll_measurement_gravity = projected_gravity;
 
   const double cmd_x = filtered_velocity_cmd_[0];
   const double cmd_angular_z = filtered_velocity_cmd_[2];
@@ -3493,6 +3643,16 @@ array_t GenericRLController::getProjectedGravity() const {
       }
     }
 
+    // 外控腰时，这条手臂 pitch 补偿随 |腰角| 衰减：0° 为 1，接近 90° 趋于 0。
+    if (isExternalWaistControlActive() && !waist_joint_ids_.empty()) {
+      const int motor_id = waist_joint_ids_[0];
+      if (motor_id >= 0 &&
+          motor_id < static_cast<int>(current_state_.q.size())) {
+        compensation_pitch_deg *=
+            std::cos(std::abs(current_state_.q[motor_id]));
+      }
+    }
+
     const double compensation_pitch_rad = compensation_pitch_deg * M_PI / 180.0;
     projected_gravity =
         Eigen::AngleAxisd(-compensation_pitch_rad, Eigen::Vector3d::UnitY()) *
@@ -3506,8 +3666,10 @@ array_t GenericRLController::getProjectedGravity() const {
   const bool is_walking_mode = getCmdStanceMode() == 0;
   if (enable_amp_arm_enhance_ && roll_compensation_closed_loop_.enabled) {
     const Eigen::Matrix3d sensor_rotation = quat.toRotationMatrix();
-    const double measured_roll_rad =
-        std::atan2(sensor_rotation(2, 1), sensor_rotation(2, 2));
+    const double measured_roll_rad = virtual_waist_frame
+        ? std::atan2(-roll_measurement_gravity.y(),
+                     -roll_measurement_gravity.z())
+        : std::atan2(sensor_rotation(2, 1), sensor_rotation(2, 2));
     const double observation_dt = policy_dt_;
 
     if (!roll_compensation_closed_loop_initialized_) {
@@ -3665,6 +3827,29 @@ array_t GenericRLController::getProjectedGravity() const {
       projected_gravity =
           Eigen::AngleAxisd(pitch_deg * M_PI / 180.0, Eigen::Vector3d::UnitY()) *
           projected_gravity;
+    }
+  }
+
+  // 外控腰：|腰转角| 越大补偿越大，±85° 时达到配置值；正=后仰抵消前倾，负=相反方向
+  if (enable_virtual_waist_enhance_ && isExternalWaistControlActive() &&
+      !waist_joint_ids_.empty() && kVirtualWaistPitchCompFullYawDeg_ > 1e-6) {
+    const int motor_id = waist_joint_ids_[0];
+    if (motor_id >= 0 &&
+        motor_id < static_cast<int>(current_state_.q.size())) {
+      const double yaw_deg =
+          std::abs(current_state_.q[motor_id]) * 180.0 / M_PI;
+      const double max_pitch_deg = virtual_waist_pitch_comp_max_deg_;
+      const double abs_max_pitch_deg = std::abs(max_pitch_deg);
+      const double pitch_deg = std::copysign(
+          std::min(abs_max_pitch_deg,
+                   abs_max_pitch_deg * yaw_deg /
+                       kVirtualWaistPitchCompFullYawDeg_),
+          max_pitch_deg);
+      if (std::abs(pitch_deg) > 1e-6) {
+        projected_gravity =
+            Eigen::AngleAxisd(-pitch_deg * M_PI / 180.0, Eigen::Vector3d::UnitY()) *
+            projected_gravity;
+      }
     }
   }
 

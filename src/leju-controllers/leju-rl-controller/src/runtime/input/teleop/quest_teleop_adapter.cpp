@@ -164,6 +164,12 @@ void QuestTeleopAdapter::processVelocityImpl(const QuestJoystickData& data,
   const float left_y = applyDeadzone(data.left_y);
   const float right_x = applyDeadzone(data.right_x);
 
+  // Roban 17 VR: touching Y (without X) gives the right stick X to waist
+  // teleop. Do not also turn the robot while the waist gesture is held.
+  const bool waist_gesture = robot_version_.start_with(1, 7) &&
+                             data.left_second_button_touched &&
+                             !data.left_first_button_touched;
+
   // A+B 触摸门控
   const bool ab_touched = data.right_first_button_touched &&
                           data.right_second_button_touched;
@@ -172,7 +178,7 @@ void QuestTeleopAdapter::processVelocityImpl(const QuestJoystickData& data,
   cmd.linear_x = left_y;
   cmd.linear_x *= cmd.linear_x > 0 ? getEffectiveMaxLinearXForward() : getEffectiveMaxLinearXBackward();
   cmd.linear_y = ab_touched ? (-left_x * config_.max_linear_y) : 0.0f;
-  cmd.angular_z = -right_x * config_.max_angular_z;
+  cmd.angular_z = waist_gesture ? 0.0f : -right_x * config_.max_angular_z;
   cmd.valid = true;
   buffer.writeCmdVel(cmd);
 }

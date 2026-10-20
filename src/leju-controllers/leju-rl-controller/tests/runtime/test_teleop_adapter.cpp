@@ -154,6 +154,8 @@ TEST(QuestTeleopAdapterRegressionTest, CombinesTranslationAndRotationInSingleCmd
   adapter.config_.max_angular_z = 1.00;
 
   auto quest = MakeQuestData(0.4f, 0.6f, -0.25f);
+  quest.right_first_button_touched = true;
+  quest.right_second_button_touched = true;
   adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
 
   auto snapshot = adapter.getSnapshot();
@@ -161,6 +163,50 @@ TEST(QuestTeleopAdapterRegressionTest, CombinesTranslationAndRotationInSingleCmd
   EXPECT_NEAR(snapshot.cmd_vel.linear_x, 0.6 * 0.55, 1e-6);
   EXPECT_NEAR(snapshot.cmd_vel.linear_y, -0.4 * 0.30, 1e-6);
   EXPECT_NEAR(snapshot.cmd_vel.angular_z, 0.25, 1e-6);
+}
+
+TEST(QuestTeleopAdapterRegressionTest, Roban17WaistGestureDoesNotTurnRobot) {
+  TriggerBuffer trigger_buffer;
+  QuestTeleopAdapter adapter(leju::RobotVersion(1, 7), &trigger_buffer);
+  adapter.config_.stick_deadzone = 0.05f;
+  adapter.config_.max_angular_z = 1.0;
+
+  auto quest = MakeQuestData(0.0f, 0.0f, 0.6f);
+  quest.left_second_button_touched = true;
+  adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+
+  quest.left_y = 0.7f;  // Walking remains available while Y owns right stick X.
+  adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
+  EXPECT_GT(adapter.getSnapshot().cmd_vel.linear_x, 0.0);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+
+  quest.left_first_button_touched = true;  // X+Y retains its squat gesture.
+  adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
+  EXPECT_LT(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+
+  quest.left_first_button_touched = false;
+  quest.left_second_button_touched = false;
+  adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
+  EXPECT_LT(adapter.getSnapshot().cmd_vel.angular_z, 0.0);
+}
+
+TEST(QuestTeleopAdapterRegressionTest, Roban17LateralRequestRemainsVisibleWithYTouch) {
+  TriggerBuffer trigger_buffer;
+  QuestTeleopAdapter adapter(leju::RobotVersion(1, 7), &trigger_buffer);
+  adapter.config_.stick_deadzone = 0.05f;
+  adapter.config_.max_linear_y = 1.0;
+  adapter.config_.max_angular_z = 1.0;
+
+  auto quest = MakeQuestData(0.5f, 0.0f, 0.6f);
+  quest.left_second_button_touched = true;
+  quest.right_first_button_touched = true;
+  quest.right_second_button_touched = true;
+  adapter.processVelocityImpl(quest, adapter.cmd_buffer_, 0.0);
+
+  const auto snapshot = adapter.getSnapshot();
+  EXPECT_LT(snapshot.cmd_vel.linear_y, -0.05);
+  EXPECT_DOUBLE_EQ(snapshot.cmd_vel.angular_z, 0.0);
 }
 
 TEST(TeleopInputSourceRegressionTest, QuestTakesOverWhenJoyIsIdle) {

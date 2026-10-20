@@ -156,6 +156,19 @@ void WaistController::setExternalTarget(const Eigen::VectorXd& q) {
     target_received_ = true;
 }
 
+void WaistController::resetExternalFilterTo(const Eigen::VectorXd& measured_q) {
+    if (!initialized_ || mode_ != WaistControlMode::kExternal) {
+        return;
+    }
+    if (measured_q.size() != waist_joint_count_) {
+        return;
+    }
+    filter_.reset(measured_q);
+    desire_waist_q_ = measured_q;
+    desire_waist_v_.setZero();
+    current_waist_pos_ = measured_q;
+}
+
 bool WaistController::update(double cmd_stance,
                              const Eigen::VectorXd& current_waist_pos,
                              const Eigen::VectorXd& current_waist_vel,

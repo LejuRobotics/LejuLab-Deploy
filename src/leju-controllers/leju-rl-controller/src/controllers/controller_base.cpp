@@ -165,6 +165,35 @@ void ControllerBase::updateWaistCommand(RobotCmd& cmd) {
   }
 }
 
+bool ControllerBase::overrideWaistYawCommand(RobotCmd& cmd, double motor_q) const {
+  if (!waist_controller_ || waist_joint_ids_.empty() || waist_joint_names_.empty()) {
+    return false;
+  }
+  const int motor_id = waist_joint_ids_[0];
+  if (motor_id < 0 ||
+      motor_id >= static_cast<int>(cmd.q.size()) ||
+      motor_id >= static_cast<int>(cmd.v.size()) ||
+      motor_id >= static_cast<int>(cmd.tau.size()) ||
+      motor_id >= static_cast<int>(cmd.kp.size()) ||
+      motor_id >= static_cast<int>(cmd.kd.size()) ||
+      motor_id >= static_cast<int>(cmd.modes.size())) {
+    return false;
+  }
+  const int policy_idx = findPolicyJointIndex(waist_joint_names_[0]);
+  if (policy_idx < 0 ||
+      policy_idx >= static_cast<int>(joint_kp_.size()) ||
+      policy_idx >= static_cast<int>(joint_kd_.size())) {
+    return false;
+  }
+  cmd.q[motor_id] = motor_q;
+  cmd.v[motor_id] = 0.0;
+  cmd.tau[motor_id] = 0.0;
+  cmd.modes[motor_id] = 2;
+  cmd.kp[motor_id] = joint_kp_[policy_idx];
+  cmd.kd[motor_id] = joint_kd_[policy_idx];
+  return true;
+}
+
 // ============================================================================
 // 配置加载
 // ============================================================================

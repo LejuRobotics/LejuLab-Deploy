@@ -59,9 +59,11 @@
 #include <chrono>
 #include <cmath>
 #include <csignal>
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -237,6 +239,37 @@ int main(int argc, char** argv) {
   std::mutex joy_mutex;
   leju::vr::QuestJoystickData latest_joy;
   bool has_joy = false;
+  std::chrono::steady_clock::time_point last_joy_rx_time =
+      std::chrono::steady_clock::time_point::min();
+  std::chrono::steady_clock::time_point last_y_touch_time =
+      std::chrono::steady_clock::time_point::min();
+  std::chrono::steady_clock::time_point last_y_release_time =
+      std::chrono::steady_clock::time_point::min();
+  bool y_was_touched = false;
+  constexpr std::chrono::milliseconds kSquatYTouchGraceWindow{100};
+  std::atomic<std::uint64_t> y_touch_generation{0};
+  // Roban 17 AMP uses joint_direction=-1 for waist_yaw_joint. External waist
+  // targets are in policy coordinates, while RobotState.q is in motor space.
+  const auto motor_names = leju::GlobalRobot::getInstance().getMotorNames();
+  const auto waist_motor = std::find(motor_names.begin(), motor_names.end(),
+                                    "waist_yaw_joint");
+  const size_t waist_motor_idx = static_cast<size_t>(
+      std::distance(motor_names.begin(), waist_motor));
+  const bool waist_teleop_supported = vr_robot_version.start_with(1, 7) &&
+                                      waist_motor != motor_names.end();
+  std::mutex waist_state_mutex;
+  double measured_waist_policy_q = 0.0;
+  std::chrono::steady_clock::time_point last_waist_state_time =
+      std::chrono::steady_clock::time_point::min();
+  if (waist_teleop_supported) {
+    leju::GlobalRobot::getInstance().subscribeRobotState(
+        [&](const leju::RobotStateConstPtr& state) {
+          if (!state || waist_motor_idx >= state->q.size()) return;
+          std::lock_guard<std::mutex> lk(waist_state_mutex);
+          measured_waist_policy_q = -state->q[waist_motor_idx];
+          last_waist_state_time = std::chrono::steady_clock::now();
+        });
+  }
 
   // 手臂模式（0=KeepPose / 1=Auto / 2=External）由 X+A / X+B 绝对式 FSM 切换；
   // 主循环仅在 External 且 OK 手势解锁(arm_mapper.isRunning())时下发外部关节指令。
@@ -293,16 +326,29 @@ int main(int argc, char** argv) {
         mask_filter.store(true);
       }
     }
-    
-    if (act.xy_touched_event) {
-      squat_event_enabled.store(true);
-    }else{
-      squat_event_enabled.store(false);
-    }
+    squat_event_enabled.store(act.xy_touched_event);
 
     std::lock_guard<std::mutex> lk(joy_mutex);
+    const auto previous_joy_rx_time = last_joy_rx_time;
     latest_joy = data;
     has_joy = true;
+    last_joy_rx_time = std::chrono::steady_clock::now();
+    if (data.left_second_button_touched) {
+      if (!y_was_touched &&
+          (last_y_release_time == std::chrono::steady_clock::time_point::min() ||
+           last_joy_rx_time - last_y_release_time >= kSquatYTouchGraceWindow)) {
+        y_touch_generation.fetch_add(1);
+      } else if (previous_joy_rx_time != std::chrono::steady_clock::time_point::min() &&
+                 last_joy_rx_time - previous_joy_rx_time >=
+                     std::chrono::milliseconds(200)) {
+        y_touch_generation.fetch_add(1);
+      }
+      last_y_touch_time = last_joy_rx_time;
+      y_was_touched = true;
+    } else {
+      if (y_was_touched) last_y_release_time = last_joy_rx_time;
+      y_was_touched = false;
+    }
     arm_mapper.updateJoystickForGesture(data.left_trigger, data.left_grip,
                                         data.right_trigger, data.right_grip);
 
@@ -366,7 +412,7 @@ int main(int argc, char** argv) {
   std::cout << "[VrAbsCtrl] 操作：双手扳机同时按下（>0.5）保持约 1～2 秒做 OK 手势，"
                "即进入外部控制、手臂开始跟随；"
                "X+A 回到自动摆手（再按或保持下按可进外部）；"
-               "X+B 在保持/自动间切换；X+Y 退出。"
+               "X+B 在保持/自动间切换；X+Y 触摸下蹲，保持触摸 Y 并移开 X 可锁定高度转腰；X+Y 按下退出。"
             << std::endl;
 
   const bool skip_ok = (getEnv("VR_SKIP_OK_GESTURE") == "1");
@@ -389,6 +435,13 @@ int main(int argc, char** argv) {
   double squat_baseline_z = 0.0;  // 站立基准高度（标定后填充）
   int squat_calib_count = 0;
   double squat_depth_filtered = 0.0;  // 滤波后的下蹲量
+  std::atomic<bool> squat_height_locked{false};
+  bool was_squat_y_only_touch = false;
+  std::atomic<double> locked_squat_height{squat_standing_height};
+  std::atomic<std::uint64_t> locked_y_touch_generation{0};
+  double last_live_squat_height = squat_standing_height;
+  auto last_live_squat_time = std::chrono::steady_clock::time_point::min();
+  std::uint64_t last_live_y_touch_generation = 0;
   if (squat_enabled) {
     std::cout << "[VrAbsCtrl] 人体下蹲控制已启用 → /rt/posture_height_cmd" 
               << "(VR_SQUAT_ENABLED=1) ,右摇杆下蹲未启用"
@@ -428,8 +481,55 @@ int main(int argc, char** argv) {
   double sum_time_ms = 0.0;
   bool prev_following = false;
   int idle_dbg_iter = 0;
+  int waist_dbg_iter = 0;
+  bool waist_teleop_active = false;
+  bool waist_mode_confirmed = false;
+  double waist_target_yaw = 0.0;
+  auto last_waist_update = std::chrono::steady_clock::now();
+  auto last_waist_mode_check =
+      std::chrono::steady_clock::now() - std::chrono::milliseconds(500);
+  constexpr std::chrono::milliseconds kWaistJoyFreshWindow{200};
+  constexpr std::chrono::milliseconds kWaistStateFreshWindow{200};
+  constexpr double kWaistYawLimitRad = 85.0 * 3.14159265358979323846 / 180.0;
+  constexpr double kWaistSpeedRadPerSec = 1.0;
+  constexpr double kWaistReturnSpeedRadPerSec = 1.5;
+  constexpr double kWaistStickDeadzone = 0.15;
 
   const auto loop_dt = std::chrono::duration<double>(ctrl_dt);
+  // 腰模式 RPC 和 IK 可能阻塞主循环；独立续发锁定高度，避免运控 0.5s 超时起身。
+  std::mutex posture_publish_mutex;
+  std::atomic<bool> squat_publisher_running{true};
+  std::thread squat_publisher([&] {
+    while (squat_publisher_running.load()) {
+      if (squat_height_locked.load()) {
+        const auto now = std::chrono::steady_clock::now();
+        bool y_only_fresh = false;
+        bool bone_still_fresh = false;
+        {
+          std::lock_guard<std::mutex> lk(joy_mutex);
+          y_only_fresh = has_joy &&
+              now - last_joy_rx_time < kWaistJoyFreshWindow &&
+              (latest_joy.left_second_button_touched ||
+               (last_y_touch_time != std::chrono::steady_clock::time_point::min() &&
+                now - last_y_touch_time < kSquatYTouchGraceWindow)) &&
+              !latest_joy.left_first_button_touched &&
+              y_touch_generation.load() == locked_y_touch_generation.load();
+        }
+        {
+          std::lock_guard<std::mutex> lk(bones_mutex);
+          bone_still_fresh = now - last_bone_rx_time < kBoneFreshWindow;
+        }
+        if (first_OK_flag.load() && y_only_fresh && bone_still_fresh) {
+          std::lock_guard<std::mutex> lk(posture_publish_mutex);
+          if (squat_height_locked.load()) {
+            leju::GlobalRobot::getInstance().publishPostureHeightCmd(
+                locked_squat_height.load());
+          }
+        }
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+  });
   bool torso_height_cali=false;
   while (g_running) {
     auto loop_start = std::chrono::steady_clock::now();
@@ -448,6 +548,199 @@ int main(int argc, char** argv) {
     // 骨骼恢复后时间戳立即刷新, 下一帧自动恢复。
     const bool bone_fresh =
         (std::chrono::steady_clock::now() - bone_rx) < kBoneFreshWindow;
+
+    // 下蹲与转腰共用同一帧手柄状态，避免移开 X 的过渡帧漏发高度目标。
+    leju::vr::QuestJoystickData joy_copy;
+    bool joy_fresh = false;
+    std::chrono::steady_clock::time_point y_touch_time;
+    std::uint64_t current_y_touch_generation = 0;
+    {
+      std::lock_guard<std::mutex> lk(joy_mutex);
+      joy_copy = latest_joy;
+      y_touch_time = last_y_touch_time;
+      current_y_touch_generation = y_touch_generation.load();
+      joy_fresh = has_joy &&
+          (std::chrono::steady_clock::now() - last_joy_rx_time) < kWaistJoyFreshWindow;
+    }
+    const bool vr_input_fresh = first_OK_flag.load() && bone_fresh && joy_fresh;
+    const bool squat_body_input_fresh = vr_input_fresh && bones_copy.is_high_confidence &&
+        bones_copy.poses.size() > 23;
+    const bool squat_xy_touch = vr_input_fresh &&
+        joy_copy.left_first_button_touched && joy_copy.left_second_button_touched;
+    const bool squat_y_only_touch = vr_input_fresh &&
+        !joy_copy.left_first_button_touched && joy_copy.left_second_button_touched;
+    const bool y_touch_recent = joy_fresh &&
+        (joy_copy.left_second_button_touched ||
+         (y_touch_time != std::chrono::steady_clock::time_point::min() &&
+          loop_start - y_touch_time < kSquatYTouchGraceWindow));
+    const bool entering_y_only = squat_y_only_touch && !was_squat_y_only_touch;
+    if (squat_height_locked &&
+        (!vr_input_fresh || !y_touch_recent || squat_xy_touch ||
+         locked_y_touch_generation.load() != current_y_touch_generation)) {
+      squat_height_locked = false;
+      std::cout << "[VrAbsCtrl] 下蹲高度锁定解除" << std::endl;
+    }
+    if (!squat_height_locked && squat_y_only_touch &&
+        last_live_squat_time != std::chrono::steady_clock::time_point::min() &&
+        last_live_y_touch_generation == current_y_touch_generation &&
+        std::isfinite(last_live_squat_height) &&
+        last_live_squat_height < squat_standing_height - 0.01) {
+      locked_squat_height = last_live_squat_height;
+      locked_y_touch_generation = current_y_touch_generation;
+      squat_height_locked = true;
+      std::cout << "[VrAbsCtrl] 下蹲高度已锁定: " << locked_squat_height << std::endl;
+    }
+    if (dbg_joy && entering_y_only) {
+      std::cout << "[VrAbsCtrl] squat Y-only: locked=" << squat_height_locked.load()
+                << " target=" << last_live_squat_height
+                << " target_age_ms="
+                << (last_live_squat_time == std::chrono::steady_clock::time_point::min()
+                        ? -1
+                        : std::chrono::duration_cast<std::chrono::milliseconds>(
+                              loop_start - last_live_squat_time).count())
+                << " same_y_session="
+                << (last_live_y_touch_generation == current_y_touch_generation)
+                << " bone_fresh=" << bone_fresh
+                << " joy_fresh=" << joy_fresh << std::endl;
+    }
+    was_squat_y_only_touch = squat_y_only_touch;
+    // Roban 17: hold a finger on Y (not X) and use right stick X for waist yaw.
+    // Integrate stick deflection at the same rate as the physical gamepad;
+    // release returns the target to zero before restoring Auto mode.
+    if (waist_teleop_supported) {
+      const auto waist_now = std::chrono::steady_clock::now();
+      const double waist_dt = std::clamp(
+          std::chrono::duration<double>(waist_now - last_waist_update).count(),
+          0.001, 0.05);
+      last_waist_update = waist_now;
+      leju::vr::QuestJoystickData waist_joy;
+      bool waist_joy_fresh = false;
+      {
+        std::lock_guard<std::mutex> lk(joy_mutex);
+        waist_joy = latest_joy;
+        waist_joy_fresh = has_joy &&
+            (std::chrono::steady_clock::now() - last_joy_rx_time) < kWaistJoyFreshWindow;
+      }
+      const bool lateral_requested =
+          waist_joy.right_first_button_touched &&
+          waist_joy.right_second_button_touched &&
+          std::abs(waist_joy.left_x) > 0.05;
+      const bool waist_gesture = waist_joy_fresh && bone_fresh &&
+          first_OK_flag.load() && !squat_event_enabled.load() &&
+          waist_joy.left_second_button_touched &&
+          !waist_joy.left_first_button_touched &&
+          (!lateral_requested || waist_mode_confirmed);
+      bool waist_state_fresh = false;
+      {
+        std::lock_guard<std::mutex> lk(waist_state_mutex);
+        waist_state_fresh = last_waist_state_time !=
+                                std::chrono::steady_clock::time_point::min() &&
+                            waist_now - last_waist_state_time < kWaistStateFreshWindow;
+      }
+      if (dbg_joy && ++waist_dbg_iter % 100 == 0) {
+        std::cout << "[VrAbsCtrl] waist input: Y_touch="
+                  << waist_joy.left_second_button_touched
+                  << " X_touch=" << waist_joy.left_first_button_touched
+                  << " joy_fresh=" << waist_joy_fresh
+                  << " bone_fresh=" << bone_fresh
+                  << " OK=" << first_OK_flag.load()
+                  << " state_fresh=" << waist_state_fresh
+                  << " lateral=" << lateral_requested
+                  << " gesture=" << waist_gesture
+                  << " active=" << waist_teleop_active
+                  << " confirmed=" << waist_mode_confirmed << std::endl;
+      }
+
+      if (waist_gesture && waist_state_fresh && !waist_teleop_active &&
+          std::chrono::steady_clock::now() - last_waist_mode_check >=
+              std::chrono::milliseconds(500)) {
+        waist_teleop_active = vr_api.setWaistMode(leju::vr::ControlMode::kExternal, 1000);
+        waist_mode_confirmed = false;
+        last_waist_mode_check = std::chrono::steady_clock::now();
+        std::cout << "[VrAbsCtrl] Waist teleop "
+                  << (waist_teleop_active ? "enabled" : "mode request failed") << std::endl;
+      }
+      // Mode RPC only queues the request. A standing gate can still reject it,
+      // so retry after the robot has settled instead of silently staying in Auto.
+      if (waist_gesture && waist_teleop_active && !waist_mode_confirmed &&
+          std::chrono::steady_clock::now() - last_waist_mode_check >=
+              std::chrono::milliseconds(500)) {
+        leju::vr::ControllerState controller_state;
+        if (vr_api.getControllerState(controller_state, 500)) {
+          const bool now_external = controller_state.waist_mode ==
+                                    leju::vr::ControlMode::kExternal;
+          if (now_external) {
+            // Read feedback after the RPC: the robot may still be settling
+            // while the mode request is in flight.
+            std::lock_guard<std::mutex> lk(waist_state_mutex);
+            waist_state_fresh = last_waist_state_time !=
+                                    std::chrono::steady_clock::time_point::min() &&
+                                std::chrono::steady_clock::now() - last_waist_state_time <
+                                    kWaistStateFreshWindow;
+            if (waist_state_fresh) {
+              waist_target_yaw = std::clamp(measured_waist_policy_q,
+                                            -kWaistYawLimitRad, kWaistYawLimitRad);
+              waist_mode_confirmed = true;
+              std::cout << "[VrAbsCtrl] Waist target aligned to measured position: "
+                        << waist_target_yaw << " rad" << std::endl;
+            }
+          } else if (!now_external) {
+            vr_api.setWaistMode(leju::vr::ControlMode::kExternal, 500);
+          }
+        }
+        last_waist_mode_check = std::chrono::steady_clock::now();
+      }
+      if (waist_gesture && waist_teleop_active && waist_mode_confirmed &&
+          waist_state_fresh) {
+        const double stick_x = std::abs(waist_joy.right_x) < kWaistStickDeadzone
+                                   ? 0.0 : static_cast<double>(waist_joy.right_x);
+        waist_target_yaw = std::clamp(
+            waist_target_yaw + std::clamp(stick_x, -1.0, 1.0) *
+                                   kWaistSpeedRadPerSec * waist_dt,
+            -kWaistYawLimitRad, kWaistYawLimitRad);
+        leju::vr::JointTrajectoryPoint waist_cmd;
+        waist_cmd.q = {waist_target_yaw};
+        waist_cmd.v = {0.0};
+        waist_cmd.acc = {0.0};
+        vr_api.publishWaistJointCmd(waist_cmd);
+      } else if (!waist_state_fresh && waist_teleop_active) {
+        vr_api.setWaistMode(leju::vr::ControlMode::kAuto, 1000);
+        waist_teleop_active = false;
+        waist_mode_confirmed = false;
+        waist_target_yaw = 0.0;
+        last_waist_mode_check =
+            std::chrono::steady_clock::now() - std::chrono::milliseconds(500);
+        std::cout << "[VrAbsCtrl] Waist feedback stale; returning to Auto" << std::endl;
+      } else if (!waist_gesture && waist_teleop_active) {
+        if (!waist_mode_confirmed) {
+          vr_api.setWaistMode(leju::vr::ControlMode::kAuto, 1000);
+          waist_teleop_active = false;
+          waist_target_yaw = 0.0;
+          last_waist_mode_check =
+              std::chrono::steady_clock::now() - std::chrono::milliseconds(500);
+        } else {
+          const double max_return = kWaistReturnSpeedRadPerSec * waist_dt;
+          if (std::abs(waist_target_yaw) <= max_return) {
+            waist_target_yaw = 0.0;
+          } else {
+            waist_target_yaw -= std::copysign(max_return, waist_target_yaw);
+          }
+          leju::vr::JointTrajectoryPoint waist_cmd;
+          waist_cmd.q = {waist_target_yaw};
+          waist_cmd.v = {0.0};
+          waist_cmd.acc = {0.0};
+          vr_api.publishWaistJointCmd(waist_cmd);
+          if (waist_target_yaw == 0.0) {
+            vr_api.setWaistMode(leju::vr::ControlMode::kAuto, 1000);
+            waist_teleop_active = false;
+            waist_mode_confirmed = false;
+            last_waist_mode_check =
+                std::chrono::steady_clock::now() - std::chrono::milliseconds(500);
+            std::cout << "[VrAbsCtrl] Waist teleop returned to center" << std::endl;
+          }
+        }
+      }
+    }
     if (bone_fresh && bones_copy.is_high_confidence) {
       std::vector<double> head_q;
       if (leju::vr_control::computeHeadFromBones(bones_copy, head_q)) {
@@ -463,12 +756,11 @@ int main(int argc, char** argv) {
     //     利用骨骼 Chest 节点 Z 坐标变化计算下蹲量，映射为机器人站立高度。
     //     ExternalInterface::buildFreshPostureCommand() 自动设置 cmd_stance=1。
     //     0.5 秒超时未收到新指令则自动恢复站立。
-    //     squat_event_enabled 由 X+Y 触摸边沿触发，避免手柄抖动导致频繁开关。
-    if (bone_fresh && squat_enabled && bones_copy.is_high_confidence &&
-        bones_copy.poses.size() > 23 ) {
+    //     X+Y 触摸实时调高度；移开 X 但持续触摸 Y 时重发保存值，避免 0.5s 超时起身。
+    if (!squat_height_locked && squat_body_input_fresh && squat_enabled) {
       // Root=22, Chest=23, Neck=24, Head=25
       const double chest_z = static_cast<double>(bones_copy.poses[23].z);
-      if (squat_event_enabled.load()) {
+      if (squat_xy_touch) {
         // 标定阶段：前 N 帧取平均作为站立基准高度
         if (squat_calib_count < squat_calib_frames) {
           squat_baseline_z += chest_z;
@@ -506,7 +798,13 @@ int main(int argc, char** argv) {
                                                   squat_height_min, squat_height_max);
           const double target_height = squat_standing_height + height_offset;
 
-          leju::GlobalRobot::getInstance().publishPostureHeightCmd(target_height);
+          {
+            std::lock_guard<std::mutex> lk(posture_publish_mutex);
+            leju::GlobalRobot::getInstance().publishPostureHeightCmd(target_height);
+          }
+          last_live_squat_height = target_height;
+          last_live_squat_time = std::chrono::steady_clock::now();
+          last_live_y_touch_generation = current_y_touch_generation;
 
           static int squat_dbg_count = 0;
           if (++squat_dbg_count % 500 == 0) {
@@ -524,13 +822,8 @@ int main(int argc, char** argv) {
         }
         squat_calib_count = 0;
       }
-    }else if(bone_fresh && !squat_enabled && bones_copy.is_high_confidence &&
-        bones_copy.poses.size() > 23 && squat_event_enabled.load()){
-      double right_y = 0.0f;
-      {
-        std::lock_guard<std::mutex> lk(joy_mutex);
-        if (has_joy) right_y = latest_joy.right_y;
-      }
+    }else if(!squat_height_locked && vr_input_fresh && !squat_enabled && squat_xy_touch){
+      const double right_y = joy_copy.right_y;
       // 摇杆死区：|right_y| < 0.05 视为回中，站直（摇杆范围 -1~1，单位非米）
       const double raw_squat = (std::abs(right_y) < 0.05) ? 0.0 : right_y;
       // 下蹲深度 → 机器人站立高度偏移（right_y 下推为负 → 高度降低 = 下蹲）
@@ -538,7 +831,13 @@ int main(int argc, char** argv) {
           std::clamp(raw_squat * squat_max, squat_height_min, squat_height_max);
       const double target_height = squat_standing_height + height_offset;
 
-      leju::GlobalRobot::getInstance().publishPostureHeightCmd(target_height);
+      {
+        std::lock_guard<std::mutex> lk(posture_publish_mutex);
+        leju::GlobalRobot::getInstance().publishPostureHeightCmd(target_height);
+      }
+      last_live_squat_height = target_height;
+      last_live_squat_time = std::chrono::steady_clock::now();
+      last_live_y_touch_generation = current_y_touch_generation;
 
       static int squat_dbg_count = 0;
       if (++squat_dbg_count % 500 == 0) {
@@ -677,7 +976,12 @@ int main(int argc, char** argv) {
   }
 
   // ------- 退出时恢复自动模式 -------
+  squat_publisher_running.store(false);
+  squat_publisher.join();
   std::cout << "\n[VrAbsCtrl] Shutting down..." << std::endl;
+  if (waist_teleop_active) {
+    vr_api.setWaistMode(leju::vr::ControlMode::kAuto, 1000);
+  }
   vr_api.setArmMode(leju::vr::ControlMode::kAuto, 1000);
   vr_api.setHeadMode(leju::vr::ControlMode::kAuto, 1000);
   vr_api.shutdown();

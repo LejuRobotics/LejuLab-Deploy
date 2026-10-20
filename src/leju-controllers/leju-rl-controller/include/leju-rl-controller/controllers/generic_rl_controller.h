@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <functional>
 #include <map>
 #include <memory>
 #include <atomic>
@@ -136,6 +137,19 @@ class GenericRLController : public ControllerBase {
     return last_inference_finish_time_sec_.load();
   }
 
+  /// 行走态且平滑速度命令近零时，才允许 LT 单独控腰 / 外部腰（阈值 0.1）。
+  bool isJoyWaistStandAllowed() const;
+  /// YAML: enable_waist_controller_v17_stand_only。为 true 时外部腰控只在站立时生效。
+  bool externalWaistRequiresStand() const {
+    return enable_waist_controller_v17_stand_only_;
+  }
+  const RobotVersion& robotVersion() const { return robot_version_; }
+  /// 手柄控腰期间把腰 yaw 观测置零，避免策略用腿去追腰偏角。
+  void setJoyWaistObservationHold(bool hold) { joy_waist_obs_hold_ = hold; }
+  void setTactWaistAbandonCallback(std::function<void()> callback) {
+    tact_waist_abandon_callback_ = std::move(callback);
+  }
+
  protected:
   // ==================== 模板方法实现 ====================
 
@@ -201,6 +215,9 @@ class GenericRLController : public ControllerBase {
   void loadMotionTrajectories(const std::string& config_dir);
   /// @brief 获取策略关节位置（相对默认位置的偏移）
   array_t getPolicyJointPos() const;
+  /// enable_virtual_waist_enhance 且外部腰控时，腰关节位置观测乘 virtual_waist_pos_scale_。
+  void applyVirtualWaistObservation(array_t& result) const;
+  bool isExternalWaistControlActive() const;
   /// @brief 获取策略关节速度
   array_t getPolicyJointVel() const;
   /// @brief 计算缩放后的原始速度指令（使用已加锁拷贝的速度与 stance 模式）
@@ -233,7 +250,7 @@ class GenericRLController : public ControllerBase {
   array_t getBaseAngVel() const;
   /// @brief 计算投影重力观测项
   array_t getProjectedGravity() const;
-  /// @brief 外部手臂接管是否生效（enable_amp_arm_enhance_v17 + 手臂模式非 Auto）
+  /// @brief 外部手臂接管是否生效（含切回 Auto 的插值阶段，虚拟观测保持到插值结束）
   bool isExternalArmControlActive() const;
   /// @brief 纯侧移命令判据（|cmd_x|<0.2, |cmd_angz|<0.2, |cmd_y|>0.1）
   bool isLateralMoveCommand() const;
@@ -499,6 +516,16 @@ class GenericRLController : public ControllerBase {
   // roll_compensation_closed_loop / off_cmdy_by_cmdx / off_cmdangz_by_cmdy / lateral_elbow_fix
   bool enable_amp_arm_enhance_ = false;
   bool enable_elbow_scale_ = false;
+  // YAML: enable_waist_controller_v17_stand_only。钳制外部腰控，仅站立时生效。
+  bool enable_waist_controller_v17_stand_only_ = false;
+  bool prev_external_waist_clamped_ = false;
+  std::function<void()> tact_waist_abandon_callback_;
+  // YAML: enable_virtual_waist_enhance。外部腰控时腰关节位置观测乘 virtual_waist_pos_scale_。
+  bool enable_virtual_waist_enhance_ = false;
+  // YAML: virtual_waist_pos_scale。外部腰控时腰关节位置观测 = 实测 × 该系数。
+  double virtual_waist_pos_scale_ = 1.0 / 3.0;
+  // YAML: virtual_waist_pitch_comp_max_deg。|腰转角| 到 ±85° 时的 pitch 补偿上限 [deg]；符号为补偿方向（正=原后仰抵消前倾）
+  double virtual_waist_pitch_comp_max_deg_ = 25.0;
   // v17 后退增强（YAML: enable_back_enhance_v17）：后退摆臂 action + 重力 pitch 补偿
   bool enable_back_enhance_v17_ = false;
   // v17 起身增强（YAML: enable_standup_enhance_v17）：projected_gravity 后仰偏置 + leg1/leg4 action
@@ -542,6 +569,8 @@ class GenericRLController : public ControllerBase {
   static constexpr double kTurnPitchCompensationCmdXMin_{0.3};   ///< 开环 pitch 补偿生效 cmd_x 下限 (m/s)
   static constexpr double kTurnPitchCompensationAbsAngZMin_{0.3};  ///< 开环 pitch 补偿生效 |cmd_angz| 下限 (rad/s)
   static constexpr double kTurnPitchCompensationExternalArmScale_{2.0};  ///< 外部手控时开环 pitch 补偿缩放
+  /// 外控腰：|waist_yaw| 达到该角度时 pitch 补偿达到 |virtual_waist_pitch_comp_max_deg_|，符号同配置
+  static constexpr double kVirtualWaistPitchCompFullYawDeg_{85.0};
   /// 原地旋转 leg_l1/leg_r1 action 偏置（policy action 空间）
   static constexpr double kInPlaceYawAbsCmdXMax_{0.15};
   static constexpr double kInPlaceYawAbsCmdYMax_{0.20};
@@ -646,6 +675,7 @@ class GenericRLController : public ControllerBase {
   MixedMotionLimitsConfig mixed_motion_limits_;
 
   // ==================== 运行时状态 ====================
+  bool joy_waist_obs_hold_ = false;         ///< LT 控腰期间屏蔽腰 yaw 观测
   double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw（HEFT 对齐使用）
   bool motion_playing_ = false;             ///< motion 是否正在播放（含末帧保持阶段）
   bool motion_cursor_frozen_ = false;       ///< 双推理切换期间是否冻结在首帧

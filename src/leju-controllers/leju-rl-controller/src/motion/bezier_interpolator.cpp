@@ -172,6 +172,20 @@ bool BezierInterpolator::Build(const TactAction& action,
     if (waist_track_.empty()) {
       // No valid waist segments, disable waist
       has_waist_ = false;
+    } else {
+      // 三次贝塞尔落在控制点凸包内。峰峰值小于 1° 视为无腰动作，避免占住腰通道。
+      double ymin = waist_track_.front().y0;
+      double ymax = ymin;
+      for (const auto& seg : waist_track_) {
+        for (const double y : {seg.y0, seg.y1, seg.y2, seg.y3}) {
+          ymin = std::min(ymin, y);
+          ymax = std::max(ymax, y);
+        }
+      }
+      if (ymax - ymin < DegToRad(1.0)) {
+        has_waist_ = false;
+        waist_track_.clear();
+      }
     }
   }
 

@@ -617,6 +617,33 @@ void JoyTeleopAdapter::processVelocityImpl(const JoyData& joy,
   }
   rt_was_active_ = false;
 
+  // 左摇杆回中时，LT 把右摇杆让给腰；下蹲中暂存高度命令。
+  // 行走时是否控腰由 ControllerManager 按当前模型配置决定。
+  const bool lt_active = joy.axes.left_trigger >= config_.trigger_threshold;
+  const bool left_stick_neutral = (left_x == 0.0f && left_y == 0.0f);
+  if (config_.amp_hand_posture_axis.enabled && lt_active && !rt_active &&
+      left_stick_neutral && posture_control_mode_) {
+    // LT 临时保持上一帧下蹲高度。
+    // 右摇杆横向留给外部腰控，不解释为转身或退出姿态。
+    cmd.cmd_stance_valid = true;
+    cmd.cmd_stance_mode = 1;
+    cmd.angular_z = last_published_angular_z_;
+    cmd.posture_height_held_for_waist = true;
+    last_published_angular_z_ = cmd.angular_z;
+    buffer.writeCmdVel(cmd);
+    return;
+  }
+  if (lt_active && !rt_active && left_stick_neutral && !posture_control_mode_) {
+    cmd.linear_x = 0.0;
+    cmd.linear_y = 0.0;
+    cmd.angular_z = 0.0;
+    cmd.cmd_stance_valid = true;
+    cmd.cmd_stance_mode = 0;
+    last_published_angular_z_ = 0.0;
+    buffer.writeCmdVel(cmd);
+    return;
+  }
+
   if (config_.amp_hand_posture_axis.enabled) {
     processAmpHandPostureAxis(left_y, left_x, right_x, right_y,
                               max_linear_x_forward, max_linear_x_backward, cmd);

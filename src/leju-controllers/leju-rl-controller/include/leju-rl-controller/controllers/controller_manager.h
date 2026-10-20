@@ -26,6 +26,9 @@ using TactFallback = std::function<bool(const std::string&)>;
 /// 手臂冻结回调类型：LB+B 触发 keep_pose 时通知 TactPlayer 冻结
 using ArmFreezeCallback = std::function<void()>;
 
+/// stand-only 钳制外控腰时：通知 TactPlayer 放弃本段 tact 腰（由 ExternalInterface 注册）
+using TactWaistAbandonCallback = std::function<void()>;
+
 /**
  * @brief 根据 IMU 判断是否倒地姿态（对齐 kuavo AmpWalk）
  * @param imu 姿态四元数 [w,x,y,z]
@@ -336,6 +339,11 @@ class ControllerManager {
    */
   void setArmFreezeCallback(ArmFreezeCallback callback) { arm_freeze_callback_ = std::move(callback); }
 
+  /**
+   * @brief stand-only 行走钳制外控腰时，通知 TactPlayer 放弃本段 tact 腰
+   */
+  void setTactWaistAbandonCallback(TactWaistAbandonCallback callback);
+
   // ==================== 外部控制接口（由 ControlLogic 调用） ====================
 
   /**
@@ -483,6 +491,14 @@ class ControllerManager {
   void loadSwitchInterpolationConfig(const YAML::Node& config);
 
   /**
+   * @brief LT + 右摇杆左右积分腰 yaw；配置允许时可边走边控腰，松开后平滑回零。
+   * 同时更新观测屏蔽标志。不在此处写 RobotCmd。
+   */
+  void updateWaistJoyTarget(ControllerBase* controller,
+                            const RobotState& state,
+                            const runtime::MotionCommand& cmd_vel);
+
+  /**
    * @brief 将机器人移动到默认关节位置
    * @param elapse 过渡时间（秒）
    */
@@ -531,6 +547,19 @@ private:
   bool head_return_active_ = false; ///< RT 松开后头部平滑回正
   std::chrono::steady_clock::time_point last_head_joy_update_{};
   bool head_joy_time_initialized_ = false;
+  // 手柄缓存：LT + 右摇杆 X 单独控制腰 yaw
+  bool waist_lt_held_ = false;       ///< 左扳机超过阈值
+  bool waist_rt_held_ = false;       ///< 右扳机超过阈值（头控优先，不抢摇杆）
+  bool waist_left_neutral_ = true;   ///< 左摇杆在速度死区内（未下达走/侧移）
+  float waist_stick_x_ = 0.0f;       ///< 死区后的右摇杆 X
+  float waist_joy_yaw_ = 0.0f;       ///< 腰 yaw 目标，电机空间 [rad]
+  bool waist_joy_active_ = false;    ///< 正在用 LT 控腰
+  bool waist_return_active_ = false; ///< 松开后腰平滑回零
+  bool waist_handoff_active_ = false; ///< 回零后平滑交回策略腰目标
+  float waist_joy_update_dt_ = 0.01f;
+  std::atomic<double> waist_gate_smoothed_cmd_y_{0.0}; ///< 互斥前的侧移请求低通值 [m/s]
+  std::chrono::steady_clock::time_point last_waist_joy_update_{};
+  bool waist_joy_time_initialized_ = false;
 
   // 控制器切换过渡状态（包含插值配置，从 YAML 直接加载）
   SwitchTransition transition_;  ///< 切换过渡数据结构
@@ -540,6 +569,9 @@ private:
   TactCompletionHandler tact_completion_handler_;
   TactFallback tact_fallback_;    ///< tact 降级回调（CSV motion 失败时尝试 .tact 播放）
   ArmFreezeCallback arm_freeze_callback_;  ///< 手臂冻结回调（LB+B keep_pose 时通知 TactPlayer 冻结）
+  TactWaistAbandonCallback tact_waist_abandon_callback_;
+
+  void propagateTactWaistAbandonCallback();
 };
 
 }  // namespace leju

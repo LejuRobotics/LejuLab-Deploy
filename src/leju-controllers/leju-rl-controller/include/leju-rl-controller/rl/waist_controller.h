@@ -87,6 +87,11 @@ public:
     void setExternalTarget(const Eigen::VectorXd& q);
 
     /**
+     * @brief kExternal：将低通滤波器与期望位姿对齐到实测（stand-only 钳制解除边沿用）
+     */
+    void resetExternalFilterTo(const Eigen::VectorXd& measured_q);
+
+    /**
      * @brief 更新腰部控制
      *
      * 数据流:
