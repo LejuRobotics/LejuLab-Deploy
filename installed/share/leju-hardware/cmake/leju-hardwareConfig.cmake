@@ -67,14 +67,14 @@ set(leju-hardware_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(leju-hardware_SOURCE_PREFIX /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/src/leju-hardware)
-  set(leju-hardware_DEVEL_PREFIX /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/devel)
+  set(leju-hardware_SOURCE_PREFIX /builds/highlydynamic/lejulab_platform/src/leju-hardware)
+  set(leju-hardware_DEVEL_PREFIX /builds/highlydynamic/lejulab_platform/devel)
   set(leju-hardware_INSTALL_PREFIX "")
   set(leju-hardware_PREFIX ${leju-hardware_DEVEL_PREFIX})
 else()
   set(leju-hardware_SOURCE_PREFIX "")
   set(leju-hardware_DEVEL_PREFIX "")
-  set(leju-hardware_INSTALL_PREFIX /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab)
+  set(leju-hardware_INSTALL_PREFIX /builds/highlydynamic/lejulab_platform/installed_for_lejulab)
   set(leju-hardware_PREFIX ${leju-hardware_INSTALL_PREFIX})
 endif()
 
@@ -154,7 +154,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/opt/ros/noetic/lib)
+    foreach(path /builds/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/builds/highlydynamic/lejulab_platform/installed_for_lejulab/lib;/opt/ros/noetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

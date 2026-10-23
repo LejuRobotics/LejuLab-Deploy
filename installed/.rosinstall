@@ -1,2 +1,2 @@
 - setup-file:
-    local-name: /data/gitlab-runner/builds/8rHoW4Dt/0/highlydynamic/lejulab_platform/installed_for_lejulab/setup.sh
+    local-name: /builds/highlydynamic/lejulab_platform/installed_for_lejulab/setup.sh
