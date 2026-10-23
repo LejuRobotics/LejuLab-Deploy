@@ -1,14 +1,13 @@
-# LejuLab
+# LejuLab-Deploy
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![ROS](https://img.shields.io/badge/ROS-Noetic-blue.svg)](http://wiki.ros.org/noetic) [![Platform](https://img.shields.io/badge/Platform-Ubuntu%2020.04-orange.svg)](https://ubuntu.com/) [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/) [![Roban2.1](https://img.shields.io/badge/Robot-Roban2.1-green.svg)]() [![Kuavo4pro](https://img.shields.io/badge/Robot-Kuavo4pro-green.svg)]() [![Kuavo5](https://img.shields.io/badge/Robot-Kuavo5-green.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![ROS](https://img.shields.io/badge/ROS-Noetic-blue.svg)](http://wiki.ros.org/noetic) [![Platform](https://img.shields.io/badge/Platform-Ubuntu%2020.04-orange.svg)](https://ubuntu.com/) [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/) [![Roban2.2](https://img.shields.io/badge/Robot-Roban2.2-green.svg)]()
 
-乐聚人形机器人强化学习部署开发平台，提供 Roban 和 Kuavo 系列机器人的仿真与实物控制支持。
+本文说明 Roban 2.2（`ROBOT_VERSION=17`）的 MuJoCo 仿真。
 
 ## 功能特性
 
-- **多机器人支持**：支持 Roban 2 代、Kuavo 4 代、Kuavo 5 代等多款人形机器人
+- **机器人支持**：支持 Roban 2.2（`ROBOT_VERSION=17`）人形机器人
 - **Mujoco 仿真**：基于 Mujoco 物理引擎的高精度仿真环境
-- **实物控制**：提供底层电机控制、IMU 传感器读取等硬件接口
 - **强化学习控制器**：内置 AMP 行走、Mimic 舞蹈等控制算法
 - **手柄遥控**：支持游戏手柄进行机器人遥控操作
 - **高性能通信**：基于 CycloneDDS + iceoryx 共享内存的低延迟进程间通信
@@ -60,7 +59,7 @@
 |    |                              |  publishRobotCmd(cmd)            |     |      |
 |    |                              |                                  |     |      |
 |    |                              |       +--------------+           |     |      |
-|    |                              |       |KuavoHumanoid |           |     |      |
+|    |                              |       |RobanHumanoid |           |     |      |
 |    |                              |       +--------------+           |     |      |
 |    |                              +----------------------------------+     |      |
 |    +-----------------------------------------------------------------------+      |
@@ -141,13 +140,32 @@ src
     └── lejusdk-vr         # 外部控制 SDK，提供头部、手臂和腰部控制以及控制器相关接口
 ```
 
-## LejuSDK 文档
+## 仿真（推荐使用 Docker）
 
-LejuSDK 是 Leju 机器人软件开发工具包，提供多层次的机器人控制接口。详细文档请参考 [LejuSDK 文档](./docs/leju-sdk/index.html)。
+在 Docker 里编译并运行 MuJoCo，镜像里已经带有 ROS Noetic，本机只安装 Docker，不必再安装 ROS。下面的命令除进入容器外，都在容器里、仓库根目录执行。容器默认 shell 是 zsh。
 
-您可以clone本仓库在网站打开LejuSDK文档进行浏览
+### 1. 前提条件
 
-## 依赖安装
+安装 Docker。使用 GPU 时，再安装与显卡驱动匹配的 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html)。
+
+### 2. 进入容器
+
+在仓库根目录执行，普通模式和 GPU 模式二选一：
+
+```bash
+./docker/run.sh
+# 或
+./docker/run_with_gpu.sh
+```
+
+本机还没有 `kuavo_opensource_mpc_wbc_img` 时，自行下载后导入，再执行上面的脚本：
+
+```bash
+wget https://kuavo.lejurobot.com/kuavo_research_editiion/docker_images/kuavo_opensource_mpc_wbc_img_v1.3.0.tar.gz
+docker load -i kuavo_opensource_mpc_wbc_img_v1.3.0.tar.gz
+```
+
+### 3. 依赖安装
 
 ```bash
 sudo apt-get update && sudo apt-get install -y \
@@ -155,159 +173,133 @@ sudo apt-get update && sudo apt-get install -y \
     libacl1-dev libncurses5-dev
 ```
 
-## 编译
+### 4. 编译
+
+`installed/setup.zsh` 在镜像里，不在 git 仓库中。它负责把 CycloneDDS、iceoryx 等依赖放进当前终端。`catkin build` 的结果在 `devel/`，之后每次开终端运行节点时加载 `devel/setup.zsh`。
 
 ```bash
-source installed/setup.bash  # !!! IMPORTANT !!! 非常重要,不可省略
-# source installed/setup.zsh  # !!! IMPORTANT !!! 非常重要,不可省略 如果是zsh
+source installed/setup.zsh
 catkin build
 ```
 
-## 部署 iceoryx 共享内存（首次使用需执行，Docker中则跳过此步骤）
+### 5. 配置 iceoryx 共享内存
 
-项目支持通过 iceoryx 共享内存加速进程间通信，建议部署以获得更优的实时性能：
+首次使用时执行。用共享内存降低进程间延迟。
 
 ```bash
-./src/leju_launch/scripts/setup_cyclonedds_config.sh
+./src/leju_launch/scripts/setup_cyclonedds_config_for_docker.sh
 ```
 
-部署脚本会完成以下操作：
-- 安装 RouDi 守护进程为系统服务（开机自启）
-- 部署 CycloneDDS 配置文件到 `/etc/cyclonedds/`
-- 设置 `CYCLONEDDS_URI` 环境变量默认为 `cyclonedds_shm.xml`
+### 6. 运行
 
-> **注意：** 部署完成后需要**注销当前用户重新登录**或**重启系统**才能生效。
-
-卸载：
+仓库默认控制器是 `amp`。要在仿真里换成自己的模型，先看后面的「在仿真里使用自己的策略」，再执行：
 
 ```bash
-./src/leju_launch/scripts/setup_cyclonedds_config.sh --remove
-```
-
-## Docker 运行
-
-如果希望直接在容器中运行仿真，可以使用仓库自带的 Docker 脚本。普通模式和 GPU 模式二选一使用：
-
-```bash
-# 普通模式
-./docker/run.sh
-
-# GPU 模式
-./docker/run_with_gpu.sh
-```
-
-- 首次运行时，脚本会自动下载基础镜像并构建本地 `lejulab` 镜像
-- 在普通模式和 GPU 模式之间切换时，按提示删除旧容器后再启动另一种模式
-- 如果主机还没有配置好 NVIDIA Docker 环境，`./docker/run_with_gpu.sh` 会给出提示并协助完成配置
-
-使用两个终端启动仿真：
-
-终端 1：
-
-```bash
-./docker/run.sh
-# 或 ./docker/run_with_gpu.sh
-
-# 使用共享内存版 CycloneDDS 配置
-./src/leju_launch/scripts/start_roudi.sh
-```
-
-终端 2：
-
-```bash
-./docker/run.sh
-# 或 ./docker/run_with_gpu.sh
-
-catkin build
-# Docker 中默认配置 zsh
 source devel/setup.zsh
+export ROBOT_VERSION=17
 roslaunch leju_launch load_mujoco_sim.launch
 ```
 
-## 运行
+- 上述命令会同时启动控制器、MuJoCo 仿真器和手柄
+- 按终端提示按下手柄 `start`
+- 在 MuJoCo 窗口点击 `Run`
+- 机器人一开始倒地时，先 `Pause`、`Reset`，再 `Run`
 
-### 通用说明
+## 通用说明
 
-- **选择机器人版本（数值定义参考 `lejusdk-utils/robot_version.hpp` 中 `RobotVersions` 常量）**
-  - `export ROBOT_VERSION=14`  ：Roban 2 代基础版（`RobotVersions::ROBAN2_BASE`）
-  - `export ROBOT_VERSION=46`  ：Kuavo 4 代 UAE 版本（`RobotVersions::KUAVO4_UAE`）
-  - `export ROBOT_VERSION=52`  ：Kuavo 5 代基础版（`RobotVersions::KUAVO5_BASE`）
-- **手柄控制（通用）**
-  - `start`：从待机/准备状态切换到运行/站立状态
-  - `back`：进入安全停机/关节松弛状态
-  - 其他按键和摇杆：根据不同控制器（如 RL demo / mimic）实现行走、转向、舞蹈等功能，详见对应控制器文档
+- `start`：进入站立
+- `back` + `start`：退出程序。运行中先下蹲再退出；尚未进入运行时直接退出
+- 其余按键见 `src/leju-controllers/leju-rl-controller/config/17/teleop_bindings.yaml` 和 [手柄绑定](src/leju-controllers/leju-rl-controller/docs/teleop_bindings.md)
 
-### Mujoco 仿真
+## 在仿真里使用自己的策略
 
-```bash
-source devel/setup.bash
+下面用仓库里的「恶作剧」说明仿真里一条舞蹈从文件到按键的接法。自己加一条时，复制 CSV、ONNX 和控制器 YAML，再在 `controller_manager.yaml` 与 `teleop_bindings.yaml` 各加一条。
 
-# Roban2
-export ROBOT_VERSION=14
-roslaunch leju_launch load_mujoco_sim.launch
+这里有两个名字：
 
-# Kuavo4pro
-export ROBOT_VERSION=46
-roslaunch leju_launch load_mujoco_sim.launch
+- 动作名写在控制器 YAML 里。恶作剧是 `恶作剧`，对应 `default_motion` 和 `motions.name`。
+- 控制器名写在注册和按键里。恶作剧是 `mimic_dance_ezuoju`。`controller_manager.yaml` 的 `name` 和按键 `args.name` 用这同一个字符串。
 
-# Kuavo5
-export ROBOT_VERSION=52
-roslaunch leju_launch load_mujoco_sim.launch
+根目录是 `src/leju-controllers/leju-rl-controller/config/17/`。
+
+| 环节 | 恶作剧所用文件 | 里面要对上的名字 |
+| --- | --- | --- |
+| CSV | `motion_data/lxh_ezuoju_50fps_deploy.csv` | 动作名 `恶作剧` |
+| ONNX | `policy/dance/lxh_robans17_ezuoju_073117_79999.onnx` | 由控制器 YAML 的 `policy_path` 指向 |
+| 控制器 | `controllers/config_mimic_dance_ezuoju.yaml` | 动作名 `恶作剧` |
+| 注册 | `controller_manager.yaml` 中的 `mimic_dance_ezuoju` | 与按键绑定相同 |
+| 按键 | `teleop_bindings.yaml` 的 `LT+RT+A` | `mimic_dance_ezuoju` |
+
+`default_controller` 保持 `amp`。仿真启动后先站立、行走；恶作剧靠按键切过去，播完再自动回到 `amp`。
+
+### 1. CSV 和 ONNX
+
+CSV 是仿真用的轨迹，ONNX 是训练导出的策略。恶作剧这两份已经放在：
+
+```text
+config/17/motion_data/lxh_ezuoju_50fps_deploy.csv
+config/17/policy/dance/lxh_robans17_ezuoju_073117_79999.onnx
 ```
 
-- 通过如上命令启动控制器、Mujoco 仿真器和手柄控制等功能包
-- 根据终端提示，按下`start`按键
-- 点击 Mujoco 仿真中的 `Run` 运行按钮
-- tips: 如果开始时机器人倒地，可以先`Pause`和`Reset`仿真，然后再`Run`
+新动作按同样位置放置：轨迹进 `motion_data/`，策略进 `policy/dance/`。
 
-### 实物机器人
+### 2. 控制器 YAML
 
-```bash
-sudo su # 实物需要在root用户下运行
-source devel/setup.bash
-
-# Roban2
-export ROBOT_VERSION=14
-roslaunch leju_launch load_real.launch
-
-# Kuavo4pro
-export ROBOT_VERSION=46
-roslaunch leju_launch load_real.launch
-
-# Kuavo5
-export ROBOT_VERSION=52
-roslaunch leju_launch load_real.launch
-```
-
-- 对于实物机器人，也许您首先需要对电机进行零点标定，但这并不是必须的，因为机器人在出厂时已经标定完毕，如果存在如下情况您可手动执行标定工具重新进行标定:
-  - **准备站立时，发现关节角度与零点位置位置存在偏差**
-  - 硬件维修更换电机
-- 电机零点标定工具参考文档: [电机零点标定工具](./docs/howto-use-motor-cali-tool.md)
-- 拉起机器人背后的急停按钮，执行上述命令
-- 将移位架升起，等待机器人进入膝盖微曲状态
-- 降低移位架，让机器人脚掌刚刚好接触地面
-- 使用手柄 `start` 按键使机器人站立
-- **结束使用机器人请按手柄 `back` 按键**
-
-### 控制器配置
-
-控制器配置文件位于 `src/leju-controllers/leju-rl-controller/config/<ROBOT_VERSION>/controller_manager.yaml`，通过修改 `default_controller` 字段切换控制模式：
-
-#### Mimic 舞蹈（仅 Roban2）
+`controllers/config_mimic_dance_ezuoju.yaml` 把上面两个文件接到控制器上。路径相对于这份 YAML 所在的 `controllers/` 目录，所以要写 `../policy` 和 `../motion_data`。
 
 ```yaml
-default_controller: "mimic"
+HumanoidRobotCfg:
+  inference_engine: onnxruntime
+  loop_dt: 0.001
+  policy_path: ../policy/dance/lxh_robans17_ezuoju_073117_79999.onnx
+  motion:
+    default_motion: 恶作剧
+    motions:
+      - name: 恶作剧
+        file: ../motion_data/lxh_ezuoju_50fps_deploy.csv
+    auto_switch_back:
+      enabled: true
+      target_controller: amp
 ```
 
-待机器人站立之后，按下西瓜键即可播放舞蹈，播放结束后再次按西瓜键可重复播放。
+`default_motion` 必须等于 `motions` 里某一项的 `name`。按键只负责切到这个控制器并自动播放默认动作，动作名用的是这里的 `恶作剧`，控制器注册名用的是下一节的 `mimic_dance_ezuoju`，两者不是同一个字符串。
 
-#### AMP 行走
+同文件后半段的 `env.robot` 要和训练导出的 `env.yaml` 对齐：`joint_default_pos` 对 `joint_pos`，`actuator_kp` 对 `stiffness`，`actuator_kd` 对 `damping`，`action_scale` 对 `actions`。`auto_switch_back` 打开后，这段舞蹈播完会切回 `amp`。
+
+### 3. 注册到 controller_manager.yaml
+
+在 `controllers:` 列表里增加一条。`name` 是按键和 `switch` 命令使用的控制器名，`config` 相对于 `config/17/controller_manager.yaml`。
 
 ```yaml
-default_controller: "amp"
+  - name: "mimic_dance_ezuoju"
+    type: "GenericRLController"
+    config: "controllers/config_mimic_dance_ezuoju.yaml"
+    music: "dance_ezuoju.wav"
+    music_delay: 1.0
+    enabled: true
 ```
 
-待机器人站立之后，左摇杆控制前后左右，右摇杆控制左右转向。
+`music` 和 `music_delay` 可选。恶作剧在动作开始约 1 秒后播放 `dance_ezuoju.wav`。`enabled: true` 才会被加载。文件顶部的 `default_controller: "amp"` 不用改成舞蹈名。
+
+### 4. 绑定按键
+
+`teleop_bindings.yaml` 里，松开 `LT+RT+A` 切到 `mimic_dance_ezuoju`，并自动播放该控制器的默认动作：
+
+```yaml
+  - buttons: ["LT", "RT", "A"]     # 恶作剧（舞蹈）
+    edge: release
+    action:
+      type: SwitchController
+      args:
+        name: mimic_dance_ezuoju
+        auto_start_motion: true
+```
+
+`args.name` 必须和 `controller_manager.yaml` 的 `name` 一致。`edge: release` 表示松开组合键才触发。`auto_start_motion: true` 表示切换完成后播放 `default_motion`（恶作剧）。
+
+使用顺序：`start` 站立并进入 `amp`，再同时按住 `LT`、`RT` 和 `A`，松开后开始恶作剧。播完回到 `amp`。左摇杆前后左右、右摇杆转向仍然是 `amp` 的行走。退出程序用 `back` + `start`。
+
+新舞蹈沿用这个结构：选一组未占用的按键，`args.name` 写成你在 `controller_manager.yaml` 里注册的新名字，并带上 `auto_start_motion: true`。改完重新启动仿真。
 
 
 ## 输入控制设备
@@ -316,144 +308,33 @@ default_controller: "amp"
 
 ![](./docs/images/joystick.png)
 
-### Quest3 VR 控制
-
-#### 启动方式
-
-```bash
-sudo su  # 需要 root 权限
-source devel/setup.bash
-
-# kuavo5
-export ROBOT_VERSION=52
-roslaunch leju_launch vr_teleop.launch
-
-# kuavo4pro
-export ROBOT_VERSION=46
-roslaunch leju_launch vr_teleop.launch
-```
-
-如果需要手动指定 Quest3 的 IP，可以追加参数：
-
-```bash
-roslaunch leju_launch vr_teleop.launch quest_ip:=192.168.1.100
-```
-
-#### 适用机型与限制
-
-| 机型              | 手臂控制 | 头部控制 | 速度控制 | 腰部控制 | 备注                    |
-| ----------------- | -------- | -------- | -------- | -------- | ----------------------- |
-| `Kuavo4Pro(46)` | 支持     | 支持     | 支持     | 不支持   | 无腰部自由度            |
-| `Kuavo5(52)`    | 支持     | 支持     | 支持     | 不支持   | 暂不提供 VR 腰部控制 |
-| `Roban(14)`     | 不开放   | 不开放   | 不开放   | 不开放   | 当前节点启动即退出      |
-
-#### 操作方式
-
-- `X+A`
-  - 在 `Auto(1)` 和 `External(2)` 之间切换
-- `X+B`
-  - 在 `KeepPose(0)` 和 `External(2)` 之间切换
-- `X+Y`
-  - 进入安全停机/关节松弛状态
-- 左/右 `grip`
-  - 对应手臂进入增量控制
-- 头部
-  - 由头显姿态驱动
-- 左摇杆
-  - 发布原始范围 `[-1, 1]` 的平移速度指令
-  - 上推前进、下拉后退、左推左移、右推右移
-- 右摇杆
-  - 发布原始范围 `[-1, 1]` 的旋转速度指令
-  - 左推左转、右推右转
-
-三个手臂模式的效果如下：
-
-| 模式         | 值    | 效果                                                           |
-| ------------ | ----- | -------------------------------------------------------------- |
-| `KeepPose` | `0` | 保持当前手臂姿态，适合临时停在当前位置                         |
-| `Auto`     | `1` | 交还给默认自动行为（行走时摆臂），手臂不再接受当前 VR 增量控制 |
-| `External` | `2` | 进入 VR 外部控制模式，按住对应 `grip` 后可进行增量控制       |
-
-#### 使用示例
-
-1. 启动 `vr_teleop.launch`
-2. 大臂垂直于地面，小臂水平于地面，长按 meta 键标定骨骼点
-3. 按 `X+A` 切到 `External(2)`
-4. 按住单侧或双侧 `grip`，移动 Quest3 手柄开始控制手臂
-
 ## Controller CLI 工具
 
-`controller_cli` 是一个命令行交互工具，可通过 DDS 接口在运行时查询状态、切换控制器、设置控制模式等，无需手柄或 VR 设备。
+`controller_cli` 是一个命令行交互工具，可通过 DDS 接口在运行时查询状态、切换控制器、设置控制模式等，无需手柄。
 
-### 启动方式
-
-**实机环境：** 本地主机新开一个终端 SSH 连接到机器人。
+仿真已经启动后再开一个终端，进入正在运行的容器。这个工具不需要 root。
 
 ```bash
-sudo su
-source installed/setup.bash
-controller_cli
-```
-
-**Docker 仿真环境：** 在主机上新开一个终端连接到正在运行的 Docker 容器。
-
-```bash
-docker ps                                    # 查看容器 ID
+docker ps
 docker exec -it <container_id> zsh
-source installed/setup.zsh
+source devel/setup.zsh
+export ROBOT_VERSION=17
 controller_cli
 ```
 
-### 命令说明
-
-使用 `help` 命令可查看完整命令列表：
+`help` 打印的命令如下。程序里没有 `runtime`、`motion`、`start`、`stop`、`walkcontrol`。
 
 | 命令 | 说明 |
-|------|------|
-| `runtime [--json]` | 查看 runtime 原始状态 |
-| `controller [--json]` | 查看控制器状态 |
-| `list [--json]` | controller 别名 |
-| `motion [--json]` | 查看动作状态 |
-| `start [--json]` | 触发 start（等价 START 事件） |
-| `stop [--json]` | 触发 stop（等价 BACK/quit 事件） |
-| `motion start [name] [--json]` | 触发动作播放 |
-| `switch <name> [--json]` | 切换控制器 |
-| `mode <arm\|waist> <keep\|auto\|external> [--json]` | 设置控制模式 |
-| `walkcontrol` | 键盘速度控制 |
+| --- | --- |
+| `list` | 查看当前控制器和可用控制器 |
+| `switch <name>` | 切换控制器，例如 `switch amp` |
+| `mode <arm\|waist> <keep\|auto\|external>` | 设置手臂或腰的控制模式 |
+| `refresh` | 刷新并显示状态 |
 | `clear` | 清屏 |
 | `help` | 帮助 |
 | `quit` / `exit` | 退出 |
 
-### 使用方法
-
-**动作模仿：**
-
-```bash
-# 触发运行
-start
-
-# 切换控制器
-switch <controller_name>
-
-# 查看动作列表
-motion
-
-# 触发动作播放
-motion start <motion_name>
-```
-
-**运动控制：**
-
-```bash
-# 触发运行
-start
-
-# 切换控制器
-switch <controller_name>
-
-# 键盘行走控制（w/s 前后、a/d 左右、q/e 转向、空格归零、x 退出）
-walkcontrol
-```
+站立用手柄 `start`，退出程序用 `back` + `start`。切换舞蹈控制器用 `switch`，名字与 `controller_manager.yaml` 里的 `name` 一致。
 
 ## 日志与录制数据
 
@@ -474,36 +355,7 @@ walkcontrol
         └── core.*
 ```
 
-## 数据可视化
-
-### Foxglove Studio
-
-[Foxglove Studio](https://foxglove.dev/) 是支持 MCAP 格式的可视化工具，可用于查看录制的机器人数据（关节状态、IMU 数据等）。
-
-- 网页版：https://studio.foxglove.dev/
-- 桌面版：https://foxglove.dev/download
-
-### 使用布局文件
-
-项目提供了预定义的布局文件，位于 `config/` 目录：
-
-| 文件 | 适用机器人 |
-|------|-----------|
-| `foxglove-roban2-layout.json` | Roban 2 |
-| `foxglove-kuavo4pro-layout.json` | Kuavo 4 Pro |
-| `foxglove-kuavo5-layout.json` | Kuavo 5 |
-
-**导入布局：**
-
-1. 在 Foxglove Studio 中打开 `.mcap` 数据文件
-2. 点击右上角 **Layout** 菜单
-3. 选择 **Import layout**，导入对应机器人的布局文件
-
-布局文件包含常用的面板配置（关节位置、速度、力矩、IMU 数据等），避免每次重复设置。
-
-
 ## 已知问题
-- Roban 2 代基础版的扭矩常数不准确：导致 CST 模式下的 AMP 步态会出现剧烈振动，目前正在重新测试扭矩常数。
 - CSP 不纯粹：用户层 CSP 下发的 joint_cmd 中 joint_q 是关节当前位置而非目标位置。
 
 ## 故障排除
@@ -520,12 +372,8 @@ walkcontrol
 
 **解决方案：**
 
-1. **首次使用**：执行 [部署 iceoryx 共享内存](#部署-iceoryx-共享内存首次使用需执行) 部分的部署脚本，然后注销重新登录或重启系统
-2. **已部署但未生效**：确认已注销重新登录，或手动启动 RouDi：
+1. **首次使用**：执行 [配置 iceoryx 共享内存](#5-配置-iceoryx-共享内存)
+2. **RouDi 没在跑**：手动启动：
    ```bash
    ./src/leju_launch/scripts/start_roudi.sh
-   ```
-3. **检查服务状态**：
-   ```bash
-   systemctl status leju-roudi
    ```
