@@ -1,19 +1,33 @@
 HumanoidRobotCfg:
   inference_engine: "onnxruntime"
   loop_dt: 0.001
-  policy_path: "../policy/upstair/model_09_2026-07-31_16-15-57_233000.onnx"
+  # policy_path: "../policy/upstair/model_09_2026-08-17_14-44-32_215000.onnx"
 
+  # policy_path: "../policy/upstair/model_bendi_2026-08-18_11-53-51_221000.onnx"
+  # policy_path: "../policy/upstair/model_15_2026-08-18_20-12-12_242000.onnx"
+  # policy_path: "../policy/upstair/model_09_2026-08-17_14-44-32_221000.onnx"
+  
+  # policy_path: "../policy/upstair/model_bendi_2026-08-28_11-25-49_227000.onnx"
+  # policy_path: "../policy/upstair/model_bendi_2026-08-28_11-25-49_227400.onnx"
+  # policy_path: "../policy/upstair/model_09_2026-08-28_18-13-10_244000.onnx"
+  
+  # policy_path: "../policy/upstair/model_bendi_2026-09-01_19-35-30_235000.onnx"
+  # 0904
+  policy_path: "../policy/upstair/model_238000.onnx"
+  # policy_path: "../policy/upstair/model_13_2026-09-02_14-27-07_239000.onnx"
+  
+  
   depth:
-    # 真机与 ROS 源端一致：Gemini 330 发送 424x240 原始毫米深度图，下位机缩放
-    # 到 64x36、修复空洞、按 2.5m 归一化后写入历史缓存。源相机为
+    # 上位机负责将 Gemini 330 原始深度处理为 64x36、米制归一化帧；
+    # 下位机直接消费该 Float64Array，不再重复缩放、修复空洞或归一化。
     # 真机60Hz不降帧，使用43帧缓存并按 [0,6,...,42] 取8帧；MuJoCo
-    # 原有64x36米制帧保持30Hz、22帧缓存和 [0,3,...,21]。两条路径
-    # 都覆盖约0.7秒历史，最终统一输出8x36x64给网络。
-    # 若上位机使用不同 DDS 话题，只需修改此项，无需改控制器代码。
-    input_topic: "rt/depth_camera/frame_mm_240x424"
-    input_width: 424
-    input_height: 240
-    input_unit: "millimeters"
+    # 原有64x36米制帧保持30Hz、22帧缓存和 [0,3,...,21]。
+    input_topic: "rt/depth_camera/frame_normalized_36x64"
+    input_data_type: "float64"
+    input_width: 64
+    input_height: 36
+    input_unit: "meters"
+    input_preprocessed: true
     input_frame_decimation: 1
     width: 64
     height: 36
@@ -25,6 +39,9 @@ HumanoidRobotCfg:
     max_depth_m: 2.5
     timeout_sec: 0.10
     min_valid_ratio: 0.05
+    # MuJoCo 仿真深度噪声标准差 [m]，由 leju-mujoco-sim 读取。真机相机不用这项。
+    # 0 关闭噪声。改完后重启仿真进程生效。
+    noise_std_m: 0.01
 
   model_contract:
     single_observation_dim: 18510
@@ -88,7 +105,7 @@ HumanoidRobotCfg:
       action_scale:
         [0.25, 0.25, 0.25, 0.25, 0.35, 0.25, 0.25,
          0.25, 0.25, 0.25, 0.35, 0.25, 0.25,
-         0.25, 0., 0., 0.25, 0.25, 0., 0., 0.25]
+         0.25, 0.05, 0.05, 0.25, 0.25, 0.05, 0.05, 0.25]
 
     # 通用加载器需要合法的基础观测声明；DepthWalkController 会使用固定的
     # 92550 维专用观测覆盖此缓冲，不会走 GenericRLController 的观测拼接。
@@ -99,8 +116,8 @@ HumanoidRobotCfg:
         base_ang_vel: {scale: 1., clip: [-10000., 10000.]}
 
     command_range:
-      lin_vel_x: [-0.5, 0.8]
-      lin_vel_y: [-0.3, 0.3]
-      ang_vel_z: [-1.0, 1.0]
+      lin_vel_x: [-0.5, 1.0]
+      lin_vel_y: [-0.0, 0.0]
+      ang_vel_z: [-0.6, 0.6]
     leg_bias: 0.5
     stance_ratio: 0.5

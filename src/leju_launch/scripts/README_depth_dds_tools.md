@@ -14,15 +14,15 @@ pip3 install cyclonedds==0.10.2 opencv-python numpy
 
 **必须先启动** `launch_real.sh`（或等价 launch），且深度相机正在发布，再运行下列工具。
 
-默认话题（Roban / Gemini 330 真机）：
+默认话题（Roban / Gemini 330 真机，上位机处理后的控制器输入）：
 
 ```text
-rt/depth_camera/frame_mm_240x424
+rt/depth_camera/frame_normalized_36x64
 ```
 
-消息类型：`Float64Array`，长度 `424 × 240 = 101760`（单位：毫米）。
+消息类型：`Float64Array`，长度 `64 × 36 = 2304`（单位：米，已由上位机归一化）。
 
-仿真 MuJoCo 深度话题（可选）：
+MuJoCo 仿真 legacy 深度话题（可选，与真机默认不同）：
 
 ```text
 rt/depth_camera/frame_meters_36x64
@@ -37,7 +37,7 @@ rt/depth_camera/frame_meters_36x64
 | 脚本 | 作用 | 典型场景 |
 |------|------|----------|
 | `dds_topic_hz.sh` | 统计话题发布频率与 payload 长度 | 确认深度在发、Hz 是否正常 |
-| `dds_depth_to_video.sh` | 原始 **424×240 mm** 深度录屏/预览 | 看相机原始画面是否正常 |
+| `dds_depth_to_video.sh` | 原始 **480×270 mm** 深度录屏/预览 | 看相机原始画面是否正常 |
 | `dds_depth_policy_input_video.sh` | 经控制器同款处理后 **64×36** 网络输入录屏/预览 | 看策略实际“看到”的深度 |
 | `dds_depth_jet_compare.sh` | **Jet 彩虹云图**左右对比 raw vs 64×36 | 直观对比原始与网络输入 |
 | `dds_depth_pointcloud_compare.sh` | **点云**左右对比 raw vs 64×36 | 3D 几何分布对比 |
@@ -52,13 +52,13 @@ rt/depth_camera/frame_meters_36x64
 等价于 ROS 的 `rostopic hz`。
 
 ```bash
-# 真机默认话题
+# 真机默认话题（上位机已处理，Float64Array，2304 个元素）
 bash src/leju_launch/scripts/dds_topic_hz.sh
 
 # 指定话题
-bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_mm_240x424
+bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_normalized_36x64
 
-# 仿真 64×36
+# MuJoCo legacy 64×36
 bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_meters_36x64 --expected-len 2304
 
 # 只跑 10 秒后退出
@@ -68,10 +68,10 @@ bash src/leju_launch/scripts/dds_topic_hz.sh --duration 10
 **输出示例：**
 
 ```text
-average rate: 48.140 Hz  (total=242, elapsed=5.0s, last_len=101760)
+average rate: 59.8 Hz  (total=299, elapsed=5.0s, last_len=2304)
 ```
 
-- `last_len=101760`：每帧长度正确  
+- `last_len=2304`：每帧长度正确
 - 频率约 **48–60 Hz** 为正常（与相机/launch 配置有关）
 
 Ctrl+C 结束并打印 summary。
@@ -80,6 +80,7 @@ Ctrl+C 结束并打印 summary。
 |------|------|
 | `topic` | DDS 话题名（可选，有默认值） |
 | `--expected-len N` | 期望 `data` 长度，`0` 表示不检查 |
+| `--type auto\|float64\|uint16` | DDS payload 类型；`auto` 按话题名选择（归一化/仿真 64×36 用 `Float64Array`，原始真机话题用 `UInt16Array`） |
 | `--duration SEC` | 运行秒数，`0` 表示一直跑 |
 | `--report-interval SEC` | 打印间隔（默认 1s） |
 
@@ -87,7 +88,7 @@ Ctrl+C 结束并打印 summary。
 
 ## 2. 原始深度视频：`dds_depth_to_video.sh`
 
-订阅 **424×240 毫米** 原始深度，伪彩色显示或录制 MP4。
+订阅 **480×270 毫米** 原始深度，伪彩色显示或录制 MP4。
 
 ```bash
 # 本地弹窗预览（按 q 退出）
@@ -118,20 +119,25 @@ bash src/leju_launch/scripts/dds_depth_to_video.sh --match-controller -o /tmp/de
 | `--max-depth-mm 2500` | 显示 clip 上限 |
 | `--match-controller` | 右下角叠加 64×36 简易预览 |
 | `--scale N` | 缩略图放大倍数（配合 `--match-controller`） |
-| `--width` / `--height` | 输入分辨率（默认 424×240） |
+| `--width` / `--height` | 输入分辨率（默认 480×270） |
 
 ---
 
 ## 3. 网络输入 64×36 视频：`dds_depth_policy_input_video.sh`
 
-订阅 `rt/depth_camera/frame_mm_240x424`，按 **`depth_walk` 控制器内 `DepthImageProcessor` 真机路径** 处理：
+该工具订阅原始真机诊断话题 `rt/depth_camera/frame_u16_mm_270x480`，在本地按
+**`depth_walk` 控制器旧版 `DepthImageProcessor` 真机路径** 处理；它不是当前下位机的
+控制器输入（控制器输入是上位机发布的 `frame_normalized_36x64`）：
 
 ```text
-424×240 mm
-  → nearest 缩放到 64×36
-  → 转米、clip [0, 2.5] m、除以 2.5
-  → 3 次邻域 inpaint（≥3 有效邻居才填洞）
-  → 3×3 Gaussian 模糊
+480×270 mm
+  → 转为 float32 米制，nearest 缩放到 240×135
+  → 两轮连通域白点过滤（与 depth_inpainter.launch 参数一致）
+  → 零值 mask 做 2×2 膨胀
+  → depth 与 mask 分别 nearest 缩放到 64×36
+  → 8-bit 量化后执行 OpenCV Navier-Stokes inpaint（radius=2）
+  → 恢复原有效深度，再做 3×3、sigma=1 Gaussian 模糊
+  → clip [0, 2.5] m、除以 2.5
   → 归一化 float [0, 1]（即网络单帧深度输入）
 ```
 
@@ -143,14 +149,15 @@ bash src/leju_launch/scripts/dds_depth_policy_input_video.sh
 bash src/leju_launch/scripts/dds_depth_policy_input_video.sh \
   --no-show -o /tmp/policy_depth_64x36.mp4 --duration 15
 
-# 左右对比：原始 424×240 | 处理后 64×36
+# 左右对比：原始 480×270 | 处理后 64×36
 bash src/leju_launch/scripts/dds_depth_policy_input_video.sh \
-  --side-by-side --no-show -o /tmp/depth_compare.mp4 --duration 15
+  --side-by-side --no-show -o /home/lab/zqb/lejulab_platform/depth_compare0826_11.mp4 --duration 15
 ```
 
 **说明：**
 
 - 显示的是 **单帧** 64×36 归一化深度（网络观测 18432 维中的 1 帧），**不含** 8 帧 history stack 与 5 帧 frame stack  
+- 该图由工具订阅原始 DDS 帧后在本地执行控制器同款算法得到；控制器没有额外发布处理后图像话题
 - 底部文字：`valid=`、`min/max/mean`（归一化值）、帧率  
 - 若 `valid` 长期 **< 5%**，控制器也会判定 depth not ready（见 `config_depth_walk.yaml` 中 `min_valid_ratio: 0.05`）
 
@@ -167,13 +174,13 @@ bash src/leju_launch/scripts/dds_depth_policy_input_video.sh \
 | `--fps 30` | 输出帧率 |
 | `--input-width` / `--input-height` | 原始 DDS 分辨率 |
 
-处理逻辑实现在同目录 `depth_processor.py`，与 C++ `depth_image_processor.cpp` + 真机 `gaussian_blur=true` 对齐。
+处理逻辑实现在同目录 `depth_processor.py`，与 C++ `depth_image_processor.cpp` 的 480×270 mm 真机分支及 `gaussian_blur=true` 对齐，同时保留 424×240 兼容输入。`dds_depth_policy_input_video.sh`、`dds_depth_jet_compare.sh` 和 `dds_depth_pointcloud_compare.sh` 共用这一实现。
 
 ---
 
 ## 4. Jet 彩虹云图对比：`dds_depth_jet_compare.sh`
 
-左：**原始 424×240 mm**；右：**控制器处理后 64×36**；最右侧可选 **深度色条**（0–2.5 m）。  
+左：**原始 480×270 mm**；右：**本地执行控制器同款流程后的 64×36**；最右侧可选 **深度色条**（0–2.5 m）。
 默认使用 OpenCV **JET** 配色（经典彩虹“云图”），便于肉眼对比两路深度分布。
 
 ```bash
@@ -184,6 +191,10 @@ bash src/leju_launch/scripts/dds_depth_jet_compare.sh
 bash src/leju_launch/scripts/dds_depth_jet_compare.sh \
   --no-show -o docs/depth_compare.mp4 --duration 15
 
+# 灰度显示
+bash src/leju_launch/scripts/dds_depth_jet_compare.sh \
+  --colormap gray
+
 # 换 turbo / inferno 配色
 bash src/leju_launch/scripts/dds_depth_jet_compare.sh \
   --colormap turbo -o /tmp/depth_compare_turbo.mp4 --duration 10 --no-show
@@ -192,7 +203,7 @@ bash src/leju_launch/scripts/dds_depth_jet_compare.sh \
 | 参数 | 说明 |
 |------|------|
 | `-o`, `--output PATH` | 输出 MP4 |
-| `--colormap jet\|turbo\|inferno` | 伪彩色（默认 **jet**） |
+| `--colormap gray\|jet\|turbo\|inferno` | 配色（默认 **jet**，`gray` 为灰度） |
 | `--panel-height 360` | 每路面板高度 |
 | `--policy-scale 10` | 64×36 放大倍数 |
 | `--no-colorbar` | 隐藏右侧色条 |
@@ -205,14 +216,17 @@ bash src/leju_launch/scripts/dds_depth_jet_compare.sh \
 
 将 **原始深度** 与 **policy 64×36** 反投影为相机坐标系点云（针孔模型），左右渲染对比并录屏。
 
-- **左**：424×240 原始深度 subsample 点云  
-- **右**：64×36 处理后点云（像素映射与 `DepthImageProcessor` 一致）  
-- 点颜色：Jet 伪彩色（按深度 Z）  
+- **左**：480×270 原始深度 subsample 点云
+- **右**：本地执行控制器同款流程后的 64×36 点云
+- 点颜色：默认 Jet 伪彩色；可用 `--colormap gray` 显示深度灰度
 - 坐标系：相机光学系 **X 右、Y 下、Z 前**
 
 ```bash
 # 默认鸟瞰 BEV（X-Z，前方向上）
 bash src/leju_launch/scripts/dds_depth_pointcloud_compare.sh
+
+# 灰度点云
+bash src/leju_launch/scripts/dds_depth_pointcloud_compare.sh --colormap gray
 
 # 录 15 秒对比视频
 bash src/leju_launch/scripts/dds_depth_pointcloud_compare.sh \
@@ -228,6 +242,7 @@ bash src/leju_launch/scripts/dds_depth_pointcloud_compare.sh --view side
 | 参数 | 说明 |
 |------|------|
 | `--view bev\|side\|both` | 渲染视角（默认 **bev**） |
+| `--colormap gray\|jet\|turbo\|inferno` | 点深度配色（默认 **jet**） |
 | `--hfov-deg 87` | 水平 FOV，用于估算 fx/fy（无标定时近似） |
 | `--fx` / `--fy` | 手动指定内参（像素），优先于 FOV |
 | `--raw-step 3` | 原始图 subsample 步长（越小点越密、越慢） |
@@ -244,8 +259,11 @@ bash src/leju_launch/scripts/dds_depth_pointcloud_compare.sh --view side
 按顺序执行，便于定位问题在「没发 / 原始图不对 / 处理后不对 / 控制器没订阅」：
 
 ```bash
-# ① 话题是否在发
-bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_mm_240x424
+# ① 控制器输入话题是否在发（上位机处理后）
+bash src/leju_launch/scripts/dds_topic_hz.sh
+
+# 原始真机诊断话题（仅供本地处理工具）
+bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_u16_mm_270x480
 
 # ② 原始深度是否正常（地面、障碍、valid 比例）
 bash src/leju_launch/scripts/dds_depth_to_video.sh \
@@ -272,9 +290,9 @@ bash src/leju_launch/scripts/dds_depth_pointcloud_compare.sh \
 
 ```text
 src/leju_launch/scripts/
-├── dds_leju_types.py              # DDS Float64Array 类型定义
+├── dds_leju_types.py              # DDS UInt16Array / Float64Array 类型定义
 ├── dds_topic_hz.sh / .py          # 话题频率
-├── dds_depth_to_video.sh / .py    # 原始 424×240 视频
+├── dds_depth_to_video.sh / .py    # 原始 480×270 视频
 ├── depth_processor.py             # 64×36 处理（与控制器一致）
 ├── dds_depth_policy_input_video.sh / .py  # 网络输入 64×36 视频
 ├── depth_viz.py                   # Jet/色条可视化
@@ -299,3 +317,7 @@ A: `dds_topic_hz.sh rt/depth_camera/frame_meters_36x64 --expected-len 2304`；�
 
 **Q: 与训练时 8 帧历史一致吗？**  
 A: 本工具只可视化 **当前帧** 经处理后的 64×36。历史栈（43 帧缓存取 8 帧）在控制器 `DepthHistoryBuffer` 内完成，不在这些脚本中复现。
+
+### 工具链路选择
+
+四个工具默认订阅 rt/depth_camera/frame_normalized_36x64 的 Float64Array（64x36、[0,1]），下位机不重复填洞或 resize。旧原始话题可用 --type uint16 并指定 --input-width 480 --input-height 270。所有工具支持 --type auto|float64|uint16。

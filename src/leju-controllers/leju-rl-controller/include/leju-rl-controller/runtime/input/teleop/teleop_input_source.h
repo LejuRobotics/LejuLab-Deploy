@@ -31,6 +31,7 @@ namespace runtime {
 // 前向声明
 class JoyTeleopAdapter;
 class QuestTeleopAdapter;
+class PicoTeleopAdapter;
 class TriggerBuffer;
 
 /**
@@ -89,11 +90,12 @@ class TeleopInputSource : public InputSource {
   // ========================================================================
 
   /**
-   * @brief 获取当前命令快照（按优先级合并所有输入源）
+   * @brief 获取当前命令快照（按字段合并所有输入源）
    * @return 当前命令快照
    *
-   * 按优先级遍历所有注册的输入源，返回第一个有效的命令。
-   * 这实现了：Joy > Quest 的优先级策略。
+   * cmd_vel：Joy > Quest > Pico，取第一个有有效行走输入的源。
+   * arm/head/waist/hand：同样按优先级取第一个有值的源（与 cmd_vel 解耦，
+   * 摇杆静止时仍可透出 Pico 手部目标供 ControlLogic 100Hz 重发）。
    */
   CommandBuffer::Snapshot getSnapshot() const override;
 
@@ -131,6 +133,9 @@ class TeleopInputSource : public InputSource {
 
   /**
    * @brief 从 AMP 控制器配置合并 amp_hand 手柄参数到各适配器
+   *
+   * 会记住 ``config_path``; 之后每次 loadBindingConfig/reloadBindingConfig 覆盖
+   * 绑定配置时都会自动重放这份参数 (绑定文件不含这些字段, 覆盖会打回默认值)。
    */
   bool mergeAmpHandTeleopFromControllerConfig(const std::string& config_path);
 
@@ -147,16 +152,29 @@ class TeleopInputSource : public InputSource {
     stance_active_query_ = std::move(callback);
   }
 
+  /** @brief 供 Joy/Quest 仅在 AMP 活跃时使用 AMP 专属速度档。 */
+  void setAmpActiveQuery(std::function<bool()> callback);
+
  private:
+  /**
+   * @brief 绑定配置被覆盖后重放最近一次合并的 AMP 控制器 amp_hand 参数
+   *
+   * 供 loadBindingConfig / reloadBindingConfig 在 setBindingConfig 之后调用。
+   * 调用方不得持有 path_mutex_(内部自行加锁), 也不得处于适配器 binding_mutex_ 内。
+   */
+  void reapplyAmpHandControllerConfigLocked();
+
   TriggerBuffer* trigger_buffer_;           ///< 触发器缓冲区（非拥有）
   std::atomic<bool> initialized_{false};    ///< 是否已初始化
 
-  mutable std::mutex path_mutex_;           ///< 保护 binding_config_path_
-  std::string binding_config_path_;         ///< 上次成功加载的配置路径（用于热重载）
+  mutable std::mutex path_mutex_;           ///< 保护路径成员
+  std::string binding_config_path_;         ///< 上次成功加载的绑定配置路径（用于热重载）
+  std::string amp_controller_config_path_;  ///< 最近一次合并 amp_hand 参数的控制器配置路径
 
   // 内部适配器（按优先级排序）
   std::unique_ptr<JoyTeleopAdapter> joy_adapter_;   ///< Joy 手柄适配器
   std::unique_ptr<QuestTeleopAdapter> quest_adapter_; ///< Quest VR 适配器
+  std::unique_ptr<PicoTeleopAdapter> pico_adapter_;   ///< Pico VR 适配器（DDS）
 
   // 蹲起状态查询回调：蹲起活跃时 teleop 行走命令让路给 External 的 stance 指令
   std::function<bool()> stance_active_query_;

@@ -14,6 +14,7 @@
 
 #include "leju-rl-controller/controllers/controller_base.h"
 #include "leju-rl-controller/motion/motion_trajectory.h"
+#include "leju-rl-controller/motion/live_sonic_reference_provider.h"
 #include "leju-rl-controller/rl/rl_controller_types.h"
 #include "leju-rl-controller/utils/velocity_stop_filter.h"
 #include "lejusdk-lowlevel/leju_sdk.h"
@@ -22,12 +23,16 @@
 
 namespace leju {
 
+class HeftRLController;
+
 /// @brief 通用 RL 控制器
 ///
 /// 基于模块化组件实现强化学习策略控制：
 /// - OpenVINOModel 负责策略推理
 /// - MotionTrajectory 提供参考动作轨迹（可选）
 class GenericRLController : public ControllerBase {
+  friend class HeftRLController;
+
  public:
   GenericRLController(const RobotVersion& version, const std::string& name);
   ~GenericRLController() override;
@@ -62,6 +67,8 @@ class GenericRLController : public ControllerBase {
   void setMotionStartImu(const ImuData& imu) { current_imu_ = imu; }
   /// @brief 切换到指定 motion 并开始播放
   bool startMotion(const std::string& name);
+  /// @brief 按配置顺序切换到下一条 motion 并开始播放（循环）
+  bool startNextMotion();
   /// @brief 停止 motion 播放
   bool stopMotion();
   /// @brief 两阶段起身：插值到 READY 目标并保持（非阻塞，在 update 中完成）
@@ -83,6 +90,12 @@ class GenericRLController : public ControllerBase {
   std::string getCurrentMotionName() const;
   /// @brief 检查是否正在播放 motion
   bool isMotionPlaying() const { return motion_playing_; }
+  /// @brief 双推理预启动时将自动起播的 Sonic motion 冻结在首帧
+  bool freezeMotionAtFirstFrame();
+  /// @brief 不自动回切时，动作结束冷却后选择并播放下一个 motion
+  bool startNextCycledMotionIfReady(double now_sec);
+  /// @brief 是否启用 Sonic 的带冷却动作轮播语义
+  bool usesCycledMotionReplay() const { return cycle_motion_on_activate_; }
   /// @brief 舞蹈播完自动切回稳定控制器是否启用
   bool isAutoSwitchBackEnabled() const { return auto_switch_back_enabled_; }
   /// @brief 舞蹈播完自动切回的目标控制器名
@@ -228,6 +241,8 @@ class GenericRLController : public ControllerBase {
   bool isVirtualArmObsBlockedByLowCmd() const;
   /// @brief v17 amp_hand：推理 action 后处理（lateral_elbow_fix）
   void applyAmpV17ActionPostProcess(array_t& actions) const;
+  /// @brief 肘关节 action 上限：default + action*scale 不超过 -0.2 rad
+  void applyElbowActionPositionLimit(array_t& actions) const;
   /// @brief v17 amp_hand：后退摆臂增强 action 后处理
   void applyBackArmEnhancePostProcess(array_t& actions) const;
   /// @brief v17 amp_hand：起身增强 action 后处理（leg1/leg4 偏置）
@@ -240,6 +255,8 @@ class GenericRLController : public ControllerBase {
   void applyTinyCmdClip(array_t& velocity_cmd) const;
   /// @brief 低速起步脉冲（env.low_speed_kick_start）
   void applyLowSpeedKickStart(array_t& velocity_cmd);
+  void applyBackwardStartForwardKick(array_t& velocity_cmd, double requested_x,
+                                     bool was_at_rest, int cmd_stance_mode);
   /// @brief 低速原地转向脉冲（env.low_speed_yaw_kick_start）
   void applyLowSpeedYawKickStart(array_t& velocity_cmd);
   /// @brief 与 25 帧前角速度反向时清零，防止反向脉冲波动
@@ -248,14 +265,36 @@ class GenericRLController : public ControllerBase {
   void applyMixedMotionLimits(array_t& velocity_cmd) const;
   /// @brief 根据名称计算观测项
   array_t getObsTerm(const std::string& name) const;
+  array_t getStackedObsTerms(const std::vector<std::string>& term_names) const;
+  bool configurePolicyObservationLayout();
+  array_t getPolicyInputTerm(const std::string& term_name) const;
+  array_t concatenatePolicyInputTerms(const std::vector<std::string>& term_names) const;
+  array_t getRobotCommandMultiFuture() const;
+  array_t getMotionAnchorOriBMultiFuture() const;
+  array_t getTargetObservation() const;
+  array_t getFutureCommand() const;
+  array_t getTrackingErrorObservation() const;
+  array_t getBootIndicator() const;
+  array_t getRefBaseVel() const;
+  array_t getMotionAnchorPosZFuture() const;
+  double finalFrameVelocityScale(int future_offset = 0) const;
+  std::vector<int> getTargetFutureStepNum() const;
+  bool sampleLiveReference(const std::vector<int>& offsets,
+                           std::vector<SonicRefFrame>& frames) const;
+  bool modelHasInput(const std::string& input_name) const;
+  int modelInputDim(const std::string& input_name) const;
+  bool buildInferenceInputs(std::vector<std::vector<float>>& inputs,
+                            std::vector<std::string>& input_names) const;
   /// @brief 获取观测项维度
   int getObsTermShape(const std::string& name) const;
   /// @brief 重置观测历史缓冲区
-  void resetObsHistory();
+  virtual void resetObsHistory();
+  /// @brief 重置与 IsaacLab episode 对齐的策略输入状态
+  void resetPolicyEpisodeState();
   /// @brief 初始化观测历史缓冲区结构
-  void initObsHistory();
-  /// @brief 初始化世界坐标系 yaw 偏移（首次 update 时调用）
-  void initializeDummyWorldYaw();
+  virtual void initObsHistory();
+  /// @brief 初始化世界坐标系 yaw 偏移（首次 update / startMotion 时调用）
+  virtual void initializeDummyWorldYaw();
   /// @brief 获取当前 motion，无则返回 nullptr
   MotionTrajectory* getCurrentMotion() const;
 
@@ -269,9 +308,16 @@ class GenericRLController : public ControllerBase {
   /// @brief 提交一帧观测给推理线程
   void submitObservationForInference(const array_t& observation);
 
-  /// @brief 从缓存中读取当前动作快照
-  array_t getActionsSnapshot() const;
+  /// @brief 从缓存中读取当前动作快照（观测 / 对外语义，默认=策略输出）
+  virtual array_t getActionsSnapshot() const;
 
+  /// @brief 写入电机 PD 目标用的动作；默认同 getActionsSnapshot()。
+  virtual array_t getMotorActionsSnapshot() const;
+
+  /// @brief 用命名的多输入张量执行一次推理（Sonic 多输入策略）
+  bool inferNamedActions(const std::vector<std::vector<float>>& inputs,
+                         const std::vector<std::string>& input_names,
+                         array_t& inferred_actions);
   /// @brief 清零推理时间戳，避免切换首帧沿用旧值
   void clearInferenceTimestamps();
 
@@ -321,18 +367,48 @@ class GenericRLController : public ControllerBase {
   StackOrder obs_stack_order_ = StackOrder::kIsaaclab;  ///< 历史堆叠顺序
   std::vector<ObsTermConfig> obs_terms_;    ///< 观测项配置列表
 
+  struct PolicyInputConfig {
+    std::string name;
+    int expected_dim = -1;
+    bool stack_history = false;
+    std::vector<std::string> terms;
+  };
+  std::vector<PolicyInputConfig> policy_inputs_;  ///< YAML 声明的 ONNX 命名输入布局
+  double boot_max_ = 12.0;
+  uint64_t policy_episode_step_ = 0;
+
   // 观测历史缓冲区（2D deque，布局取决于 stack_order）
   // kIsaaclab: obs_stacks_[term_index][time_index]
   // kClassic:  obs_stacks_[time_index][term_index]
   std::deque<std::deque<array_t>> obs_stacks_;
+  bool obs_history_initialized_ = false;
 
   // ==================== Motion 配置 ====================
   std::map<std::string, std::string> motion_paths_;     ///< motion 名称 → 文件路径
+  std::vector<std::string> motion_sequence_; ///< YAML motions 顺序（用于轮播）
+  std::string configured_default_motion_;    ///< YAML motion.default_motion
+  bool cycle_motion_on_activate_ = false;    ///< 每次 resume 时选择序列中的下一个 motion
+  size_t next_motion_sequence_index_ = 0;    ///< 下次激活要选择的 motion 索引
+  double motion_replay_cooldown_s_ = 1.0;    ///< 留在本控制器时再次起播的冷却时间
+  double motion_replay_ready_time_sec_ = 0.0; ///< 当前动作结束后允许再次起播的时刻
+  bool motion_prep_auto_start_ = false;       ///< 动作轮播插值到首帧后自动起播
+  double policy_blend_time_s_ = 0.0;          ///< 动作轮播时新旧策略 action 的混合时长
+  bool cycle_action_blend_active_ = false;
+  double cycle_action_blend_elapsed_s_ = 0.0;
+  array_t cycle_action_blend_start_;          ///< 上一动作末帧的稳定策略 action
+  std::vector<std::string> motion_order_;               ///< YAML 顺序，供切轨循环
+  std::string default_motion_name_;                     ///< 配置的默认 motion
   bool motion_residual_action_ = false;     ///< 是否使用残差动作
   std::map<std::string, std::unique_ptr<MotionTrajectory>> motions_;  ///< motion 实例
   std::string current_motion_name_;         ///< 当前选中的 motion
+  std::unique_ptr<LiveSonicReferenceProvider> live_reference_;
+  std::vector<int> live_reference_joint_map_;
+  mutable bool live_reference_active_ = false;
+
   bool auto_switch_back_enabled_ = false;   ///< 舞蹈播完是否自动切回稳定控制器
   std::string auto_switch_back_target_;     ///< 自动切回的目标控制器名
+  double final_frame_hold_time_s_ = 0.0;    ///< 默认保持 Beta 立即结束语义；Sonic 配置显式设为 2s
+  int final_frame_velocity_interpolation_steps_ = 10;  ///< 末帧参考速度衰减步数
 
   /// 两阶段 motion：插值到 CSV 首帧并保持；StandbyHold=START 后锁姿不跑策略
   enum class MotionPrepState {
@@ -424,6 +500,7 @@ class GenericRLController : public ControllerBase {
   // v17 amp_hand 增强（YAML: enable_amp_arm_enhance_v17）：virtual_arm_obs /
   // roll_compensation_closed_loop / off_cmdy_by_cmdx / off_cmdangz_by_cmdy / lateral_elbow_fix
   bool enable_amp_arm_enhance_ = false;
+  bool enable_elbow_scale_ = false;
   // v17 后退增强（YAML: enable_back_enhance_v17）：后退摆臂 action + 重力 pitch 补偿
   bool enable_back_enhance_v17_ = false;
   // v17 起身增强（YAML: enable_standup_enhance_v17）：projected_gravity 后仰偏置 + leg1/leg4 action
@@ -550,8 +627,16 @@ class GenericRLController : public ControllerBase {
     double lateral_threshold = 0.2;
     bool enable_reverse_kick_guard = false;
   };
-  static constexpr int kReverseYawKickGuardHistorySteps_ = 25;  
+  static constexpr int kReverseYawKickGuardHistorySteps_ = 25;
   LowSpeedKickStartConfig low_speed_kick_start_;
+  struct BackwardStartForwardKickConfig {
+    bool enabled = false;
+    double forward_velocity = 0.6;
+    int duration_steps = 5;
+    double rest_cmd_threshold = 0.2;
+    double backward_trigger = 0.2;
+  } backward_start_forward_kick_;
+  int backward_start_forward_kick_remaining_steps_{0};
   LowSpeedYawKickStartConfig low_speed_yaw_kick_start_;
   int low_speed_kick_remaining_steps_{0};
   int low_speed_yaw_kick_remaining_steps_{0};
@@ -571,9 +656,12 @@ class GenericRLController : public ControllerBase {
   MixedMotionLimitsConfig mixed_motion_limits_;
 
   // ==================== 运行时状态 ====================
-  double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw
-  bool motion_playing_ = false;             ///< motion 是否正在播放
-  bool motion_just_finished_ = false;       ///< motion 刚播完的边沿标志（本控制周期有效）
+  double dummy_world_yaw_ = 0.0;            ///< 世界坐标系初始 yaw（HEFT 对齐使用）
+  bool motion_playing_ = false;             ///< motion 是否正在播放（含末帧保持阶段）
+  bool motion_cursor_frozen_ = false;       ///< 双推理切换期间是否冻结在首帧
+  bool motion_just_finished_ = false;       ///< 末帧保持结束后的边沿标志
+  bool final_frame_holding_ = false;        ///< 是否正在末帧保持阶段
+  int final_frame_hold_elapsed_steps_ = 0;  ///< 已保持的策略步数
   bool block_velocity_in_motion_ = false;   ///< M1/M2 motion 播放期间屏蔽摇杆行走
 
   // ==================== 异步推理线程 ====================
@@ -585,6 +673,10 @@ class GenericRLController : public ControllerBase {
   bool inference_stop_requested_ = false;   ///< 请求停止推理线程
   bool has_pending_observation_ = false;    ///< 是否有待推理观测
   array_t pending_observation_;             ///< 待推理观测缓存
+  std::vector<std::vector<float>> pending_named_inputs_;  ///< Sonic 命名输入快照
+  std::vector<std::string> pending_input_names_;
+  uint64_t policy_episode_generation_ = 0;
+  uint64_t pending_episode_generation_ = 0;
   std::atomic<double> last_observation_submit_time_sec_{0.0};  ///< 最近一次提交观测时间
   std::atomic<double> last_inference_finish_time_sec_{0.0};    ///< 最近一次推理完成时间
   std::atomic<double> last_inference_frequency_sample_time_sec_{0.0};  ///< 上次频率采样时间
@@ -594,6 +686,10 @@ class GenericRLController : public ControllerBase {
   RobotCmd blend_reference_cmd_;  ///< 策略切换用参考命令（q 中保存 q_target）
   array_t blend_torque_limits_;   ///< 策略切换时的策略关节力矩限幅（电机空间）
   array_i blend_recompute_mask_;  ///< 1=按 q_target 重算 tau；0=沿用旧整包混合
+
+  // ==================== Sonic 多输入策略 ====================
+  // 新配置由 observations.future_steps 显式声明；旧配置回退到 ONNX metadata。
+  std::vector<int> future_step_num_{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
   // ==================== 日志 ====================
   std::unique_ptr<TopicLogger> logger_;     ///< DDS 调试数据发布器

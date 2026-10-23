@@ -25,8 +25,13 @@ ROUDI_CONFIG="${PKG_DIR}/config/roudi_config.toml"
 NORMAL_XML="${PKG_DIR}/config/cyclonedds.xml"
 SHM_XML="${PKG_DIR}/config/cyclonedds_shm.xml"
 
+# DDS 发现网段：默认 lo；部署主机确实拥有该地址时才启用跨机通信
+DDS_TARGET_NET="192.168.26.1"
+
 # 自动检测 iox-roudi 路径 (兼容 lejulab-platform 和 lejulab)
+ARCH="$(uname -m)"
 ROUDI_SEARCH_PATHS=(
+    "${PROJECT_DIR}/src/lejusdk/3rd_party/${ARCH}/iceoryx/bin/iox-roudi"
     "${PROJECT_DIR}/src/lejusdk/3rd_party/iceoryx/bin/iox-roudi"
     "${PROJECT_DIR}/installed/bin/iox-roudi"
 )
@@ -54,6 +59,21 @@ find_roudi() {
     echo "错误: 未找到 iox-roudi，搜索路径:" >&2
     printf "  %s\n" "${ROUDI_SEARCH_PATHS[@]}" >&2
     exit 1
+}
+
+has_ipv4_address() {
+    local target="$1" addr
+    if command -v ip >/dev/null 2>&1; then
+        ip -o -4 addr show 2>/dev/null \
+            | awk '{print $4}' | cut -d/ -f1 | grep -Fxq "$target"
+        return
+    fi
+    if command -v hostname >/dev/null 2>&1; then
+        for addr in $(hostname -I 2>/dev/null); do
+            [ "$addr" = "$target" ] && return 0
+        done
+    fi
+    return 1
 }
 
 update_cyclonedds_env() {
@@ -153,6 +173,13 @@ deploy() {
     sudo cp "${ROUDI_CONFIG}" /etc/iceoryx/roudi_config.toml
     sudo cp "${NORMAL_XML}" /etc/cyclonedds/cyclonedds.xml
     sudo cp "${SHM_XML}" /etc/cyclonedds/cyclonedds_shm.xml
+
+    if has_ipv4_address "${DDS_TARGET_NET}"; then
+        sudo sed -i "s|name=\"lo\"|address=\"${DDS_TARGET_NET}\"|" /etc/cyclonedds/cyclonedds_shm.xml
+        echo -e "\033[1;32m[DDS] 检测到 ${DDS_TARGET_NET}，启用跨机通信\033[0m"
+    else
+        echo -e "\033[1;33m[DDS] ${DDS_TARGET_NET} 未找到，保持 lo 本机通信\033[0m"
+    fi
 
     # systemd 服务
     # UMask=0000: 确保 RouDi 创建的 socket/shm 不受 umask 限制

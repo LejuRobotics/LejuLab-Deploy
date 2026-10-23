@@ -20,12 +20,14 @@
 
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <functional>
 #include <memory>
 
 #include "leju-rl-controller/runtime/input/teleop/teleop_adapter_base.h"
 #include "leju-rl-controller/runtime/input/teleop/teleop_binding.hpp"
+#include "leju-rl-controller/runtime/dexterous_hand_poses.h"
 #include "lejusdk-lowlevel/data_types.h"
 
 namespace leju {
@@ -217,13 +219,37 @@ private:
   void handleArmUnlock(const ComboKey& current_combo,
                        std::vector<ActionTrigger>& out_triggers);
 
+  /// 单手 6 维灵巧手位姿
+  using HandPoseArray = std::array<double, kDexterousHandDof>;
+
   /**
-   * @brief LB+X 灵巧手抓握 toggle（切换6指全闭合 ↔ 全张开）
+   * @brief LB+X 灵巧手抓握 toggle（分段式握拳 ↔ 全张开）
    *
    * 组合键无法用静态 yaml 绑定表达，由 adapter 内部直接 publishHandCmd。
+   * 闭合采用与倒地起身 hand grip 序列同构的分段时序，避免拇指/食指同时
+   * 全速进入交会区造成机械干涉。
+   * 动作执行中（握拳序列或张开锁定窗口）再按 LB+X 一律忽略，
+   * 待当前动作完成后才接受下一指令。
    * @param current_combo 当前帧组合键
+   * @param current_time 当前时间戳 [s]（steady_clock）
    */
-  void handleHandGripToggle(const ComboKey& current_combo);
+  void handleHandGripToggle(const ComboKey& current_combo, double current_time);
+
+  /**
+   * @brief 推进 LB+X 分段握拳/张开序列（由 onJoyData 每帧调用）
+   *
+   * 握拳：全开/拇指预位 → 四指闭合 → 拇指收（握拳终点），与倒地起身
+   * kHandResetDelaySec/kFourFingerGripDelaySec 时序一致；
+   * 张开：kOpening 锁定窗口结束后视为动作完成（kOpening → kIdle）。
+   * @param now 当前时间戳 [s]（steady_clock）
+   */
+  void tickHandGripSequencer(double now);
+
+  /**
+   * @brief 发布双手 12 维灵巧手位置指令
+   * @param pose 单手 6 维姿态（左右手同值）
+   */
+  void publishHandPose(const HandPoseArray& pose);
 
 private:
   // SDK 订阅状态
@@ -233,6 +259,16 @@ private:
   bool posture_control_mode_ = false;       ///< amp_hand 右摇杆姿态模式
   int cmd_vel_line_x_limit_level_ = 1;      ///< 0=low, 1=default, 2=up
   bool hand_grip_toggled_ = false;          ///< LB+X 灵巧手抓握 toggle 状态
+
+  /// LB+X 分段握拳/张开动作阶段
+  enum class HandGripStage : uint8_t {
+    kIdle,             ///< 无动作执行中，接受 LB+X toggle
+    kWaitFourFingers,  ///< 已发全开/拇指预位，等待后闭合四指
+    kWaitThumbs,       ///< 已发四指闭合，等待后收拇指（到达握拳终点）
+    kOpening,          ///< 已发张开，锁定窗口内忽略再按（等待拇指回位）
+  };
+  HandGripStage hand_grip_stage_ = HandGripStage::kIdle;  ///< 当前握拳阶段
+  double hand_grip_stage_at_ = 0.0;                        ///< 当前阶段截止时刻 [s]
   std::atomic<bool> hand_presence_resolved_{false};  ///< 是否已收到首帧灵巧手状态
   std::atomic<bool> dexterous_hands_available_{false};  ///< 双侧灵巧手是否有效
   bool rt_was_active_ = false;              ///< 上一帧 RT 是否按下（上升沿检测）

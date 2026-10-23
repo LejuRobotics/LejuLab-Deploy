@@ -294,6 +294,7 @@ bool ParseAmpHandTeleopFromControllerConfig(
       config.amp_hand_posture_axis.policy_angular_z_scale =
           walking_scale["angular_z"].as<double>(1.0);
     }
+    // The adapter applies these limits only while AMP is active.
     ParseAmpHandCmdVelLineXGearConfig(walking_scale, config);
     RL_LOGI("ParseAmpHandTeleop: loaded from %s "
             "(posture=%s, line_x_gear=%s, entry_neutral_guard=%s/%d, quit_squat=%s)",
@@ -316,6 +317,7 @@ bool TeleopBindingConfig::loadFromFile(const std::string& config_path) {
   loaded_ = false;
   joy_config_.device_type = TeleopDeviceType::kJoy;
   quest_config_.device_type = TeleopDeviceType::kQuest;
+  pico_config_.device_type = TeleopDeviceType::kPico;
   try {
     RL_LOGI("TeleopBindingConfig: Loading config from %s", config_path.c_str());
     YAML::Node config = YAML::LoadFile(config_path);
@@ -340,10 +342,16 @@ bool TeleopBindingConfig::loadFromFile(const std::string& config_path) {
       RL_LOGW("TeleopBindingConfig: 未找到 quest_bindings 配置段");
     }
 
+    // 解析 pico_bindings（可选；组合键语法与 quest_bindings 相同）
+    if (config["pico_bindings"]) {
+      RL_LOGD("TeleopBindingConfig: Found pico_bindings section");
+      pico_config_ = ParseDeviceConfig(config["pico_bindings"], TeleopDeviceType::kPico);
+    }
+
     loaded_ = true;
 
-    RL_LOG_SUCCESS("TeleopBindingConfig: 已加载 %zu 个 joy 绑定和 %zu 个 quest",
-            joy_config_.size(), quest_config_.size());
+    RL_LOG_SUCCESS("TeleopBindingConfig: 已加载 %zu 个 joy 绑定, %zu 个 quest, %zu 个 pico",
+            joy_config_.size(), quest_config_.size(), pico_config_.size());
 
     return true;
   } catch (const YAML::Exception& e) {

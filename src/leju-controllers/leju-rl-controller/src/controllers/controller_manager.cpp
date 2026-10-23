@@ -21,6 +21,7 @@
 #include "lejusdk-utils/time_utils.hpp"
 
 namespace leju {
+void ForceLinkHeftRLController();
 
 namespace {
 struct HoldPoseForceLink {
@@ -40,6 +41,10 @@ bool IsFallenPose(const ImuData& imu, double threshold_deg) {
 }
 
 namespace {
+
+struct ForceLinkHeftRLControllerSymbol {
+  ForceLinkHeftRLControllerSymbol() { ForceLinkHeftRLController(); }
+} g_force_link_heft_rl_controller;
 
 //五次多项式插值
 double QuinticBlend(double x) {
@@ -321,15 +326,31 @@ bool ControllerManager::requestSwitch(const std::string& name, double now, bool 
     return false;
   }
 
-  auto* depth_target =
-      dynamic_cast<DepthWalkController*>(controllers_[target_index].controller.get());
-  if (depth_target && !depth_target->depthReady()) {
-    RL_LOGW("Cannot switch to depth controller: model/depth history is not ready");
+  auto* target_controller_ptr = controllers_[target_index].controller.get();
+  std::string not_ready_reason;
+  if (target_controller_ptr &&
+      !target_controller_ptr->isActivationReady(not_ready_reason)) {
+    RL_LOGW("Cannot switch to controller '%s': %s", name.c_str(),
+            not_ready_reason.empty() ? "not ready" : not_ready_reason.c_str());
     return false;
   }
 
-  // 如果已经是当前控制器，直接返回
+  // 如果已经是当前控制器：Sonic 使用带冷却的轮播语义，
+  // 其他 RL 控制器（如 HEFT CSV）按配置顺序直接切换下一条轨迹。
   if (target_index == active_index_) {
+    if (auto_start_motion) {
+      auto* active_rl =
+          dynamic_cast<GenericRLController*>(controllers_[active_index_].controller.get());
+      if (active_rl) {
+        const bool started = active_rl->usesCycledMotionReplay()
+                                 ? active_rl->startNextCycledMotionIfReady(now)
+                                 : active_rl->startNextMotion();
+        if (started) {
+          RL_LOGI("Started next motion on active controller '%s'", name.c_str());
+        }
+        return started;
+      }
+    }
     RL_LOGW("Controller '%s' is already active, skip switch", name.c_str());
     return true;
   }
@@ -374,6 +395,7 @@ bool ControllerManager::requestSwitch(const std::string& name, double now, bool 
   transition_.target_index = target_index;
   transition_.start_time = now;
   transition_.pending_auto_start_motion = auto_start_motion;
+  transition_.start_frozen_motion_on_commit = false;
   transition_.target_prestarted = false;
 
   // 立即 commit：跳过混合（倒地起身交接等场景，切后状态由目标控制器自身管理）
@@ -394,6 +416,15 @@ bool ControllerManager::requestSwitch(const std::string& name, double now, bool 
     RL_LOGI("Starting RL->RL dual inference switch: %s -> %s",
             from_name.c_str(), name.c_str());
     to_controller->resume();
+    // Sonic 等带 target/rbt_cmd_mf 输入的策略会在 resume()->reset() 时自动起播。
+    // 双推理期间继续执行目标策略，但冻结 motion cursor，稳定后再从首帧正式播放。
+    if (auto_start_motion) {
+      auto* target_rl = dynamic_cast<GenericRLController*>(to_controller);
+      if (target_rl) {
+        transition_.start_frozen_motion_on_commit =
+            target_rl->freezeMotionAtFirstFrame();
+      }
+    }
     transition_.target_prestarted = true;
   }
 
@@ -412,6 +443,7 @@ void ControllerManager::commitSwitch() {
     transition_.state = SwitchState::kIdle;
     transition_.rl_to_rl_dual_inference_active = false;
     transition_.target_prestarted = false;
+    transition_.start_frozen_motion_on_commit = false;
     transition_.source_index = -1;
     transition_.target_index = -1;
     return;
@@ -441,6 +473,18 @@ void ControllerManager::commitSwitch() {
   } else {
     RL_LOGI("Dual inference switch committed, target controller kept running: %s",
             transition_.to_controller.c_str());
+  }
+
+  // Sonic 的策略已在双推理阶段预热，但 motion cursor 一直冻结在首帧。
+  // 切换提交后立即解除冻结并从首帧起播，避免等待 gyro 稳定造成死锁。
+  if (transition_.pending_auto_start_motion &&
+      transition_.start_frozen_motion_on_commit) {
+    RL_LOGI("Controller switch committed; starting frozen Sonic motion immediately");
+    if (!new_controller->startMotion()) {
+      RL_LOGE("Failed to start frozen Sonic motion after controller switch");
+    }
+    transition_.pending_auto_start_motion = false;
+    transition_.start_frozen_motion_on_commit = false;
   }
 
   // 重置过渡状态
@@ -590,6 +634,23 @@ RobotCmd ControllerManager::update(const RobotState& state,
 
   if (active_index_ < 0) {
     return cmd;
+  }
+
+  // 数据流退化回退：活动控制器请求回退（如 HEFT live 丢流）时，
+  // 走正常 requestSwitch 平滑切换到安全控制器（限频 1Hz 重试）。
+  if (transition_.state == SwitchState::kIdle) {
+    auto* active_controller = controllers_[active_index_].controller.get();
+    std::string fallback_to;
+    if (active_controller && active_controller->requestsFallback(fallback_to) &&
+        !fallback_to.empty() && fallback_to != controllers_[active_index_].name) {
+      const double now_sec = common::GetSteadyTimestampNs() * 1e-9;
+      if (now_sec - last_fallback_attempt_time_ > 1.0) {
+        last_fallback_attempt_time_ = now_sec;
+        RL_LOGW("Controller '%s' requests fallback to '%s' (reference stream lost)",
+                controllers_[active_index_].name.c_str(), fallback_to.c_str());
+        requestSwitch(fallback_to, now_sec, false);
+      }
+    }
   }
 
   // 从 CommandSnapshot 中提取速度指令（输入优先级已在 ControlLoop::mergeAllCmdVel() 中选择）
@@ -807,8 +868,17 @@ RobotCmd ControllerManager::update(const RobotState& state,
       if (!target.empty()) {
         RL_LOGI("Motion finished, auto switching back to stable controller: %s",
                 target.c_str());
+        // 自动回切由 motion 完成事件驱动，不应被仍按住的摇杆或上一周期
+        // 残留速度命令卡住。先将当前控制器速度命令清零，使 requestSwitch
+        // 的站立门控只阻止真正的外部行走切换，不阻止动作完成回 AMP。
+        VelocityCommand zero_velocity;
+        zero_velocity.setZero();
+        generic_rl->setVelocityCommand(zero_velocity);
         if (requestSwitch(target, time, /*auto_start_motion=*/false)) {
           generic_rl->consumeMotionFinished();
+        } else {
+          RL_LOG_WARNING("Automatic switch back to '%s' was rejected; will retry",
+                         target.c_str());
         }
       }
     }
@@ -1440,7 +1510,8 @@ double ControllerManager::getTurnExitGuardThreshold() const {
   return controllers_[active_index_].controller->getTurnExitGuardThreshold();
 }
 
-bool ControllerManager::setArmMode(ArmControlMode mode, std::string& message) {
+bool ControllerManager::setArmMode(ArmControlMode mode, std::string& message,
+                                   bool notify_freeze) {
   if (isTransitioning()) {
     message = "Controller is transitioning, cannot set arm mode";
     RL_LOGW("ControllerManager: Ignoring arm mode change during controller transition");
@@ -1464,7 +1535,7 @@ bool ControllerManager::setArmMode(ArmControlMode mode, std::string& message) {
   RL_LOG_SUCCESS("ControllerManager: Arm mode set to %d", static_cast<int>(mode));
 
   // keep_pose 时通知 TactPlayer 冻结（LB+B 锁定手臂）
-  if (mode == ArmControlMode::kKeepPose && arm_freeze_callback_) {
+  if (notify_freeze && mode == ArmControlMode::kKeepPose && arm_freeze_callback_) {
     arm_freeze_callback_();
   }
 
@@ -1580,7 +1651,7 @@ bool ControllerManager::startMotion(const std::string& name) {
   }
 
   // CSV motion 未找到，尝试 tact fallback（由 ExternalInterface 提供 TactPlayer）
-  if (!success && tact_fallback_) {
+  if (!success && !name.empty() && tact_fallback_) {
     RL_LOGI("ControllerManager::startMotion: CSV motion '%s' not found, trying tact fallback",
             name.c_str());
     success = tact_fallback_(name);

@@ -13,7 +13,12 @@ endif()
 include(GNUInstallDirs)
 
 # ── Catkin support ──
-find_package(catkin QUIET COMPONENTS lejusdk-lowlevel lejusdk-utils lejusdk-vr)
+find_package(catkin QUIET COMPONENTS
+  lejusdk-dds-idl
+  lejusdk-lowlevel
+  lejusdk-utils
+  lejusdk-vr
+)
 set(_USING_CATKIN ${catkin_FOUND})
 
 # iceoryx + CycloneDDS (needed by lejusdk-lowlevel headers)
@@ -77,13 +82,15 @@ endif()
 
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc photo)
 
 # ── Catkin package config ──
 if(_USING_CATKIN)
   catkin_package(
     INCLUDE_DIRS include
     LIBRARIES rl_controller_framework
-    CATKIN_DEPENDS lejusdk-lowlevel lejusdk-utils lejusdk-vr
+    CATKIN_DEPENDS lejusdk-dds-idl lejusdk-lowlevel lejusdk-utils lejusdk-vr
+    DEPENDS OpenCV
   )
 endif()
 
@@ -100,6 +107,7 @@ set(INC_DIRS
     ${CYCLONEDDS_CXX_DIR}/include
     ${CYCLONEDDS_CXX_DIR}/include/ddscxx
     ${CMAKE_CURRENT_SOURCE_DIR}/../../leju-hardware/lejusdk-hw/src/kuavo_solver/include
+    ${OpenCV_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/../../lejusdk/lejusdk-comm-dds/lejusdk-dds-idl/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../../lejusdk/lejusdk-comm-dds/lejusdk-topic-pubsub/include
 )
@@ -120,12 +128,17 @@ set(RL_FRAMEWORK_SOURCES
     src/controllers/controller_registry.cpp
     src/controllers/generic_rl_controller.cpp
     src/controllers/depth_walk_controller.cpp
+    src/controllers/waq_walk_controller.cpp
+    src/controllers/heft_rl_controller.cpp
     src/controllers/hold_pose_controller.cpp
     src/depth/depth_image_processor.cpp
     src/depth/depth_history_buffer.cpp
     src/depth/depth_observation_provider.cpp
     src/robot_data.cpp
     src/motion/motion_trajectory.cpp
+    src/motion/live_sonic_reference_provider.cpp
+    src/motion/live_heft_reference_provider.cpp
+    src/motion/heft_policy_csv_recorder.cpp
     src/motion/tact_parser.cpp
     src/motion/bezier_interpolator.cpp
     src/motion/tact_player.cpp
@@ -149,6 +162,7 @@ set(RL_FRAMEWORK_SOURCES
     src/runtime/input/teleop/teleop_binding_config.cpp
     src/runtime/input/teleop/joy_teleop_adapter.cpp
     src/runtime/input/teleop/quest_teleop_adapter.cpp
+    src/runtime/input/teleop/pico_teleop_adapter.cpp
     src/runtime/input/teleop/teleop_input_source.cpp
 )
 
@@ -174,6 +188,7 @@ target_link_libraries(rl_controller_framework
     Eigen3::Eigen
     CycloneDDS-CXX::ddscxx
     iceoryx_posh::iceoryx_posh
+    ${OpenCV_LIBS}
 )
 if(_USING_CATKIN)
     target_link_libraries(rl_controller_framework ${catkin_LIBRARIES} kuavo_solver lejusdk-dds-idl)
@@ -331,6 +346,8 @@ if(_USING_CATKIN)
         endmacro()
         rl_test(test_motion_trajectory tests/motion/test_motion_trajectory.cpp)
         target_link_libraries(test_motion_trajectory Eigen3::Eigen)
+        rl_test(test_heft_golden_reference tests/motion/test_heft_golden_reference.cpp)
+        target_link_libraries(test_heft_golden_reference Eigen3::Eigen)
         rl_test(test_robot_data tests/test_robot_data.cpp)
         rl_test(test_minimum_jerk_interpolator tests/trajectory/interpolator/test_minimum_jerk_interpolator.cpp)
         target_link_libraries(test_minimum_jerk_interpolator Eigen3::Eigen)
@@ -369,6 +386,10 @@ elseif(BUILD_TESTING)
     _rl_add_test(test_motion_trajectory tests/motion/test_motion_trajectory.cpp)
     target_link_libraries(test_motion_trajectory Eigen3::Eigen)
 
+    # Test: CSV 与 Live 参考源窗口一致性（golden）
+    _rl_add_test(test_heft_golden_reference tests/motion/test_heft_golden_reference.cpp)
+    target_link_libraries(test_heft_golden_reference Eigen3::Eigen)
+
     # Test: TactApproach（tact 播放前置接入过渡，zx/develop 新增）
     _rl_add_test(test_tact_approach tests/motion/test_tact_approach.cpp)
     target_link_libraries(test_tact_approach Eigen3::Eigen)
@@ -391,6 +412,8 @@ elseif(BUILD_TESTING)
     _rl_add_test(test_teleop_adapter tests/runtime/test_teleop_adapter.cpp)
 
     _rl_add_test(test_teleop_integration tests/runtime/test_teleop_integration.cpp)
+
+    _rl_add_test(test_depth_pipeline tests/depth/test_depth_pipeline.cpp)
 
     _rl_add_test(test_teleop_config_reload tests/runtime/test_teleop_config_reload.cpp)
 

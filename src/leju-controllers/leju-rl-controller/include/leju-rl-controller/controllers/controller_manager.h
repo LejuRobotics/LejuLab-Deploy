@@ -59,6 +59,7 @@ struct SwitchTransition {
   bool rl_to_rl_dual_inference_active = false;  ///< 是否启用 RL->RL 双推理混合
   bool target_prestarted = false;               ///< 目标控制器是否已提前启动
   bool pending_auto_start_motion = false;       ///< 切换完成后是否自动起播默认动作
+  bool start_frozen_motion_on_commit = false;   ///< 提交切换时立即解除 Sonic 首帧冻结
   int stable_ticks = 0;                         ///< 稳定计数器（gyro 低于阈值连续帧数）
 };
 
@@ -394,7 +395,15 @@ class ControllerManager {
    * @param message 返回消息
    * @return 是否成功
    */
-  bool setArmMode(ArmControlMode mode, std::string& message);
+  bool setArmMode(ArmControlMode mode, std::string& message,
+                  bool notify_freeze = true);
+  using TactCompletionHandler = std::function<bool(uint64_t, ArmControlMode, std::string&)>;
+  void setTactCompletionHandler(TactCompletionHandler handler) {
+    tact_completion_handler_ = std::move(handler);
+  }
+  bool applyTactCompletion(uint64_t generation, ArmControlMode mode, std::string& message) {
+    return tact_completion_handler_ && tact_completion_handler_(generation, mode, message);
+  }
 
   /**
    * @brief 设置腰部控制模式
@@ -526,6 +535,9 @@ private:
   // 控制器切换过渡状态（包含插值配置，从 YAML 直接加载）
   SwitchTransition transition_;  ///< 切换过渡数据结构
 
+  double last_fallback_attempt_time_ = 0.0;  ///< 数据流退化回退限频 [steady s]
+
+  TactCompletionHandler tact_completion_handler_;
   TactFallback tact_fallback_;    ///< tact 降级回调（CSV motion 失败时尝试 .tact 播放）
   ArmFreezeCallback arm_freeze_callback_;  ///< 手臂冻结回调（LB+B keep_pose 时通知 TactPlayer 冻结）
 };

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="coredump" default="false"/>
+  <arg name="enable_iceoryx_shm" default="false"/>
+  <arg name="controller_manager_config"
+       default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/controller_manager.yaml"/>
+  <arg name="urdf_path"
+       default="$(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/urdf/biped_s$(optenv ROBOT_VERSION 46).urdf"/>
+  <arg name="teleop_config"
+       default="$(find leju-rl-controller)/config/$(optenv ROBOT_VERSION 46)/teleop_bindings.yaml"/>
+  <arg name="auto_start" default="false"/>
+
+  <include file="$(find leju_launch)/launch/load_mujoco_sim.launch">
+    <arg name="coredump" value="$(arg coredump)"/>
+    <arg name="enable_iceoryx_shm" value="$(arg enable_iceoryx_shm)"/>
+    <arg name="controller_manager_config" value="$(arg controller_manager_config)"/>
+    <arg name="urdf_path" value="$(arg urdf_path)"/>
+    <arg name="teleop_config" value="$(arg teleop_config)"/>
+    <arg name="auto_start" value="$(arg auto_start)"/>
+    <arg name="mujoco_xml_file"
+         value="$(find leju_assets)/models/biped_s$(optenv ROBOT_VERSION 46)/xml/scene_kuavo.xml"/>
+  </include>
+</launch>

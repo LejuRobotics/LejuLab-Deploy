@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -18,10 +19,22 @@ struct DepthDdsInputConfig {
   int height = 36;
   DepthUnit unit = DepthUnit::kMeters;
   int frame_decimation = 1;
+  std::string data_type = "float64";
+  bool preprocessed = false;
 };
+
+bool ShouldSubscribeMujocoDepthFallback(const DepthDdsInputConfig& config);
+std::optional<ProcessedDepth> BuildPreprocessedDepth(
+    const std::vector<double>& values, double receive_steady_sec,
+    uint64_t sequence);
+std::optional<double> ComputeDepthLatencySec(int32_t sec, uint32_t nsec,
+                                             double receive_system_sec);
 
 std::optional<DepthFrame> BuildDepthFrameFromDdsData(
     const std::vector<double>& values, const DepthDdsInputConfig& config,
+    double timestamp_sec, uint64_t sequence);
+std::optional<DepthFrame> BuildDepthFrameFromDdsData(
+    const std::vector<uint16_t>& values, const DepthDdsInputConfig& config,
     double timestamp_sec, uint64_t sequence);
 
 void ConfigureDepthDdsInput(const DepthDdsInputConfig& config);
@@ -30,6 +43,7 @@ class DepthObservationProvider {
  public:
   explicit DepthObservationProvider(DepthProcessorConfig config = {});
   bool submit(const DepthFrame& frame);
+  bool submitPreprocessed(const ProcessedDepth& depth);
   DepthHistorySnapshot snapshot(double now_sec, double timeout_sec) const;
   void reset();
 

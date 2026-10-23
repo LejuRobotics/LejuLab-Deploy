@@ -3,8 +3,8 @@
 #
 # Usage:
 #   bash src/leju_launch/scripts/dds_topic_hz.sh
-#   bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_mm_240x424
-#   bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_meters_36x64 --expected-len 2304
+#   bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_normalized_36x64
+#   bash src/leju_launch/scripts/dds_topic_hz.sh rt/depth_camera/frame_meters_36x64 --expected-len 2304  # MuJoCo legacy
 #
 # Requires: pip3 install cyclonedds==0.10.2
 # Run while launch_real.sh / depth publisher is active.

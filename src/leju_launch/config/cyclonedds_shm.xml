@@ -17,6 +17,11 @@
             <AllowMulticast>true</AllowMulticast>
         </General>
         <Discovery>
+            <!-- Multiple platform processes share domain 0. The default 0..9
+                 participant range can be exhausted before the joystick starts. -->
+            <ParticipantIndex>auto</ParticipantIndex>
+            <MaxAutoParticipantIndex>99</MaxAutoParticipantIndex>
+            <Peers><Peer address="127.0.0.1"/></Peers>
             <EnableTopicDiscoveryEndpoints>true</EnableTopicDiscoveryEndpoints>
         </Discovery>
         <!-- <Tracing> -->

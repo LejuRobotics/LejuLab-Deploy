@@ -1,0 +1,11 @@
+// Compact unsigned 16-bit arrays for raw depth images in millimeters.
+module leju {
+  module msgs {
+    @final
+    struct UInt16Array {
+      int32 header_sec;
+      uint32 header_nanosec;
+      sequence<uint16> data;
+    };
+  };
+};

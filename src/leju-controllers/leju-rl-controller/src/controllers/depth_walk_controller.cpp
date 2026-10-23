@@ -83,6 +83,10 @@ bool DepthWalkController::loadConfig(const std::string& path) {
       if (depth_cfg["input_frame_decimation"])
         input.frame_decimation =
             depth_cfg["input_frame_decimation"].as<int>();
+      if (depth_cfg["input_data_type"])
+        input.data_type = depth_cfg["input_data_type"].as<std::string>();
+      if (depth_cfg["input_preprocessed"])
+        input.preprocessed = depth_cfg["input_preprocessed"].as<bool>();
       if (depth_cfg["input_unit"]) {
         const std::string unit = depth_cfg["input_unit"].as<std::string>();
         if (unit == "millimeters" || unit == "mm") {
@@ -94,10 +98,13 @@ bool DepthWalkController::loadConfig(const std::string& path) {
         }
       }
       depth::ConfigureDepthDdsInput(input);
-      RL_LOGI("Depth DDS input: topic=%s %dx%d unit=%s decimation=%d "
+      RL_LOGI("Depth DDS input: topic=%s type=%s %dx%d unit=%s "
+              "preprocessed=%s decimation=%d "
               "(legacy 64x36 meters remains accepted)",
-              input.topic.c_str(), input.width, input.height,
+              input.topic.c_str(), input.data_type.c_str(), input.width,
+              input.height,
               input.unit == depth::DepthUnit::kMillimeters ? "mm" : "m",
+              input.preprocessed ? "true" : "false",
               input.frame_decimation);
     }
     const auto env = root["HumanoidRobotCfg"]["env"];
@@ -136,6 +143,7 @@ void DepthWalkController::reset() {
   phase_ = 0.0;
   phase_stand_flag_ = 2;
   phase_turns_ = 5;
+  stance_gate_.reset();
   fre_phase_raw_.store(0.0);
   gait_frequency_.store(1.0);
   velocity_estimate_.fill(0.0);
@@ -355,13 +363,18 @@ array_t DepthWalkController::buildSingleObservation(
       std::abs(x) < 0.01 &&
       std::abs(command_y * cmd_vxc) < 0.01 &&
       std::abs(command_w * cmd_vxc) < 0.01;
-  const double estimated_speed =
-      std::sqrt(velocity_estimate_[0] * velocity_estimate_[0] +
-                velocity_estimate_[1] * velocity_estimate_[1] +
-                velocity_estimate_[2] * velocity_estimate_[2]);
   if (near_zero_command) {
-    if (estimated_speed < 0.2 || cmd_vxc < 0.5) {
-      phase_stand_flag_ = 1;
+    // Once a walking policy is active, its own velocity estimate can remain
+    // high while it is still stepping.  Gating the stop request on that
+    // estimate therefore creates a self-sustaining stop deadlock.  Debounce
+    // only the command, then let the existing phase-boundary alignment finish.
+    if (stance_gate_.update(true, stance_debounce_threshold_)) {
+      // The user requested a hard stop.  Training's standing command freezes
+      // gait time at phase zero, so jump directly to that trained stance
+      // phase instead of waiting for the next gait boundary.
+      phase_ = 0.0;
+      phase_turns_ = 0;
+      phase_stand_flag_ = 2;
     }
     double par = 0.0;
     if (policy_joint_ids_.size() > 8) {
@@ -382,12 +395,8 @@ array_t DepthWalkController::buildSingleObservation(
         ++phase_turns_;
       }
     }
-    if (estimated_speed > 0.3 && cmd_vxc > 0.5 &&
-        phase_stand_flag_ == 2) {
-      phase_stand_flag_ = 0;
-      phase_turns_ = 0;
-    }
   } else {
+    stance_gate_.update(false, stance_debounce_threshold_);
     phase_stand_flag_ = 0;
     phase_turns_ = 0;
   }

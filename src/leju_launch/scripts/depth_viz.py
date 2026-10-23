@@ -88,7 +88,7 @@ def compose_jet_compare_frame(
     valid_policy: float = 0.0,
     hz: float = 0.0,
 ) -> np.ndarray:
-    """Side-by-side: raw 424x240 | policy 64x36 (both jet), optional colorbar."""
+    """Side-by-side: raw 480x270 | policy 64x36 (both jet), optional colorbar."""
     max_depth_mm = max_depth_m * 1000.0
     raw_bgr = normalized_mm_to_bgr(depth_mm, max_depth_mm, colormap)
     policy_bgr = normalized_policy_to_bgr(policy, colormap)
@@ -119,7 +119,7 @@ def compose_jet_compare_frame(
     x = raw_vis.shape[1] + gap // 2
     cv2.line(canvas, (x, 0), (x, panel_height), (80, 80, 80), 2)
 
-    _draw_label(canvas, "RAW 424x240 (mm DDS)", 8, 24)
+    _draw_label(canvas, "RAW 480x270 (mm DDS)", 8, 24)
     _draw_label(
         canvas,
         f"POLICY 64x36  valid={valid_policy * 100:.1f}%",

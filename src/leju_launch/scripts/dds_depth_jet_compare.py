@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Depth DDS jet-colormap side-by-side compare (raw 424x240 vs policy 64x36)."""
+"""Depth DDS jet-colormap side-by-side compare (raw 480x270 vs policy 64x36)."""
 
 from __future__ import annotations
 
@@ -16,11 +16,12 @@ from cyclonedds.domain import DomainParticipant
 from cyclonedds.sub import DataReader
 from cyclonedds.topic import Topic
 
-from dds_leju_types import Float64Array
+from dds_leju_types import Float64Array, UInt16Array
 from depth_processor import process_depth_mm_frame
+from depth_dds_source import NORMALIZED_TOPIC, default_shape, resolve_type
 from depth_viz import compose_jet_compare_frame
 
-DEFAULT_TOPIC = "rt/depth_camera/frame_mm_240x424"
+DEFAULT_TOPIC = NORMALIZED_TOPIC
 
 
 def _preload_cyclonedds() -> None:
@@ -49,10 +50,10 @@ def _parse_args() -> argparse.Namespace:
         help=f"DDS topic (default: {DEFAULT_TOPIC})",
     )
     parser.add_argument(
-        "--input-width", type=int, default=424, help="Raw width (default: 424)"
+        "--input-width", type=int, default=0, help="Raw width (0 = infer from topic/type)"
     )
     parser.add_argument(
-        "--input-height", type=int, default=240, help="Raw height (default: 240)"
+        "--input-height", type=int, default=0, help="Raw height (0 = infer from topic/type)"
     )
     parser.add_argument(
         "--max-depth-m",
@@ -62,9 +63,9 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--colormap",
-        choices=("jet", "turbo", "inferno"),
+        choices=("gray", "jet", "turbo", "inferno"),
         default="jet",
-        help="Pseudo-color map (default: jet, classic rainbow cloud map)",
+        help="Color map (default: jet; use gray for grayscale)",
     )
     parser.add_argument(
         "--no-blur",
@@ -100,6 +101,7 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Do not open live window",
     )
+    parser.add_argument("--type", choices=("auto", "float64", "uint16"), default="auto", help="DDS payload type (default: auto)")
     return parser.parse_args()
 
 
@@ -112,9 +114,12 @@ def main() -> int:
     args = _parse_args()
     _preload_cyclonedds()
 
+    args.payload_type = resolve_type(args.topic, args.type)
+    if args.input_width <= 0 or args.input_height <= 0: args.input_width, args.input_height = default_shape(args.topic, args.payload_type)
     expected_len = args.input_width * args.input_height
     participant = DomainParticipant(0)
-    reader = DataReader(participant, Topic(participant, args.topic, Float64Array))
+    dds_type = Float64Array if args.payload_type == "float64" else UInt16Array
+    reader = DataReader(participant, Topic(participant, args.topic, dds_type))
 
     show = not args.no_show
     print(f"subscribed to {args.topic}")
@@ -147,14 +152,22 @@ def main() -> int:
                     )
                     continue
 
-                depth_mm = data.reshape(args.input_height, args.input_width)
-                policy, valid_policy = process_depth_mm_frame(
+                if args.payload_type == "float64":
+                    policy = np.clip(data.reshape(36, 64), 0.0, 1.0).astype(np.float32)
+                    valid_policy = float(np.isfinite(policy).mean())
+                    depth_mm = cv2.resize(policy * args.max_depth_m * 1000.0, (args.input_width, args.input_height), interpolation=cv2.INTER_NEAREST)
+                else:
+                    depth_mm = data.reshape(args.input_height, args.input_width)
+                    policy, valid_policy= process_depth_mm_frame(
                     depth_mm,
                     input_width=args.input_width,
                     input_height=args.input_height,
                     max_depth_m=args.max_depth_m,
                     gaussian_blur=not args.no_blur,
-                )
+                    )
+                if policy is None:
+                    print("warn: dropped depth frame with no valid pixels", file=sys.stderr)
+                    continue
                 valid_raw = _valid_ratio_mm(depth_mm)
 
                 now = time.time()

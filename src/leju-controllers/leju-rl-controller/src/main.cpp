@@ -15,6 +15,7 @@
  */
 
 #include "leju-rl-controller/controllers/controller_manager.h"
+#include "leju-rl-controller/controllers/waq_walk_controller.h"
 #include "leju-rl-controller/runtime/input/action_trigger.h"
 #include "leju-rl-controller/runtime/control_loop.h"
 #include "leju-rl-controller/runtime/dexterous_hand_poses.h"
@@ -34,6 +35,7 @@
 #include "lejusdk-utils/time_utils.hpp"
 
 #include <dds/dds.hpp>
+#include <yaml-cpp/yaml.h>
 #include "lejusdk-dds-idl/StringData.hpp"
 #include "lejusdk-topic-pubsub/topic_names.h"
 #include "lejusdk-topic-pubsub/topic_publisher.hpp"
@@ -116,6 +118,8 @@ void printUsage(const char* program_name) {
 // 主函数
 // ============================================================================
 int main(int argc, char** argv) {
+  ForceLinkWaqWalkController();
+
   std::string config_file;
   std::string teleop_config_path;
   std::string urdf_path;
@@ -168,6 +172,12 @@ int main(int argc, char** argv) {
   }
 
   try {
+    // 启动时读取；缺省保持旧的播放后回正行为，非法配置由外层异常处理拒绝启动。
+    const YAML::Node startup_config = YAML::LoadFile(config_file);
+    const YAML::Node tact_config = startup_config["tact_player"];
+    const bool hold_after_tact = tact_config && tact_config["hold_after_tact"]
+        ? tact_config["hold_after_tact"].as<bool>() : false;
+
     // ========================================================================
     // 1. 初始化基础设施
     // ========================================================================
@@ -214,6 +224,9 @@ int main(int argc, char** argv) {
 
     // 3.4 创建遥操作输入源（内部自动管理 Joy 和 Quest 适配器）
     TeleopInputSource teleop_input(version, &trigger_buffer);
+    teleop_input.setAmpActiveQuery([&controller_manager]() {
+      return controller_manager.getCurrentControllerName() == "amp";
+    });
     if (!teleop_input.initialize()) {
       RL_LOGE("Failed to initialize TeleopInputSource");
       return 1;
@@ -299,7 +312,8 @@ int main(int argc, char** argv) {
     // 4. 初始化外部接口（VR/SDK）
     // ========================================================================
     ExternalInterface external_interface;
-    if (!external_interface.initialize(version, trigger_buffer, controller_manager, lifecycle)) {
+    if (!external_interface.initialize(version, trigger_buffer, controller_manager, lifecycle,
+                                       hold_after_tact)) {
       RL_LOGW("Failed to initialize ExternalInterface, continuing without VR support");
     } else {
       RL_LOGI("ExternalInterface initialized");

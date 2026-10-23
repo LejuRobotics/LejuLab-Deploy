@@ -1,0 +1,147 @@
+HumanoidRobotCfg:
+  inference_engine: "onnxruntime"
+  loop_dt: 0.001
+
+  policy_path: "policy/sonic/recon_obs10_clip_28000.onnx"  # prop690+boot1+tracking_error231+target539+rbt_cmd_mf66
+
+  live_reference:
+    enabled: false
+    topic: "/rt/pico/sonic_reference"
+    robot_version: "roban_s17"
+    schema_version: 1
+    cursor_delay: 0.2
+    history_margin: 0.18
+    fresh_timeout: 0.15
+    hold_timeout: 0.5
+
+  motion:
+    # 对齐 my_sonic：末帧保持 2 秒，参考速度在 10 个 policy step 内线性降到 0。
+    final_frame_hold:
+      time_s: 2.0
+      velocity_interpolation_steps: 10
+    auto_switch_back:
+      enabled: false
+      target_controller: amp
+    # 每次切入时按顺序选动作；关闭自动回切后，播完冷却 1 秒可按同一按键播放下一个。
+    cycle_on_activate: true
+    replay_cooldown_s: 1.0
+    # 动作间插值到首帧后，Sonic 策略输出再平滑接管，避免首个 action 跳变。
+    policy_blend_time_s: 0.5
+    default_motion: "motion1"
+    motions:
+      - name: "motion1"
+        file: "motion_data/sonic_motion/dance_hiphop_kick_it_4_directions_R_001__A312.csv"
+      - name: "motion2"
+        file: "motion_data/sonic_motion/side_roll_R_001__A304.csv"
+      - name: "motion3"
+        file: "motion_data/sonic_motion/tiger_jump_to_shoulder_roll_R_0915.csv"
+
+  env:
+    policy_dt: 0.02
+    robot:
+      residual_action: false
+
+      joint_names:
+        ["waist_yaw_joint",
+         "zarm_l1_joint", "zarm_r1_joint", "leg_l1_joint", "leg_r1_joint",
+         "zarm_l2_joint", "zarm_r2_joint", "leg_l2_joint", "leg_r2_joint",
+         "zarm_l3_joint", "zarm_r3_joint", "leg_l3_joint", "leg_r3_joint",
+         "zarm_l4_joint", "zarm_r4_joint", "leg_l4_joint", "leg_r4_joint",
+         "leg_l5_joint", "leg_r5_joint", "leg_l6_joint", "leg_r6_joint"]
+      joint_direction:
+        [-1.,
+         1., 1., 1., 1.,
+         1., 1., 1., 1.,
+         1., 1., 1., 1.,
+         1., 1., 1., 1.,
+         1., 1., 1., 1.]
+      joint_default_pos:
+        [0.,
+         0., 0., 0., 0.,
+         0., 0., 0., 0.,
+         0., 0., 0., 0.,
+         0., 0., 0., 0.,
+         0., 0., 0., 0.]
+      joint_torque_limit:
+        [80.,
+         14.1, 14.1, 150., 150.,
+         37., 37., 150., 150.,
+         37., 37., 70., 70.,
+         37., 37., 150., 150.,
+         74., 74., 74., 74.]
+      actuator_kp:
+        [40.179,
+         14.25, 14.25, 90.179, 90.179,
+         14.25, 14.25, 150.098, 150.098,
+         14.25, 14.25, 40.179, 40.179,
+         14.25, 14.25, 150.098, 150.098,
+         34.25, 34.25, 34.25, 34.25]
+      actuator_kd:
+        [3.557,
+         1.907, 1.907, 3.557, 3.557,
+         1.907, 1.907, 8.308, 8.308,
+         1.907, 1.907, 3.557, 3.557,
+         1.907, 1.907, 8.308, 8.308,
+         2.907, 2.907, 2.907, 2.907]
+      actuator_control_mode:
+        [0,
+         2, 2, 0, 0,
+         2, 2, 0, 0,
+         2, 2, 0, 0,
+         2, 2, 0, 0,
+         0, 0, 0, 0]
+      action_scale:
+        [0.5,
+         0.5, 0.5, 0.5, 0.5,
+         0.5, 0.5, 0.5, 0.5,
+         0.5, 0.5, 0.5, 0.5,
+         0.5, 0.5, 0.5, 0.5,
+         0.5, 0.5, 0.5, 0.5]
+
+    observations:
+      # 历史帧按 IsaacLab 顺序排列：每个 term 从最旧帧到当前帧，共 10 帧。
+      history_length: 10
+      stack_order: "isaaclab"
+      # 所有 future term 共用同一参考游标：0 是当前参考帧，1..6 是未来帧。
+      # future_steps: [0, 1, 2, 3, 4, 5, 6]
+      future_steps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      # boot_indicator = max(boot_max - policy_step, 0) / boot_max。
+      boot_max: 12
+
+      # ONNX 命名输入契约。terms 的书写顺序就是最终张量的拼接顺序。
+      policy_inputs:
+        - name: "prop"
+          expected_dim: "69 * history_length"
+          stack_history: true
+          terms:
+            ["projected_gravity", "base_ang_vel", "joint_pos", "joint_vel", "actions"]
+        - name: "boot"
+          expected_dim: 1
+          terms: ["boot_indicator"]
+        - name: "tracking_error"
+          expected_dim: "21 * future_steps"
+          terms: ["ref_joint_pos_err_future"]
+        - name: "target"
+          expected_dim: "49 * future_steps"
+          terms: ["future_command", "ref_base_vel", "motion_anchor_pos_z_future"]
+        - name: "rbt_cmd_mf"
+          expected_dim: "6 * future_steps"
+          terms: ["motion_anchor_ori_b_multi_future"]
+
+      # prop 单帧观测：3 + 3 + 21 + 21 + 21 = 69；历史 10 帧得到 690。
+      terms:
+        projected_gravity:
+          scale: 1.
+          clip: [-5000., 5000.]
+        base_ang_vel:
+          scale: 1.
+          clip: [-5000., 5000.]
+        joint_pos:
+          scale: 1.
+          clip: [-5000., 5000.]
+        joint_vel:
+          scale: 1.
+          clip: [-5000., 5000.]
+        actions:
+          scale: 1.
+          clip: [-5000., 5000.]

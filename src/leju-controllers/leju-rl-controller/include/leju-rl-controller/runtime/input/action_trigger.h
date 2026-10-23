@@ -74,6 +74,13 @@ struct NamedArgs : public ActionArgs {
       : name(n), auto_start_motion(auto_start) {}
 };
 
+// tact 正常结束请求与主动模式切换分开，并携带所属播放代数。
+struct TactCompletionArgs : public NamedArgs {
+  uint64_t generation;
+  TactCompletionArgs(const std::string& mode, uint64_t id)
+      : NamedArgs(mode), generation(id) {}
+};
+
 /**
  * @brief 动作控制命令参数
  *

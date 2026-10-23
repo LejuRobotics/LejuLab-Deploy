@@ -14,7 +14,10 @@ else
 fi
 
 KUAVO_JSON="${PROJECT_DIR}/src/leju-hardware/config/roban_v17/kuavo.json"
-CAN_CONFIG="${HOME}/.config/lejuconfig/canbus_device_cofig.yaml"
+CAN_CONFIG_CORRECT="${HOME}/.config/lejuconfig/canbus_device_config.yaml"
+CAN_CONFIG_LEGACY="${HOME}/.config/lejuconfig/canbus_device_cofig.yaml"
+CAN_CONFIG="${CAN_CONFIG_CORRECT}"
+CAN_CONFIG_EXPLICIT=0
 CHECK_ONLY=0
 UPDATE_KUAVO=1
 UPDATE_CAN=1
@@ -32,7 +35,7 @@ Options:
   --kuavo-json PATH       kuavo.json path. Default:
                           ./src/leju-hardware/config/roban_v17/kuavo.json
   --can-config PATH       CAN device yaml path. Default:
-                          ~/.config/lejuconfig/canbus_device_cofig.yaml
+                          prefer canbus_device_config.yaml, fallback to legacy cofig
   --no-kuavo              Do not update EndEffectorType in kuavo.json.
   --no-can                Do not update CAN device yaml.
   -h, --help              Show this help.
@@ -63,6 +66,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --can-config)
       CAN_CONFIG="${2:?missing value for --can-config}"
+      CAN_CONFIG_EXPLICIT=1
       shift 2
       ;;
     --no-kuavo)
@@ -84,6 +88,19 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# 默认路径与运行时保持相同优先级；显式 --can-config 不参与兼容选择。
+if [[ "${CAN_CONFIG_EXPLICIT}" == "0" ]]; then
+  if [[ -f "${CAN_CONFIG_CORRECT}" ]]; then
+    CAN_CONFIG="${CAN_CONFIG_CORRECT}"
+    if [[ -f "${CAN_CONFIG_LEGACY}" ]]; then
+      echo "[WARN] 检测到新旧两份 CANBUS 配置，将使用正确文件名 ${CAN_CONFIG_CORRECT}" >&2
+    fi
+  elif [[ -f "${CAN_CONFIG_LEGACY}" ]]; then
+    CAN_CONFIG="${CAN_CONFIG_LEGACY}"
+    echo "[WARN] 使用历史错误文件名 ${CAN_CONFIG_LEGACY}" >&2
+  fi
+fi
 
 python3 - "$KUAVO_JSON" "$CAN_CONFIG" "$CHECK_ONLY" "$UPDATE_KUAVO" "$UPDATE_CAN" <<'PY'
 import json

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 project(lejusdk-dds-idl)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -34,8 +34,12 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME})
 
-file(GLOB IDL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src-generated/*.cpp")
-file(GLOB IDL_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/lejusdk-dds-idl/*.hpp")
+file(GLOB IDL_SOURCES CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/src-generated/*.cpp"
+)
+file(GLOB IDL_HEADERS CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/lejusdk-dds-idl/*.hpp"
+)
 
 add_library(${PROJECT_NAME} STATIC ${IDL_SOURCES} ${IDL_HEADERS})
 

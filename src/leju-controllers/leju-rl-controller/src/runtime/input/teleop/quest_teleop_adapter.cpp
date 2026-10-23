@@ -137,7 +137,7 @@ double QuestTeleopAdapter::getCmdVelLineXLimitForLevel(int level) const {
 
 double QuestTeleopAdapter::getEffectiveMaxLinearXForward() const {
   const auto& gear_cfg = config_.amp_hand_cmd_vel_line_x_gear;
-  if (!gear_cfg.enabled || gear_cfg.policy_linear_x <= 0.0) {
+  if (!useAmpVelocityLimits() || gear_cfg.policy_linear_x <= 0.0) {
     return config_.max_linear_x;
   }
   // velocity_scale.walking.linear_x* 即 policy 输入上限，填多少就是多少
@@ -146,7 +146,7 @@ double QuestTeleopAdapter::getEffectiveMaxLinearXForward() const {
 
 double QuestTeleopAdapter::getEffectiveMaxLinearXBackward() const {
   const auto& gear_cfg = config_.amp_hand_cmd_vel_line_x_gear;
-  if (gear_cfg.enabled) {
+  if (useAmpVelocityLimits()) {
     return gear_cfg.policy_linear_x_negative;
   }
   return config_.max_linear_x;
@@ -171,7 +171,7 @@ void QuestTeleopAdapter::processVelocityImpl(const QuestJoystickData& data,
   MotionCommand cmd;
   cmd.linear_x = left_y;
   cmd.linear_x *= cmd.linear_x > 0 ? getEffectiveMaxLinearXForward() : getEffectiveMaxLinearXBackward();
-  cmd.linear_y = ab_touched ? (-left_x * config_.max_linear_y) : 0.0f;
+  cmd.linear_y = ab_touched ? (-left_x * getEffectiveMaxLinearY()) : 0.0f;
   cmd.angular_z = -right_x * config_.max_angular_z;
   cmd.valid = true;
   buffer.writeCmdVel(cmd);
@@ -191,7 +191,7 @@ void QuestTeleopAdapter::processLeftController(const QuestJoystickData& data,
   // - left_y (左摇杆 Y) -> linear_x (前进，前为正)
   MotionCommand cmd;
   cmd.linear_x = left_y * config_.max_linear_x;
-  cmd.linear_y = -left_x * config_.max_linear_y;
+  cmd.linear_y = -left_x * getEffectiveMaxLinearY();
   cmd.angular_z = 0.0;  // 由右控制器处理
   cmd.valid = true;
   cmd_buffer_.writeCmdVel(cmd);

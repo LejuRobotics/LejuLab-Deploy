@@ -38,6 +38,12 @@ constexpr char kQuestBonePoses[] = "/rt/quest/bone_poses";     ///< Quest3 骨�
 constexpr char kQuestJoysticks[] = "/rt/quest/joysticks";      ///< Quest3 手柄数据 (QuestJoysticks)
 constexpr char kQuestConnected[] = "/rt/quest/connected";      ///< Quest3 握手成功心跳 (StringData; 握手成功后持续发)
 
+// Pico teleop topics (leju_pico_gmr 前端发布)
+constexpr char kPicoSonicReference[] = "/rt/pico/sonic_reference"; ///< Pico 实时动作参考 (SonicReference)
+constexpr char kPicoHeftReference[] = "/rt/pico/heft_reference";  ///< HEFT 实时参考帧 (HeftReference, 100Hz)
+constexpr char kPicoJoysticks[] = "/rt/pico/joysticks";           ///< Pico 手柄数据 (复用 QuestJoysticks 类型)
+constexpr char kPicoBonePoses[] = "/rt/pico/bone_poses";           ///< Pico 原始骨骼 (复用 QuestBonePoses；Unity→world 后)
+
 // teleop config hot-reload
 constexpr char kReloadTeleopConfig[] = "/rt/teleop/reload_config";  ///< 遥控器绑定配置热重载信号 (StringData; data 可选携带配置路径, 空则重读已加载路径)
 constexpr char kReloadControllerConfig[] = "/rt/teleop/reload_controllers";  ///< 控制器列表配置热重载信号 (StringData; data 可选携带配置路径, 空则重读已加载路径)

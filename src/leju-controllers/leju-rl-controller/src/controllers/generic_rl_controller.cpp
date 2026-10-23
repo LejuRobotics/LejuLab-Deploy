@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cctype>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
@@ -20,6 +21,61 @@ namespace leju {
 namespace {
 
 constexpr double kFallStandFlatCos = std::cos(15.0 * M_PI / 180.0);
+
+double yawFromQuat(const Eigen::Quaterniond& quat) {
+  return std::atan2(
+      2.0 * (quat.w() * quat.z() + quat.x() * quat.y()),
+      1.0 - 2.0 * (quat.y() * quat.y() + quat.z() * quat.z()));
+}
+
+Eigen::Quaterniond alignReferenceCurrentYaw(
+    const Eigen::Quaterniond& robot,
+    const Eigen::Quaterniond& reference_current,
+    const Eigen::Quaterniond& reference_target) {
+  const double yaw_offset = yawFromQuat(robot) - yawFromQuat(reference_current);
+  return Eigen::Quaterniond(
+             Eigen::AngleAxisd(yaw_offset, Eigen::Vector3d::UnitZ())) *
+         reference_target;
+}
+
+int parsePolicyInputExpectedDim(const YAML::Node& node, int history_length,
+                                size_t future_frame_count) {
+  if (!node || !node.IsScalar()) {
+    throw std::runtime_error("policy input expected_dim must be an integer or expression");
+  }
+  std::string expression = node.Scalar();
+  expression.erase(std::remove_if(expression.begin(), expression.end(),
+                                  [](unsigned char c) { return std::isspace(c); }),
+                   expression.end());
+  const size_t multiply = expression.find('*');
+  if (multiply == std::string::npos) return node.as<int>();
+  if (multiply == 0 || multiply + 1 >= expression.size() ||
+      expression.find('*', multiply + 1) != std::string::npos) {
+    throw std::runtime_error("invalid expected_dim expression '" + expression + "'");
+  }
+  size_t parsed = 0;
+  const int per_frame = std::stoi(expression.substr(0, multiply), &parsed);
+  if (parsed != multiply || per_frame <= 0) {
+    throw std::runtime_error("invalid expected_dim per-frame dimension in '" + expression + "'");
+  }
+  const std::string source = expression.substr(multiply + 1);
+  int frames = 0;
+  if (source == "history_length") {
+    frames = history_length;
+  } else if (source == "future_steps") {
+    frames = static_cast<int>(future_frame_count);
+  } else {
+    size_t frame_chars = 0;
+    frames = std::stoi(source, &frame_chars);
+    if (frame_chars != source.size()) {
+      throw std::runtime_error("invalid expected_dim frame source in '" + expression + "'");
+    }
+  }
+  if (frames <= 0) {
+    throw std::runtime_error("expected_dim frame count must be positive in '" + expression + "'");
+  }
+  return per_frame * frames;
+}
 
 }  // namespace
 
@@ -195,7 +251,15 @@ bool GenericRLController::updateImpl(double time, const RobotState& state,
     fillHoldCmd(cmd, q);
     if (phase >= 1.0) {
       motion_prep_state_ = MotionPrepState::kHolding;
-      RL_LOG_INFO("prepareToMotionStart: reached CSV first frame, holding (press again to start)");
+      if (motion_prep_auto_start_) {
+        motion_prep_auto_start_ = false;
+        RL_LOG_INFO("Motion cycle transition reached next first frame; auto-starting motion");
+        if (!startMotion()) {
+          RL_LOG_FAILURE("Motion cycle failed to start after transition");
+        }
+      } else {
+        RL_LOG_INFO("prepareToMotionStart: reached CSV first frame, holding (press again to start)");
+      }
     }
     return true;
   }
@@ -206,10 +270,8 @@ bool GenericRLController::updateImpl(double time, const RobotState& state,
     return true;
   }
 
-  // 首次 update 时初始化 dummy_world_yaw_（与 rl_mimic_controller 时序一致）
   MotionTrajectory* loader = getCurrentMotion();
   if (step_count_ == 0 && loader && loader->isLoaded()) {
-    RL_LOG_INFO("\033[33m[step 0] initializeDummyWorldYaw at startup\033[0m");
     initializeDummyWorldYaw();
   }
 
@@ -217,22 +279,43 @@ bool GenericRLController::updateImpl(double time, const RobotState& state,
   if (step_count_ % decimation_ == 0) {
     computeObservation();
     submitObservationForInference(observations_);
+    ++policy_episode_step_;
   }
 
   // 每个控制周期都更新电机命令
   updateRobotCmd(cmd);
 
-  // 推进 motion 帧
+  // 推进 motion 帧。到达末帧后继续运行策略并保持参考姿态；参考速度
+  // 在前 N 个策略步线性衰减，保持到期后才向上层报告播放完成。
   if (step_count_ % decimation_ == 0) {
-    if (loader && motion_playing_) {
+    if (loader && motion_playing_ && !motion_cursor_frozen_) {
       if (loader->hasNext()) {
         loader->next();
+        if (!loader->hasNext()) {
+          final_frame_holding_ = true;
+          final_frame_hold_elapsed_steps_ = 0;
+          RL_LOG_INFO("Motion '%s' reached final frame, holding for %.3f s",
+                      current_motion_name_.c_str(), final_frame_hold_time_s_);
+        }
       } else {
-        // motion 播放完毕，停止播放
-        motion_playing_ = false;
-        motion_just_finished_ = true;  // 播完边沿标志，供 ControllerManager 自动切回
-        block_velocity_in_motion_ = false;
-        RL_LOG_INFO("Motion '%s' playback finished", current_motion_name_.c_str());
+        if (!final_frame_holding_) {
+          final_frame_holding_ = true;
+          final_frame_hold_elapsed_steps_ = 0;
+        }
+        const int max_hold_steps = std::max(
+            0, static_cast<int>(std::ceil(final_frame_hold_time_s_ / policy_dt_)));
+        if (final_frame_hold_elapsed_steps_ >= max_hold_steps) {
+          motion_playing_ = false;
+          final_frame_holding_ = false;
+          motion_just_finished_ = true;
+          motion_replay_ready_time_sec_ =
+              common::GetSteadyTimestampNs() * 1e-9 + motion_replay_cooldown_s_;
+          block_velocity_in_motion_ = false;
+          RL_LOG_INFO("Motion '%s' final-frame hold finished",
+                      current_motion_name_.c_str());
+        } else {
+          ++final_frame_hold_elapsed_steps_;
+        }
       }
     }
   }
@@ -243,15 +326,22 @@ bool GenericRLController::updateImpl(double time, const RobotState& state,
 void GenericRLController::reset() {
   // 调用基类 reset（会重置 step_count_）
   ControllerBase::reset();
-  resetObsHistory();
-  {
-    std::lock_guard<std::mutex> lock(action_mutex_);
-    actions_.setZero();
-    last_actions_.setZero();
+  if (live_reference_) {
+    live_reference_->onActivate();
+    live_reference_active_ = false;
   }
+  resetPolicyEpisodeState();
   last_policy_q_target_.setZero();
   motion_playing_ = false;
+  motion_cursor_frozen_ = false;
   motion_just_finished_ = false;
+  motion_replay_ready_time_sec_ = 0.0;
+  motion_prep_auto_start_ = false;
+  cycle_action_blend_active_ = false;
+  cycle_action_blend_elapsed_s_ = 0.0;
+  cycle_action_blend_start_.resize(0);
+  final_frame_holding_ = false;
+  final_frame_hold_elapsed_steps_ = 0;
   block_velocity_in_motion_ = false;
   motion_prep_state_ = MotionPrepState::kIdle;
   motion_prep_elapsed_ = 0.0;
@@ -259,7 +349,6 @@ void GenericRLController::reset() {
   fall_stand_entry_blend_frame_ = 0;
   motion_prep_start_q_.clear();
   motion_prep_target_q_.clear();
-  dummy_world_yaw_ = 0.0;
   velocity_cmd_.setZero();
   filtered_velocity_cmd_.setZero();
   angular_z_stop_filter_.reset(0.0);
@@ -280,12 +369,39 @@ void GenericRLController::reset() {
   clearInferenceTimestamps();
   held_non_policy_pos_.clear();
   held_non_policy_pos_initialized_ = false;
+  dummy_world_yaw_ = 0.0;
+
+  if (cycle_motion_on_activate_ && !motion_sequence_.empty()) {
+    bool selected = false;
+    for (size_t attempt = 0; attempt < motion_sequence_.size(); ++attempt) {
+      const size_t index = next_motion_sequence_index_ % motion_sequence_.size();
+      next_motion_sequence_index_ = (index + 1) % motion_sequence_.size();
+      const std::string& candidate = motion_sequence_[index];
+      if (motions_.count(candidate) != 0) {
+        current_motion_name_ = candidate;
+        RL_LOG_INFO("Motion cycle selected '%s' (%zu/%zu)", candidate.c_str(),
+                    index + 1, motion_sequence_.size());
+        selected = true;
+        break;
+      }
+    }
+    if (!selected) {
+      RL_LOG_WARNING("Motion cycle has no loaded trajectories");
+    }
+  }
 
   MotionTrajectory* loader = getCurrentMotion();
   if (loader) {
     loader->reset();
     RL_LOG_INFO("Available motions: %zu. Press `guide` to start '%s'",
                 motions_.size(), current_motion_name_.c_str());
+    if (!live_reference_ &&
+        (modelHasInput("rbt_cmd_mf") || modelHasInput("target"))) {
+      motion_playing_ = true;
+      RL_LOG_INFO("Auto-start motion playback for Sonic policy");
+    } else if (live_reference_) {
+      RL_LOG_INFO("Sonic live reference configured; holding fallback motion at frame 0 while waiting for Pico");
+    }
   }
 }
 
@@ -300,6 +416,7 @@ void GenericRLController::clearVelocityFilterState() {
   cmd_x_decel_hold_timer_ = 0.0;
   stance_debounce_counter_ = 0;
   low_speed_kick_remaining_steps_ = 0;
+  backward_start_forward_kick_remaining_steps_ = 0;
   low_speed_yaw_kick_remaining_steps_ = 0;
   low_speed_yaw_kick_sign_ = 1.0;
   yaw_cmd_angz_history_.clear();
@@ -336,6 +453,18 @@ bool GenericRLController::startMotion() {
 
   // 如果已经在播放，返回 false 表示重复触发，避免重置导致动作跳回起始位置
   if (motion_playing_) {
+    if (motion_cursor_frozen_) {
+      loader->reset();
+      motion_cursor_frozen_ = false;
+      motion_just_finished_ = false;
+      final_frame_holding_ = false;
+      final_frame_hold_elapsed_steps_ = 0;
+      resetPolicyEpisodeState();
+      initializeDummyWorldYaw();
+      RL_LOG_INFO("Motion '%s' playback started from frozen first frame",
+                  current_motion_name_.c_str());
+      return true;
+    }
     RL_LOG_WARNING("Motion '%s' already playing, skipping restart", current_motion_name_.c_str());
     return false;
   }
@@ -345,6 +474,8 @@ bool GenericRLController::startMotion() {
     loader->reset();
     RL_LOG_INFO("Motion '%s' reset to beginning", current_motion_name_.c_str());
   }
+  resetPolicyEpisodeState();
+  initializeDummyWorldYaw();
 
   if (dual_fall_stand_) {
     fall_stand_entry_blend_active_ = true;
@@ -353,13 +484,13 @@ bool GenericRLController::startMotion() {
                 kFallStandEntryBlendFrames);
   }
 
-  // 在开始播放时重新初始化 dummy_world_yaw_（与 humanoidController 一致）
-  RL_LOG_INFO("\033[32m[startMotion] initializeDummyWorldYaw before motion play\033[0m");
-  initializeDummyWorldYaw();
   motion_just_finished_ = false;
+  motion_cursor_frozen_ = false;
+  final_frame_holding_ = false;
+  final_frame_hold_elapsed_steps_ = 0;
   motion_playing_ = true;
-  RL_LOG_INFO("\033[32mMotion '%s' playback started (dummy_world_yaw: %.3f)\033[0m",
-              current_motion_name_.c_str(), dummy_world_yaw_);
+  RL_LOG_INFO("\033[32mMotion '%s' playback started\033[0m",
+              current_motion_name_.c_str());
   return true;
 }
 
@@ -386,16 +517,33 @@ bool GenericRLController::startMotion(const std::string& name) {
 
   // 重置并开始播放
   it->second->reset();
+  resetPolicyEpisodeState();
+  initializeDummyWorldYaw();
   motion_prep_state_ = MotionPrepState::kIdle;
   motion_prep_elapsed_ = 0.0;
-  // 在开始播放时重新初始化 dummy_world_yaw_（与 humanoidController 一致）
-  RL_LOG_INFO("\033[32m[startMotion(%s)] initializeDummyWorldYaw before motion play\033[0m", name.c_str());
-  initializeDummyWorldYaw();
   motion_just_finished_ = false;
+  motion_cursor_frozen_ = false;
+  final_frame_holding_ = false;
+  final_frame_hold_elapsed_steps_ = 0;
   motion_playing_ = true;
-  RL_LOG_INFO("\033[32mMotion '%s' playback started (dummy_world_yaw: %.3f)\033[0m",
-              name.c_str(), dummy_world_yaw_);
+  RL_LOG_INFO("\033[32mMotion '%s' playback started\033[0m", name.c_str());
   return true;
+}
+
+bool GenericRLController::startNextMotion() {
+  if (motion_order_.empty()) {
+    return startMotion();
+  }
+
+  size_t idx = 0;
+  auto it = std::find(motion_order_.begin(), motion_order_.end(), current_motion_name_);
+  if (it != motion_order_.end()) {
+    idx = static_cast<size_t>(std::distance(motion_order_.begin(), it));
+  }
+  idx = (idx + 1) % motion_order_.size();
+  RL_LOG_INFO("Cycling motion -> '%s' (%zu/%zu)",
+              motion_order_[idx].c_str(), idx + 1, motion_order_.size());
+  return startMotion(motion_order_[idx]);
 }
 
 bool GenericRLController::stopMotion() {
@@ -407,6 +555,12 @@ bool GenericRLController::stopMotion() {
       loader->reset();
     }
     motion_just_finished_ = false;
+    motion_cursor_frozen_ = false;
+    cycle_action_blend_active_ = false;
+    cycle_action_blend_elapsed_s_ = 0.0;
+    cycle_action_blend_start_.resize(0);
+    final_frame_holding_ = false;
+    final_frame_hold_elapsed_steps_ = 0;
     RL_LOG_INFO("Motion playback stopped");
     return true;
   }
@@ -434,6 +588,76 @@ bool GenericRLController::enterStandbyHold(const RobotState& current_state) {
   motion_prep_state_ = MotionPrepState::kStandbyHold;
   RL_LOG_INFO("enterStandbyHold: locking current pose (no policy until LB+RB+X two-stage)");
   return true;
+}
+
+bool GenericRLController::freezeMotionAtFirstFrame() {
+  MotionTrajectory* loader = getCurrentMotion();
+  if (!loader || !motion_playing_) return false;
+  loader->reset();
+  motion_cursor_frozen_ = true;
+  motion_just_finished_ = false;
+  final_frame_holding_ = false;
+  final_frame_hold_elapsed_steps_ = 0;
+  RL_LOG_INFO("Motion '%s' frozen at first frame for dual inference",
+              current_motion_name_.c_str());
+  return true;
+}
+
+bool GenericRLController::startNextCycledMotionIfReady(double now_sec) {
+  if (auto_switch_back_enabled_ || !cycle_motion_on_activate_ ||
+      motion_sequence_.empty()) {
+    return false;
+  }
+  if (motion_playing_) {
+    RL_LOG_WARNING("Cannot start next motion: '%s' is still playing",
+                   current_motion_name_.c_str());
+    return false;
+  }
+  if (!motion_just_finished_) {
+    RL_LOG_WARNING("Cannot start next motion: no completed motion to continue from");
+    return false;
+  }
+  if (now_sec < motion_replay_ready_time_sec_) {
+    RL_LOG_INFO("Next motion available in %.2f s",
+                motion_replay_ready_time_sec_ - now_sec);
+    return false;
+  }
+
+  const array_t previous_actions = getActionsSnapshot();
+  const std::string previous_motion_name = current_motion_name_;
+  for (size_t attempt = 0; attempt < motion_sequence_.size(); ++attempt) {
+    const size_t index = next_motion_sequence_index_ % motion_sequence_.size();
+    next_motion_sequence_index_ = (index + 1) % motion_sequence_.size();
+    const std::string& candidate = motion_sequence_[index];
+    if (motions_.count(candidate) == 0) continue;
+    current_motion_name_ = candidate;
+    RL_LOG_INFO("Motion cycle policy transition to '%s' (%zu/%zu)",
+                candidate.c_str(), index + 1, motion_sequence_.size());
+    if (!startMotion()) {
+      current_motion_name_ = previous_motion_name;
+      motion_just_finished_ = true;
+      RL_LOG_WARNING("Cannot start next cycled motion '%s'",
+                     candidate.c_str());
+      return false;
+    }
+
+    // 非残差 Sonic 的 CSV 是策略参考，不是可以直接下发给电机的关节目标。
+    // 保持策略控制持续在线：冻结新动作首帧，并从上一动作末帧的稳定 action
+    // 平滑过渡到新 episode 的 action，完成后再推进新动作参考。
+    if (policy_blend_time_s_ > 0.0 &&
+        previous_actions.size() == policy_joint_count_) {
+      cycle_action_blend_start_ = previous_actions;
+      cycle_action_blend_elapsed_s_ = 0.0;
+      cycle_action_blend_active_ = true;
+      motion_cursor_frozen_ = true;
+      RL_LOG_INFO(
+          "Motion cycle action blend started with reference frozen: %.3fs",
+          policy_blend_time_s_);
+    }
+    return true;
+  }
+  RL_LOG_WARNING("Cannot start next motion: no cycle trajectory is loaded");
+  return false;
 }
 
 bool GenericRLController::prepareToMotionStart(const RobotState& current_state,
@@ -717,6 +941,9 @@ bool GenericRLController::autoSelectFallStandModel(const ImuData& imu) {
 }
 
 std::vector<std::string> GenericRLController::getMotionNames() const {
+  if (!motion_order_.empty()) {
+    return motion_order_;
+  }
   std::vector<std::string> names;
   names.reserve(motions_.size());
   for (const auto& [name, _] : motions_) {
@@ -952,6 +1179,50 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
     YAML::Node robot = cfg["env"]["robot"];
     joint_names_ = robot["joint_names"].as<std::vector<std::string>>();
 
+    if (cfg["live_reference"] &&
+        cfg["live_reference"]["enabled"].as<bool>(false)) {
+      const YAML::Node live = cfg["live_reference"];
+      LiveSonicReferenceProvider::Config live_config;
+      live_config.topic = live["topic"].as<std::string>(live_config.topic);
+      live_config.expected_robot_version = live["robot_version"].as<std::string>(
+          live_config.expected_robot_version);
+      live_config.expected_schema_version = live["schema_version"].as<uint32_t>(
+          live_config.expected_schema_version);
+      live_config.policy_dt = policy_dt_;
+      live_config.cursor_delay = live["cursor_delay"].as<double>(0.2);
+      live_config.history_margin = live["history_margin"].as<double>(0.18);
+      live_config.fresh_timeout = live["fresh_timeout"].as<double>(0.15);
+      live_config.hold_timeout = live["hold_timeout"].as<double>(0.5);
+
+      static const std::vector<std::string> kPicoJointNames = {
+          "waist_yaw_joint",
+          "leg_l1_joint", "leg_l2_joint", "leg_l3_joint", "leg_l4_joint",
+          "leg_l5_joint", "leg_l6_joint", "leg_r1_joint", "leg_r2_joint",
+          "leg_r3_joint", "leg_r4_joint", "leg_r5_joint", "leg_r6_joint",
+          "zarm_l1_joint", "zarm_l2_joint", "zarm_l3_joint", "zarm_l4_joint",
+          "zarm_r1_joint", "zarm_r2_joint", "zarm_r3_joint", "zarm_r4_joint"};
+      live_reference_joint_map_.clear();
+      for (const auto& joint_name : joint_names_) {
+        const auto it = std::find(kPicoJointNames.begin(), kPicoJointNames.end(),
+                                  joint_name);
+        if (it == kPicoJointNames.end()) {
+          RL_LOG_FAILURE("Pico live reference does not provide joint '%s'",
+                         joint_name.c_str());
+          return false;
+        }
+        live_reference_joint_map_.push_back(
+            static_cast<int>(std::distance(kPicoJointNames.begin(), it)));
+      }
+      live_reference_ = std::make_unique<LiveSonicReferenceProvider>(live_config);
+      if (!live_reference_->startSubscription()) {
+        RL_LOG_FAILURE("Failed to subscribe Pico live reference topic %s",
+                       live_config.topic.c_str());
+        return false;
+      }
+      RL_LOG_INFO("Sonic Pico live reference enabled on %s",
+                  live_config.topic.c_str());
+    }
+
     auto direction_vec = robot["joint_direction"].as<std::vector<double>>();
     auto default_pos_vec = robot["joint_default_pos"].as<std::vector<double>>();
     auto torque_limit_vec = robot["joint_torque_limit"].as<std::vector<double>>();
@@ -991,22 +1262,72 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
 
     // --- 观测配置 ---
     YAML::Node obs = cfg["env"]["observations"];
-    obs_history_length_ = obs["history_length"].as<int>();
-    std::string stack_order_str = obs["stack_order"].as<std::string>();
-    obs_stack_order_ = (stack_order_str == "isaaclab") ? StackOrder::kIsaaclab : StackOrder::kClassic;
+    if (obs) {
+      obs_history_length_ = obs["history_length"].as<int>();
+      std::string stack_order_str = obs["stack_order"].as<std::string>();
+      obs_stack_order_ = (stack_order_str == "isaaclab") ? StackOrder::kIsaaclab : StackOrder::kClassic;
 
-    for (const auto& pair : obs["terms"]) {
-      ObsTermConfig term;
-      term.name = pair.first.as<std::string>();
-      term.scale = pair.second["scale"].as<double>();
-      auto clip = pair.second["clip"].as<std::vector<double>>();
-      term.clip = {clip[0], clip[1]};
-      obs_terms_.push_back(term);
+      for (const auto& pair : obs["terms"]) {
+        ObsTermConfig term;
+        term.name = pair.first.as<std::string>();
+        term.scale = pair.second["scale"].as<double>();
+        auto clip = pair.second["clip"].as<std::vector<double>>();
+        term.clip = {clip[0], clip[1]};
+        obs_terms_.push_back(term);
+      }
+    }
+    if (obs["future_steps"]) {
+      future_step_num_ = obs["future_steps"].as<std::vector<int>>();
+      if (future_step_num_.empty() || future_step_num_.front() != 0 ||
+          !std::is_sorted(future_step_num_.begin(), future_step_num_.end()) ||
+          std::adjacent_find(future_step_num_.begin(), future_step_num_.end()) !=
+              future_step_num_.end()) {
+        RL_LOG_FAILURE("observations.future_steps must be sorted, unique, and start at 0");
+        return false;
+      }
+    }
+    if (obs["boot_max"]) {
+      boot_max_ = obs["boot_max"].as<double>();
+      if (boot_max_ <= 0.0) {
+        RL_LOG_FAILURE("observations.boot_max must be positive");
+        return false;
+      }
+    }
+    if (obs["policy_inputs"]) {
+      if (!obs["policy_inputs"].IsSequence()) {
+        RL_LOG_FAILURE("observations.policy_inputs must be a sequence");
+        return false;
+      }
+      for (const auto& input_node : obs["policy_inputs"]) {
+        PolicyInputConfig input;
+        input.name = input_node["name"].as<std::string>();
+        input.expected_dim = parsePolicyInputExpectedDim(
+            input_node["expected_dim"], obs_history_length_, future_step_num_.size());
+        input.stack_history = input_node["stack_history"].as<bool>(false);
+        input.terms = input_node["terms"].as<std::vector<std::string>>();
+        if (input.name.empty() || input.expected_dim <= 0 || input.terms.empty()) {
+          RL_LOG_FAILURE("Each observations.policy_inputs entry requires name, "
+                         "positive expected_dim, and terms");
+          return false;
+        }
+        const auto duplicate = std::find_if(
+            policy_inputs_.begin(), policy_inputs_.end(),
+            [&](const PolicyInputConfig& existing) { return existing.name == input.name; });
+        if (duplicate != policy_inputs_.end()) {
+          RL_LOG_FAILURE("Duplicate policy input in YAML: %s", input.name.c_str());
+          return false;
+        }
+        policy_inputs_.push_back(std::move(input));
+      }
     }
 
     // --- Motion 配置（可选） ---
     if (cfg["motion"]) {
       YAML::Node motion = cfg["motion"];
+
+      if (motion["default_motion"]) {
+        default_motion_name_ = motion["default_motion"].as<std::string>();
+      }
 
       // 对齐 kuavo fallStandMaxJointVelocity：插值到 CSV 首帧的最大关节速度
       if (motion["prep_max_joint_velocity"]) {
@@ -1016,9 +1337,37 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
                     motion_prep_max_joint_velocity_);
       }
 
+      cycle_motion_on_activate_ =
+          motion["cycle_on_activate"].as<bool>(false);
+      configured_default_motion_ =
+          motion["default_motion"].as<std::string>("");
+      motion_replay_cooldown_s_ =
+          motion["replay_cooldown_s"].as<double>(motion_replay_cooldown_s_);
+      if (motion_replay_cooldown_s_ < 0.0) {
+        RL_LOG_FAILURE("motion.replay_cooldown_s must be non-negative");
+        return false;
+      }
+      policy_blend_time_s_ =
+          motion["policy_blend_time_s"].as<double>(policy_blend_time_s_);
+      if (policy_blend_time_s_ < 0.0) {
+        RL_LOG_FAILURE("motion.policy_blend_time_s must be non-negative");
+        return false;
+      }
+      if (policy_blend_time_s_ > 0.0) {
+        RL_LOG_INFO("Motion cycle action blend: %.3f s",
+                    policy_blend_time_s_);
+      }
       if (motion["motions"]) {
+        motion_order_.clear();
+        motion_sequence_.clear();
+        motion_paths_.clear();
         for (const auto& item : motion["motions"]) {
           std::string motion_name = item["name"].as<std::string>();
+          if (motion_name.empty() || motion_paths_.count(motion_name) != 0) {
+            RL_LOG_FAILURE("Motion names must be non-empty and unique: '%s'",
+                           motion_name.c_str());
+            return false;
+          }
 
           if (item["prone_file"] && item["supine_file"]) {
             fall_stand_motion_base_ = motion_name;
@@ -1035,10 +1384,38 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
             } else if (item["path"]) {
               motion_path = item["path"].as<std::string>();
             }
+            if (motion_path.empty()) {
+              RL_LOG_FAILURE("Motion '%s' requires file or path", motion_name.c_str());
+              return false;
+            }
             motion_paths_[motion_name] = motion_path;
+            motion_sequence_.push_back(motion_name);
+            motion_order_.push_back(motion_name);
           }
         }
+        if (cycle_motion_on_activate_ && motion_sequence_.empty()) {
+          RL_LOG_FAILURE("motion.cycle_on_activate requires at least one regular motion");
+          return false;
+        }
+      }
 
+      // 末帧保持语义与 my_sonic 训练端一致：位置钳制在末帧，
+      // 参考速度线性衰减到零，保持到期后才报告 motion 完成。
+      if (motion["final_frame_hold"]) {
+        const auto final_hold = motion["final_frame_hold"];
+        final_frame_hold_time_s_ =
+            final_hold["time_s"].as<double>(final_frame_hold_time_s_);
+        final_frame_velocity_interpolation_steps_ =
+            final_hold["velocity_interpolation_steps"].as<int>(
+                final_frame_velocity_interpolation_steps_);
+        if (final_frame_hold_time_s_ < 0.0 ||
+            final_frame_velocity_interpolation_steps_ < 0) {
+          RL_LOG_FAILURE("motion.final_frame_hold values must be non-negative");
+          return false;
+        }
+        RL_LOG_INFO("Motion final-frame hold: time=%.3f s, velocity fade=%d steps",
+                    final_frame_hold_time_s_,
+                    final_frame_velocity_interpolation_steps_);
       }
 
       // 舞蹈播完自动切回稳定控制器（可选，配置在对应舞蹈 yaml 中）
@@ -1062,6 +1439,11 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
       enable_amp_arm_enhance_ = robot["enable_amp_arm_enhance_v17"].as<bool>();
       RL_LOGI("AMP arm enhance (v17): %s",
               enable_amp_arm_enhance_ ? "enabled" : "disabled");
+    }
+    if (robot["enable_elbow_scale"]) {
+      enable_elbow_scale_ = robot["enable_elbow_scale"].as<bool>();
+      RL_LOGI("Elbow action scale limit: %s",
+              enable_elbow_scale_ ? "enabled" : "disabled");
     }
     if (robot["enable_back_enhance_v17"]) {
       enable_back_enhance_v17_ = robot["enable_back_enhance_v17"].as<bool>();
@@ -1365,6 +1747,26 @@ bool GenericRLController::loadConfig(const std::string& config_path) {
     };
     loadLowSpeedKickStart(cfg["env"]["low_speed_kick_start"],
                           low_speed_kick_start_, "LowSpeedKickStart");
+    const YAML::Node backward_kick = cfg["env"]["backward_start_forward_kick"];
+    if (backward_kick) {
+      auto& kick = backward_start_forward_kick_;
+      kick.enabled = backward_kick["enabled"].as<bool>(false);
+      kick.forward_velocity =
+          backward_kick["forward_velocity"].as<double>(kick.forward_velocity);
+      kick.duration_steps =
+          backward_kick["duration_steps"].as<int>(kick.duration_steps);
+      kick.rest_cmd_threshold =
+          backward_kick["rest_cmd_threshold"].as<double>(kick.rest_cmd_threshold);
+      kick.backward_trigger =
+          backward_kick["backward_trigger"].as<double>(kick.backward_trigger);
+      if (kick.enabled &&
+          (kick.forward_velocity <= 0.0 || kick.duration_steps < 1 ||
+           kick.rest_cmd_threshold <= 0.0 || kick.backward_trigger <= 0.0)) {
+        RL_LOG_FAILURE("Invalid backward_start_forward_kick in %s",
+                       config_path.c_str());
+        return false;
+      }
+    }
     loadLowSpeedYawKickStart(cfg["env"]["low_speed_yaw_kick_start"],
                              low_speed_yaw_kick_start_, "LowSpeedYawKickStart");
 
@@ -1527,6 +1929,8 @@ bool GenericRLController::loadPolicy(const std::string& policy_path) {
     return false;
   }
 
+  if (!configurePolicyObservationLayout()) return false;
+
   RL_LOG_SUCCESS("Policy model loaded: %s (engine: %s)",
                  policy_path.c_str(),
                  ModelFactory::typeToString(model_->getModelType()).c_str());
@@ -1541,21 +1945,27 @@ bool GenericRLController::loadPolicy(const std::string& policy_path) {
 void GenericRLController::computeObservation() {
   updateVelocityCommandCache();
 
-  // 更新历史缓冲区：弹出最老帧，压入当前帧
+  // IsaacLab CircularBuffer 首次 append 时会用当前观测填满整个历史，
+  // 后续才按 oldest -> newest 滚动。
   if (obs_stack_order_ == StackOrder::kIsaaclab) {
     // isaaclab 模式：按 term 分组，每个 term 独立维护时间序列
     // obs_stacks_[term_index][time_index]
     for (size_t i = 0; i < obs_terms_.size(); ++i) {
-      obs_stacks_[i].pop_front();
       array_t term = getObsTerm(obs_terms_[i].name);
       term *= obs_terms_[i].scale;
       term = term.min(obs_terms_[i].clip.upper).max(obs_terms_[i].clip.lower);
-      obs_stacks_[i].push_back(term);
+      if (!obs_history_initialized_) {
+        for (auto& history_term : obs_stacks_[i]) {
+          history_term = term;
+        }
+      } else {
+        obs_stacks_[i].pop_front();
+        obs_stacks_[i].push_back(term);
+      }
     }
   } else {
     // classic 模式：按时间分组，每个时刻包含所有 term
-    // obs_stacks_[time_index][term_index]
-    obs_stacks_.pop_front();
+    // obs_stacks_[time_index][term_index]。首次也复制当前帧填满历史。
     std::deque<array_t> single_obs;
     for (size_t i = 0; i < obs_terms_.size(); ++i) {
       array_t term = getObsTerm(obs_terms_[i].name);
@@ -1563,8 +1973,16 @@ void GenericRLController::computeObservation() {
       term = term.min(obs_terms_[i].clip.upper).max(obs_terms_[i].clip.lower);
       single_obs.push_back(term);
     }
-    obs_stacks_.push_back(single_obs);
+    if (!obs_history_initialized_) {
+      for (auto& history_frame : obs_stacks_) {
+        history_frame = single_obs;
+      }
+    } else {
+      obs_stacks_.pop_front();
+      obs_stacks_.push_back(single_obs);
+    }
   }
+  obs_history_initialized_ = true;
 
   // 展平 2D deque → 1D observations_ 向量
   int offset = 0;
@@ -1611,7 +2029,33 @@ void GenericRLController::updateRobotCmd(RobotCmd& cmd) {
 
   // 计算目标关节位置：q_target = direction * (base_pos + action * scale)
   array_t q_target;
-  const array_t local_actions = getActionsSnapshot();
+  array_t local_actions = getMotorActionsSnapshot();
+  if (cycle_action_blend_active_) {
+    if (cycle_action_blend_start_.size() != policy_joint_count_ ||
+        local_actions.size() != policy_joint_count_ ||
+        policy_blend_time_s_ <= 0.0) {
+      cycle_action_blend_active_ = false;
+      motion_cursor_frozen_ = false;
+      RL_LOG_WARNING("Motion cycle action blend cancelled: invalid state");
+    } else {
+      cycle_action_blend_elapsed_s_ =
+          std::min(cycle_action_blend_elapsed_s_ + loop_dt_,
+                   policy_blend_time_s_);
+      const double u =
+          cycle_action_blend_elapsed_s_ / policy_blend_time_s_;
+      const double u2 = u * u;
+      const double blend =
+          10.0 * u2 * u - 15.0 * u2 * u2 + 6.0 * u2 * u2 * u;
+      local_actions =
+          (1.0 - blend) * cycle_action_blend_start_ + blend * local_actions;
+      if (cycle_action_blend_elapsed_s_ >= policy_blend_time_s_) {
+        cycle_action_blend_active_ = false;
+        motion_cursor_frozen_ = false;
+        RL_LOG_INFO(
+            "Motion cycle action blend complete; reference playback started");
+      }
+    }
+  }
   MotionTrajectory* loader = getCurrentMotion();
   if (loader) {
     if (motion_residual_action_) {
@@ -1925,7 +2369,26 @@ bool GenericRLController::buildJointMapping() {
 
 /// 从配置目录加载所有 motion 轨迹文件
 void GenericRLController::loadMotionTrajectories(const std::string& config_dir) {
-  for (const auto& [name, path] : motion_paths_) {
+  std::vector<std::string> order = motion_order_;
+  if (order.empty()) {
+    for (const auto& [name, _] : motion_paths_) {
+      order.push_back(name);
+    }
+  } else {
+    // 双起身轨迹等条目不进入 motion_order_，但仍必须加载。
+    for (const auto& [name, _] : motion_paths_) {
+      if (std::find(order.begin(), order.end(), name) == order.end()) {
+        order.push_back(name);
+      }
+    }
+  }
+
+  for (const auto& name : order) {
+    auto pit = motion_paths_.find(name);
+    if (pit == motion_paths_.end()) {
+      continue;
+    }
+    const std::string& path = pit->second;
     std::string motion_full_path;
     try {
       motion_full_path = UriPathResolver::resolve(path, config_dir);
@@ -1944,13 +2407,43 @@ void GenericRLController::loadMotionTrajectories(const std::string& config_dir) 
     motions_[name] = std::move(motion_traj);
   }
 
-  // 默认使用第一个 motion；双策略则默认 supine 轨迹
+  // 优先使用 YAML 指定的 default_motion；双策略固定默认 supine 轨迹。
   if (dual_fall_stand_ && !fall_stand_motion_base_.empty()) {
     current_motion_name_ = fall_stand_motion_base_ + "_supine";
     fall_stand_model_type_ = FallStandModelType::kSupine;
     RL_LOG_INFO("Default dual fall-stand motion: %s", current_motion_name_.c_str());
   } else if (!motions_.empty()) {
-    current_motion_name_ = motions_.begin()->first;
+    auto selected = motion_sequence_.end();
+    if (!configured_default_motion_.empty()) {
+      selected = std::find(motion_sequence_.begin(), motion_sequence_.end(),
+                           configured_default_motion_);
+      if (selected == motion_sequence_.end() ||
+          motions_.count(*selected) == 0) {
+        RL_LOG_WARNING(
+            "Configured default_motion '%s' is missing or failed to load; "
+            "falling back to the first loaded motion",
+            configured_default_motion_.c_str());
+        selected = motion_sequence_.end();
+      }
+    }
+    if (selected == motion_sequence_.end()) {
+      selected = std::find_if(
+          motion_sequence_.begin(), motion_sequence_.end(),
+          [&](const std::string& name) { return motions_.count(name) != 0; });
+    }
+
+    if (selected != motion_sequence_.end()) {
+      current_motion_name_ = *selected;
+      // reset() 会按 next_motion_sequence_index_ 选择首次起播动作，因此这里
+      // 指向 default_motion 自身；选中后 reset() 再推进到下一项。
+      next_motion_sequence_index_ =
+          static_cast<size_t>(std::distance(motion_sequence_.begin(), selected));
+    } else {
+      current_motion_name_ = motions_.begin()->first;
+      next_motion_sequence_index_ = 0;
+    }
+  }
+  if (!current_motion_name_.empty()) {
     RL_LOG_INFO("Default motion: %s", current_motion_name_.c_str());
   }
 }
@@ -2309,6 +2802,9 @@ void GenericRLController::updateVelocityCommandCache() {
     return;
   }
 
+  const bool x_was_at_rest =
+      std::abs(smoothed_raw_cmd_x_) <
+      backward_start_forward_kick_.rest_cmd_threshold;
   double limited_linear_x = vel_cmd.linear_x;
   double limited_linear_y = vel_cmd.linear_y;
   double limited_angular_z = vel_cmd.angular_z;
@@ -2449,6 +2945,8 @@ void GenericRLController::updateVelocityCommandCache() {
     applyLowSpeedKickStart(filtered_velocity_cmd_);
     applyLowSpeedYawKickStart(filtered_velocity_cmd_);
   }
+  applyBackwardStartForwardKick(filtered_velocity_cmd_, vel_cmd.linear_x,
+                                x_was_at_rest, cmd_stance_mode);
   prev_raw_cmd_vel_line_x_ = raw_cmd_x_before_kick;
   prev_raw_cmd_vel_angular_z_ = raw_cmd_angz_before_kick;
 
@@ -2660,7 +3158,14 @@ void GenericRLController::applyAmpV17ActionPostProcess(array_t& actions) const {
     actions[leg_r4_policy_idx_] += kInPlaceYawLegR1ActionBias_;
   }
 
-  // enable_elbow_scale：肘关节目标角 (default + action*scale) 不得超过 -0.2
+}
+
+void GenericRLController::applyElbowActionPositionLimit(array_t& actions) const {
+  if (!enable_elbow_scale_ && !enable_amp_arm_enhance_) {
+    return;
+  }
+
+  // 肘关节目标角 (default + action*scale) 不得超过 -0.2。
   for (const int idx : kElbowActionIndices_) {
     if (idx < 0 || idx >= static_cast<int>(actions.size()) ||
         idx >= default_joint_pos_.size() || idx >= joint_action_scale_.size()) {
@@ -2705,8 +3210,8 @@ void GenericRLController::applyBackArmEnhancePostProcess(array_t& actions) const
   actions[18] *= 0.5;
   actions[20] += 1.0 - 1.0 * actions[10];
   actions[20] *= arm1_scale_ratio;
-  actions[16] = std::min(0.8, actions[16]);
-  actions[20] = std::min(0.8, actions[20]);
+  actions[16] = std::min(-1.2, actions[16]);
+  actions[20] = std::min(-1.2, actions[20]);
 }
 
 void GenericRLController::applyStandUpEnhancePostProcess(array_t& actions) const {
@@ -2838,6 +3343,34 @@ void GenericRLController::applyLowSpeedKickStart(array_t& velocity_cmd) {
     velocity_cmd[0] = low_speed_kick_start_.kick_velocity;
     low_speed_kick_remaining_steps_ =
         low_speed_kick_start_.duration_steps - 1;
+  }
+}
+
+void GenericRLController::applyBackwardStartForwardKick(
+    array_t& velocity_cmd, double requested_x, bool was_at_rest,
+    int cmd_stance_mode) {
+  const auto& kick = backward_start_forward_kick_;
+  if (!kick.enabled || velocity_cmd.size() < 3) return;
+
+  const bool backward_only =
+      cmd_stance_mode == 0 && requested_x <= -kick.backward_trigger &&
+      velocity_cmd[0] < 0.0 &&
+      std::abs(velocity_cmd[1]) < low_speed_kick_start_.lateral_threshold &&
+      std::abs(velocity_cmd[2]) < low_speed_kick_start_.yaw_threshold;
+  if (!backward_only) {
+    backward_start_forward_kick_remaining_steps_ = 0;
+    return;
+  }
+
+  if (backward_start_forward_kick_remaining_steps_ == 0 && was_at_rest) {
+    backward_start_forward_kick_remaining_steps_ = kick.duration_steps;
+    RL_LOGI("BackwardStartForwardKick: %.2f for %d policy steps",
+            kick.forward_velocity, kick.duration_steps);
+  }
+  if (backward_start_forward_kick_remaining_steps_ > 0) {
+    // Applied after the normal kick logic so +X cannot trigger its 25-step pulse.
+    velocity_cmd[0] = kick.forward_velocity;
+    --backward_start_forward_kick_remaining_steps_;
   }
 }
 
@@ -3198,22 +3731,486 @@ array_t GenericRLController::getMotionAnchorOriB() const {
   result.setZero();
 
   auto* motion = getCurrentMotion();
-  if (!motion) {
-    return result;
-  }
+  if (!motion) return result;
 
   Eigen::Quaterniond target_quat = motion->getBodyQuat();
   Eigen::Quaterniond base_quat(current_imu_.quat[0], current_imu_.quat[1],
                                 current_imu_.quat[2], current_imu_.quat[3]);
 
-  // R = (world_yaw^-1 * base)^-1 * target
-  auto dummy_world_quat = Eigen::AngleAxisd(dummy_world_yaw_, Eigen::Vector3d{0., 0., 1.});
-  auto R_BaseTarget = ((dummy_world_quat.inverse() * base_quat).inverse() * target_quat).matrix();
+  const auto dummy_world_quat =
+      Eigen::AngleAxisd(dummy_world_yaw_, Eigen::Vector3d::UnitZ());
+  const auto R_BaseTarget =
+      ((dummy_world_quat.inverse() * base_quat).inverse() * target_quat).matrix();
 
   result << R_BaseTarget(0, 0), R_BaseTarget(0, 1),
             R_BaseTarget(1, 0), R_BaseTarget(1, 1),
             R_BaseTarget(2, 0), R_BaseTarget(2, 1);
 
+  return result;
+}
+
+array_t GenericRLController::getStackedObsTerms(
+    const std::vector<std::string>& term_names) const {
+  int total = 0;
+  for (const auto& name : term_names) total += getObsTermShape(name) * obs_history_length_;
+  array_t result = array_t::Zero(total);
+  int offset = 0;
+  for (const auto& name : term_names) {
+    auto it = std::find_if(obs_terms_.begin(), obs_terms_.end(),
+        [&](const ObsTermConfig& term) { return term.name == name; });
+    const int size = getObsTermShape(name);
+    if (it == obs_terms_.end()) {
+      RL_LOG_WARNING("Sonic input term '%s' is absent from observations config", name.c_str());
+      offset += size * obs_history_length_;
+      continue;
+    }
+    const size_t term_index = std::distance(obs_terms_.begin(), it);
+    for (int h = 0; h < obs_history_length_; ++h) {
+      const array_t* value = nullptr;
+      if (obs_stack_order_ == StackOrder::kIsaaclab &&
+          term_index < obs_stacks_.size() && h < static_cast<int>(obs_stacks_[term_index].size())) {
+        value = &obs_stacks_[term_index][h];
+      } else if (obs_stack_order_ == StackOrder::kClassic &&
+                 h < static_cast<int>(obs_stacks_.size()) &&
+                 term_index < obs_stacks_[h].size()) {
+        value = &obs_stacks_[h][term_index];
+      }
+      if (value && value->size() == size) result.segment(offset, size) = *value;
+      offset += size;
+    }
+  }
+  return result;
+}
+
+bool GenericRLController::modelHasInput(const std::string& name) const {
+  if (!model_) return false;
+  const auto names = model_->getInputNames();
+  return std::find(names.begin(), names.end(), name) != names.end();
+}
+
+int GenericRLController::modelInputDim(const std::string& name) const {
+  return model_ ? model_->getInputFeatureDim(name) : -1;
+}
+
+namespace {
+std::vector<int> parseIntList(const std::string& raw) {
+  std::string text = raw;
+  text.erase(std::remove_if(text.begin(), text.end(), [](unsigned char c) {
+    return c == '[' || c == ']' || std::isspace(c);
+  }), text.end());
+  std::vector<int> values;
+  std::stringstream stream(text);
+  std::string item;
+  while (std::getline(stream, item, ',')) if (!item.empty()) values.push_back(std::stoi(item));
+  return values;
+}
+}  // namespace
+
+bool GenericRLController::configurePolicyObservationLayout() {
+  if (!model_) return false;
+  const std::string future = model_->getMetadata("future_step_num");
+  if (!future.empty()) {
+    try {
+      auto steps = parseIntList(future);
+      if (!steps.empty()) {
+        if (!policy_inputs_.empty() && steps != future_step_num_) {
+          RL_LOG_FAILURE("YAML future_steps does not match ONNX future_step_num");
+          return false;
+        }
+        if (policy_inputs_.empty()) future_step_num_ = std::move(steps);
+      }
+    } catch (const std::exception& e) {
+      RL_LOG_FAILURE("Invalid future_step_num: %s", e.what());
+      return false;
+    }
+  }
+  if (!policy_inputs_.empty()) {
+    const auto model_inputs = model_->getInputNames();
+    for (const auto& input : policy_inputs_) {
+      if (!modelHasInput(input.name)) {
+        RL_LOG_FAILURE("YAML policy input '%s' is absent from ONNX", input.name.c_str());
+        return false;
+      }
+      if (modelInputDim(input.name) != input.expected_dim) {
+        RL_LOG_FAILURE("Policy input '%s' dimension mismatch: YAML=%d, ONNX=%d",
+                       input.name.c_str(), input.expected_dim,
+                       modelInputDim(input.name));
+        return false;
+      }
+    }
+    for (const auto& model_input : model_inputs) {
+      const auto configured = std::find_if(
+          policy_inputs_.begin(), policy_inputs_.end(),
+          [&](const PolicyInputConfig& input) { return input.name == model_input; });
+      if (configured == policy_inputs_.end()) {
+        RL_LOG_FAILURE("ONNX input '%s' is absent from YAML policy_inputs", model_input.c_str());
+        return false;
+      }
+    }
+  }
+  RL_LOG_INFO("Sonic layout: prop=%d boot=%d tracking_error=%d target=%d "
+              "rbt_cmd_mf=%d future_count=%zu",
+              modelInputDim("prop"), modelInputDim("boot"),
+              modelInputDim("tracking_error"), modelInputDim("target"),
+              modelInputDim("rbt_cmd_mf"), future_step_num_.size());
+  return true;
+}
+
+bool GenericRLController::sampleLiveReference(
+    const std::vector<int>& offsets, std::vector<SonicRefFrame>& frames) const {
+  if (!live_reference_) return false;
+  if (!live_reference_active_) {
+    if (!live_reference_->ready()) return false;
+    live_reference_active_ = true;
+    RL_LOG_INFO("Sonic switched to Pico live reference");
+  }
+  if (live_reference_->degraded()) {
+    live_reference_active_ = false;
+    RL_LOG_WARNING("Sonic Pico reference timed out; falling back to CSV motion");
+    return false;
+  }
+  if (!live_reference_->sampleWindow(offsets, frames)) return false;
+  for (auto& frame : frames) {
+    if (frame.jpos.size() != 21) return false;
+    array_t mapped_pos(policy_joint_count_);
+    array_t mapped_vel = array_t::Zero(policy_joint_count_);
+    for (int i = 0; i < policy_joint_count_; ++i) {
+      const int source = live_reference_joint_map_[i];
+      mapped_pos[i] = frame.jpos[source];
+      if (frame.jvel.size() == 21) mapped_vel[i] = frame.jvel[source];
+    }
+    frame.jpos = std::move(mapped_pos);
+    frame.jvel = std::move(mapped_vel);
+  }
+  return true;
+}
+
+array_t GenericRLController::getRobotCommandMultiFuture() const {
+  const int orientation_only_dim = static_cast<int>(future_step_num_.size()) * 6;
+  const bool orientation_only = modelInputDim("rbt_cmd_mf") == orientation_only_dim;
+  const int stride = policy_joint_count_ * 2 + 6;
+  array_t result = array_t::Zero(orientation_only ? orientation_only_dim
+                                                   : static_cast<int>(future_step_num_.size()) * stride);
+  std::vector<SonicRefFrame> live_frames;
+  const bool use_live = sampleLiveReference(future_step_num_, live_frames);
+  auto* motion = getCurrentMotion();
+  if (!use_live && !motion) return result;
+  int offset = 0;
+  if (!orientation_only) {
+    for (size_t i = 0; i < future_step_num_.size(); ++i) {
+      const array_t value = use_live ? live_frames[i].jpos
+                                     : motion->getJointPosAtOffset(future_step_num_[i]);
+      if (value.size() == policy_joint_count_) result.segment(offset, policy_joint_count_) = value;
+      offset += policy_joint_count_;
+    }
+    for (size_t i = 0; i < future_step_num_.size(); ++i) {
+      array_t value = use_live ? live_frames[i].jvel
+                               : (final_frame_holding_
+                                      ? motion->getRecordedJointVelAtOffset(future_step_num_[i])
+                                      : motion->getJointVelAtOffset(future_step_num_[i]));
+      if (!use_live && final_frame_holding_) {
+        value *= finalFrameVelocityScale(future_step_num_[i]);
+      }
+      if (value.size() == policy_joint_count_) result.segment(offset, policy_joint_count_) = value;
+      offset += policy_joint_count_;
+    }
+  }
+  Eigen::Quaterniond base(current_imu_.quat[0], current_imu_.quat[1],
+                          current_imu_.quat[2], current_imu_.quat[3]);
+  base.normalize();
+  const Eigen::Quaterniond reference_current = use_live
+      ? live_frames.front().quat.normalized()
+      : motion->getBodyQuat().normalized();
+  for (size_t i = 0; i < future_step_num_.size(); ++i) {
+    Eigen::Quaterniond target = use_live
+        ? live_frames[i].quat.normalized()
+        : motion->getBodyQuatAtOffset(future_step_num_[i]).normalized();
+    target = alignReferenceCurrentYaw(base, reference_current, target);
+    const Eigen::Matrix3d rotation = (base.inverse() * target).matrix();
+    result.segment(offset, 6) << rotation(0,0), rotation(0,1), rotation(1,0),
+                                 rotation(1,1), rotation(2,0), rotation(2,1);
+    offset += 6;
+  }
+  return result;
+}
+
+array_t GenericRLController::getMotionAnchorOriBMultiFuture() const {
+  array_t result = array_t::Zero(static_cast<int>(future_step_num_.size()) * 6);
+  std::vector<SonicRefFrame> live_frames;
+  const bool use_live = sampleLiveReference(future_step_num_, live_frames);
+  auto* motion = getCurrentMotion();
+  if (!use_live && !motion) return result;
+
+  Eigen::Quaterniond base(current_imu_.quat[0], current_imu_.quat[1],
+                          current_imu_.quat[2], current_imu_.quat[3]);
+  base.normalize();
+  const Eigen::Quaterniond reference_current = use_live
+      ? live_frames.front().quat.normalized()
+      : motion->getBodyQuat().normalized();
+  for (size_t i = 0; i < future_step_num_.size(); ++i) {
+    Eigen::Quaterniond target = use_live
+        ? live_frames[i].quat.normalized()
+        : motion->getBodyQuatAtOffset(future_step_num_[i]).normalized();
+    target = alignReferenceCurrentYaw(base, reference_current, target);
+    const Eigen::Matrix3d rotation = (base.inverse() * target).matrix();
+    result.segment(static_cast<int>(i) * 6, 6) <<
+        rotation(0, 0), rotation(0, 1), rotation(1, 0),
+        rotation(1, 1), rotation(2, 0), rotation(2, 1);
+  }
+  return result;
+}
+
+array_t GenericRLController::getFutureCommand() const {
+  const std::vector<int> target_steps = getTargetFutureStepNum();
+  const int frames = static_cast<int>(target_steps.size());
+  array_t result = array_t::Zero(frames * 2 * policy_joint_count_);
+  std::vector<SonicRefFrame> live_frames;
+  const bool use_live = sampleLiveReference(target_steps, live_frames);
+  auto* motion = getCurrentMotion();
+  if (!use_live && !motion) return result;
+  int offset = 0;
+  for (int step = 0; step < frames; ++step) {
+    const int frame_offset = target_steps[step];
+    const array_t q = use_live ? live_frames[step].jpos
+                               : motion->getJointPosAtOffset(frame_offset);
+    array_t v = use_live ? live_frames[step].jvel
+                         : (final_frame_holding_
+                                ? motion->getRecordedJointVelAtOffset(frame_offset)
+                                : motion->getJointVelAtOffset(frame_offset));
+    if (!use_live && final_frame_holding_) {
+      v *= finalFrameVelocityScale(frame_offset);
+    }
+    if (q.size() == policy_joint_count_) result.segment(offset, policy_joint_count_) = q;
+    offset += policy_joint_count_;
+    if (v.size() == policy_joint_count_) result.segment(offset, policy_joint_count_) = v;
+    offset += policy_joint_count_;
+  }
+  return result;
+}
+
+array_t GenericRLController::getTrackingErrorObservation() const {
+  const std::vector<int> target_steps = getTargetFutureStepNum();
+  const int frames = static_cast<int>(target_steps.size());
+  array_t result = array_t::Zero(frames * policy_joint_count_);
+  std::vector<SonicRefFrame> live_frames;
+  const bool use_live = sampleLiveReference(target_steps, live_frames);
+  auto* motion = getCurrentMotion();
+  if (!use_live && !motion) return result;
+  const array_t robot_joint_pos = getPolicyJointPos() + default_joint_pos_;
+  for (int step = 0; step < frames; ++step) {
+    const array_t reference = use_live
+        ? live_frames[step].jpos
+        : motion->getJointPosAtOffset(target_steps[step]);
+    if (reference.size() == policy_joint_count_) {
+      result.segment(step * policy_joint_count_, policy_joint_count_) =
+          reference - robot_joint_pos;
+    }
+  }
+  return result;
+}
+
+array_t GenericRLController::getBootIndicator() const {
+  const double policy_step = static_cast<double>(policy_episode_step_);
+  return array_t::Constant(1, std::max(boot_max_ - policy_step, 0.0) / boot_max_);
+}
+
+array_t GenericRLController::getRefBaseVel() const {
+  const std::vector<int> target_steps = getTargetFutureStepNum();
+  const int frames = static_cast<int>(target_steps.size());
+  const double dt = policy_dt_;
+  const bool include_linear_z = !policy_inputs_.empty() || modelHasInput("tracking_error") ||
+      modelInputDim("target") == frames * 2 * policy_joint_count_ + frames * 7;
+  const int frame_size = include_linear_z ? 6 : 5;
+  array_t result = array_t::Zero(frames * frame_size);
+  std::vector<int> offsets;
+  offsets.reserve(target_steps.size() * 2);
+  for (const int frame_offset : target_steps) {
+    offsets.push_back(frame_offset);
+    offsets.push_back(frame_offset + 1);
+  }
+  std::vector<SonicRefFrame> live_frames;
+  const bool use_live = sampleLiveReference(offsets, live_frames);
+  auto* motion = getCurrentMotion();
+  if (!use_live && !motion) return result;
+  const int current = motion ? motion->getCurrentFrame() : 0;
+  const int last = motion ? std::max(0, motion->getNumFrames() - 1) : 0;
+  for (int step = 0; step < frames; ++step) {
+    const int frame_offset = target_steps[step];
+    const int next_offset = frame_offset + 1;
+    const bool clamped = !use_live && std::min(current + frame_offset, last) ==
+                         std::min(current + next_offset, last);
+    Eigen::Vector3d velocity = Eigen::Vector3d::Zero();
+    Eigen::Vector3d omega = Eigen::Vector3d::Zero();
+    if (use_live) {
+      const Eigen::Vector3d p0 = live_frames[step * 2].pos;
+      const Eigen::Vector3d p1 = live_frames[step * 2 + 1].pos;
+      velocity = (p1 - p0) / dt;
+    } else {
+      velocity = motion->getBodyLinVelAtOffset(frame_offset, dt);
+    }
+    if (!clamped) {
+      const Eigen::Vector3d p0 = use_live ? live_frames[step * 2].pos
+                                          : motion->getBodyPosAtOffset(frame_offset);
+      const Eigen::Vector3d p1 = use_live ? live_frames[step * 2 + 1].pos
+                                          : motion->getBodyPosAtOffset(next_offset);
+      Eigen::Quaterniond q0 = use_live ? live_frames[step * 2].quat.normalized()
+                                       : motion->getBodyQuatAtOffset(frame_offset).normalized();
+      Eigen::Quaterniond q1 = use_live ? live_frames[step * 2 + 1].quat.normalized()
+                                       : motion->getBodyQuatAtOffset(next_offset).normalized();
+      Eigen::Quaterniond delta = (q0.inverse() * q1).normalized();
+      if (delta.w() < 0) delta.coeffs() *= -1;
+      omega = (2.0 / dt) * delta.vec();
+    }
+    if (!use_live && final_frame_holding_) {
+      const double scale = finalFrameVelocityScale(frame_offset);
+      velocity = motion->getBodyLinVelAtOffset(frame_offset, dt) * scale;
+      omega = motion->getBodyAngVelAtOffset(frame_offset, dt) * scale;
+    }
+    if (include_linear_z) {
+      result.segment(step * frame_size, frame_size) <<
+          velocity.x(), velocity.y(), velocity.z(), omega.x(), omega.y(), omega.z();
+    } else {
+      result.segment(step * frame_size, frame_size) <<
+          velocity.x(), velocity.y(), omega.x(), omega.y(), omega.z();
+    }
+  }
+  return result;
+}
+
+array_t GenericRLController::getMotionAnchorPosZFuture() const {
+  const std::vector<int> target_steps = getTargetFutureStepNum();
+  const int frames = static_cast<int>(target_steps.size());
+  array_t result = array_t::Zero(frames);
+  std::vector<SonicRefFrame> live_frames;
+  const bool use_live = sampleLiveReference(target_steps, live_frames);
+  auto* motion = getCurrentMotion();
+  if (!use_live && !motion) return result;
+  for (int step = 0; step < frames; ++step) {
+    result[step] = use_live ? live_frames[step].pos.z()
+                            : motion->getBodyPosAtOffset(target_steps[step]).z();
+  }
+  return result;
+}
+
+double GenericRLController::finalFrameVelocityScale(int future_offset) const {
+  if (!final_frame_holding_) return 1.0;
+  if (final_frame_velocity_interpolation_steps_ <= 0) return 0.0;
+  const int step = final_frame_hold_elapsed_steps_ + std::max(0, future_offset);
+  return std::clamp(1.0 - static_cast<double>(step) /
+                              final_frame_velocity_interpolation_steps_,
+                    0.0, 1.0);
+}
+
+std::vector<int> GenericRLController::getTargetFutureStepNum() const {
+  if (!policy_inputs_.empty() || modelHasInput("tracking_error")) return future_step_num_;
+  return {0, 1, 2, 3, 4, 5};
+}
+
+array_t GenericRLController::getTargetObservation() const {
+  // target: future_command + ref_base_vel, optionally followed by anchor z.
+  const array_t future = getFutureCommand();
+  const array_t velocity = getRefBaseVel();
+  const int base_size = future.size() + velocity.size();
+  const int expected_size = modelInputDim("target");
+  const int frames = static_cast<int>(getTargetFutureStepNum().size());
+  const bool include_anchor_z = expected_size == base_size + frames;
+  array_t result = array_t::Zero(include_anchor_z ? expected_size : base_size);
+  result.segment(0, future.size()) = future;
+  result.segment(future.size(), velocity.size()) = velocity;
+  if (include_anchor_z) {
+    result.segment(base_size, frames) = getMotionAnchorPosZFuture();
+  }
+  return result;
+}
+
+bool GenericRLController::buildInferenceInputs(
+    std::vector<std::vector<float>>& inputs, std::vector<std::string>& names) const {
+  if (!policy_inputs_.empty()) {
+    auto to_float = [](const array_t& value) {
+      std::vector<float> out(value.size());
+      for (int i = 0; i < value.size(); ++i) out[i] = static_cast<float>(value[i]);
+      return out;
+    };
+    for (const auto& input : policy_inputs_) {
+      const array_t value = input.stack_history
+          ? getStackedObsTerms(input.terms)
+          : concatenatePolicyInputTerms(input.terms);
+      if (value.size() != input.expected_dim) {
+        RL_LOG_WARNING("Configured policy input '%s' dim mismatch: got %d, expected %d",
+                       input.name.c_str(), static_cast<int>(value.size()), input.expected_dim);
+        return false;
+      }
+      names.push_back(input.name);
+      inputs.push_back(to_float(value));
+    }
+    return true;
+  }
+
+  if (!modelHasInput("prop") || !modelHasInput("rbt_cmd_mf")) return false;
+  auto to_float = [](const array_t& value) {
+    std::vector<float> out(value.size());
+    for (int i = 0; i < value.size(); ++i) out[i] = static_cast<float>(value[i]);
+    return out;
+  };
+  std::vector<std::string> terms = {
+      "projected_gravity", "base_ang_vel", "joint_pos", "joint_vel", "actions"};
+  const int base_prop_dim = obs_history_length_ * (6 + 3 * policy_joint_count_);
+  if (modelInputDim("prop") == base_prop_dim + obs_history_length_ * 6) {
+    terms.push_back("motion_anchor_ori_b");
+  }
+  const array_t prop = getStackedObsTerms(terms);
+  const array_t rbt = getRobotCommandMultiFuture();
+  auto append = [&](const std::string& name, const array_t& value) {
+    const int expected = modelInputDim(name);
+    if (expected > 0 && value.size() != expected) {
+      RL_LOG_WARNING("Policy input '%s' dim mismatch: got %d, expected %d",
+                     name.c_str(), static_cast<int>(value.size()), expected);
+      return false;
+    }
+    names.push_back(name); inputs.push_back(to_float(value)); return true;
+  };
+  if (!append("prop", prop)) return false;
+  if (modelHasInput("boot") && !append("boot", getBootIndicator())) return false;
+  if (modelHasInput("tracking_error") &&
+      !append("tracking_error", getTrackingErrorObservation())) return false;
+  if (modelHasInput("target") && !append("target", getTargetObservation())) return false;
+  if (!append("rbt_cmd_mf", rbt)) return false;
+  if (modelHasInput("smpl_cmd_mf")) {
+    const int size = std::max(0, modelInputDim("smpl_cmd_mf"));
+    names.push_back("smpl_cmd_mf"); inputs.emplace_back(size, 0.0f);
+  }
+  return true;
+}
+
+array_t GenericRLController::getPolicyInputTerm(const std::string& term_name) const {
+  if (term_name == "boot_indicator") return getBootIndicator();
+  if (term_name == "ref_joint_pos_err_future") return getTrackingErrorObservation();
+  if (term_name == "future_command") return getFutureCommand();
+  if (term_name == "ref_base_vel") return getRefBaseVel();
+  if (term_name == "motion_anchor_pos_z_future") return getMotionAnchorPosZFuture();
+  if (term_name == "motion_anchor_ori_b_multi_future") {
+    return getMotionAnchorOriBMultiFuture();
+  }
+  RL_LOG_WARNING("Unknown policy input term: %s", term_name.c_str());
+  return array_t();
+}
+
+array_t GenericRLController::concatenatePolicyInputTerms(
+    const std::vector<std::string>& term_names) const {
+  std::vector<array_t> values;
+  int total_size = 0;
+  for (const auto& term_name : term_names) {
+    array_t value = getPolicyInputTerm(term_name);
+    if (value.size() == 0) return array_t();
+    total_size += value.size();
+    values.push_back(std::move(value));
+  }
+  array_t result(total_size);
+  int offset = 0;
+  for (const auto& value : values) {
+    result.segment(offset, value.size()) = value;
+    offset += value.size();
+  }
   return result;
 }
 
@@ -3238,6 +4235,24 @@ array_t GenericRLController::getObsTerm(const std::string& name) const {
       return array_t::Zero(policy_joint_count_ * 2);
     }
     return motion->getCurrentCommand();
+  } else if (name == "motion_joint_pos") {
+    auto* motion = getCurrentMotion();
+    return motion ? motion->getJointPos() : array_t::Zero(policy_joint_count_);
+  } else if (name == "motion_joint_vel") {
+    auto* motion = getCurrentMotion();
+    return motion ? motion->getJointVel() : array_t::Zero(policy_joint_count_);
+  } else if (name == "motion_anchor_lin_vel_b") {
+    return array_t::Zero(3);
+  } else if (name == "motion_anchor_ang_vel_b") {
+    return array_t::Zero(3);
+  } else if (name == "motion_anchor_project_gravity") {
+    auto* motion = getCurrentMotion();
+    if (!motion) return array_t::Zero(3);
+    Eigen::Quaterniond q = motion->getBodyQuat().normalized();
+    return (q.inverse() * Eigen::Vector3d(0., 0., -1.)).array();
+  } else if (name == "motion_anchor_pos_z") {
+    auto* motion = getCurrentMotion();
+    return array_t::Constant(1, motion ? motion->getBodyPos().z() : 0.0);
   } else if (name == "motion_target_height") {
     // motion 参考轨迹的目标体高（body_pos[z]）
     auto* motion = getCurrentMotion();
@@ -3293,10 +4308,18 @@ void GenericRLController::stopInferenceThread() {
 }
 
 void GenericRLController::submitObservationForInference(const array_t& observation) {
+  std::vector<std::vector<float>> named_inputs;
+  std::vector<std::string> input_names;
+  const bool has_named_inputs = buildInferenceInputs(named_inputs, input_names);
   last_observation_submit_time_sec_.store(common::GetSteadyTimestampNs() * 1e-9);
   {
     std::lock_guard<std::mutex> lock(inference_mutex_);
     pending_observation_ = observation;
+    pending_named_inputs_ = has_named_inputs ? std::move(named_inputs)
+                                              : std::vector<std::vector<float>>{};
+    pending_input_names_ = has_named_inputs ? std::move(input_names)
+                                            : std::vector<std::string>{};
+    pending_episode_generation_ = policy_episode_generation_;
     has_pending_observation_ = true;
   }
   inference_cv_.notify_one();
@@ -3307,12 +4330,17 @@ array_t GenericRLController::getActionsSnapshot() const {
   return actions_;
 }
 
+array_t GenericRLController::getMotorActionsSnapshot() const {
+  return getActionsSnapshot();
+}
+
 void GenericRLController::updateActionCache(const array_t& new_actions) {
   array_t processed = new_actions;
   if (processed.size() == static_cast<size_t>(policy_joint_count_)) {
     if (enable_amp_arm_enhance_) {
       applyAmpV17ActionPostProcess(processed);
     }
+    applyElbowActionPositionLimit(processed);
     if (enable_back_enhance_v17_) {
       applyBackArmEnhancePostProcess(processed);
     }
@@ -3377,6 +4405,22 @@ bool GenericRLController::inferActions(const array_t& observation, array_t& infe
   return true;
 }
 
+bool GenericRLController::inferNamedActions(
+    const std::vector<std::vector<float>>& inputs,
+    const std::vector<std::string>& input_names,
+    array_t& inferred_actions) {
+  if (!model_ || !model_->isLoaded()) return false;
+  const std::vector<float> action_vec = model_->forward(inputs, input_names);
+  if (action_vec.size() != static_cast<size_t>(policy_joint_count_)) {
+    RL_LOG_WARNING("Action size mismatch: got %zu, expected %d",
+                   action_vec.size(), policy_joint_count_);
+    return false;
+  }
+  inferred_actions.resize(policy_joint_count_);
+  for (int i = 0; i < policy_joint_count_; ++i) inferred_actions[i] = action_vec[i];
+  return true;
+}
+
 void GenericRLController::inferenceThreadLoop() {
   // 推理线程早于 main 的主线程绑核，需要单独绑定 RK3588 大核。
   if (leju::cpu::bindCurrentThreadToBigCores()) {
@@ -3389,6 +4433,9 @@ void GenericRLController::inferenceThreadLoop() {
 
   while (true) {
     array_t observation;
+    std::vector<std::vector<float>> named_inputs;
+    std::vector<std::string> input_names;
+    uint64_t episode_generation = 0;
     {
       std::unique_lock<std::mutex> lock(inference_mutex_);
       inference_cv_.wait(lock, [this] {
@@ -3400,11 +4447,21 @@ void GenericRLController::inferenceThreadLoop() {
       }
 
       observation = pending_observation_;
+      named_inputs = pending_named_inputs_;
+      input_names = pending_input_names_;
+      episode_generation = pending_episode_generation_;
       has_pending_observation_ = false;
     }
 
     array_t inferred_actions;
-    if (inferActions(observation, inferred_actions)) {
+    const bool inferred = named_inputs.empty()
+        ? inferActions(observation, inferred_actions)
+        : inferNamedActions(named_inputs, input_names, inferred_actions);
+    if (inferred) {
+      std::lock_guard<std::mutex> lock(inference_mutex_);
+      if (episode_generation != policy_episode_generation_) {
+        continue;
+      }
       updateActionCache(inferred_actions);
       const double finish_time_sec = common::GetSteadyTimestampNs() * 1e-9;
       last_inference_finish_time_sec_.store(finish_time_sec);
@@ -3421,6 +4478,14 @@ int GenericRLController::getObsTermShape(const std::string& name) const {
     return policy_joint_count_;
   } else if (name == "motion_command") {
     return policy_joint_count_ * 2;
+  } else if (name == "motion_joint_pos" || name == "motion_joint_vel") {
+    return policy_joint_count_;
+  } else if (name == "motion_anchor_lin_vel_b" ||
+             name == "motion_anchor_ang_vel_b" ||
+             name == "motion_anchor_project_gravity") {
+    return 3;
+  } else if (name == "motion_anchor_pos_z") {
+    return 1;
   } else if (name == "motion_target_height") {
     return 1;
   } else if (name == "motion_anchor_ori_b") {
@@ -3444,6 +4509,25 @@ void GenericRLController::resetObsHistory() {
     }
   }
   observations_.setZero();
+  obs_history_initialized_ = false;
+}
+
+void GenericRLController::resetPolicyEpisodeState() {
+  resetObsHistory();
+  policy_episode_step_ = 0;
+  {
+    std::lock_guard<std::mutex> lock(inference_mutex_);
+    ++policy_episode_generation_;
+    pending_observation_.resize(0);
+    pending_named_inputs_.clear();
+    pending_input_names_.clear();
+    has_pending_observation_ = false;
+  }
+  {
+    std::lock_guard<std::mutex> lock(action_mutex_);
+    actions_.setZero();
+    last_actions_.setZero();
+  }
 }
 
 /// 根据 obs_terms_ 和 history_length 初始化 obs_stacks_ 的 2D deque 结构
@@ -3480,13 +4564,9 @@ void GenericRLController::initObsHistory() {
 
   observations_.resize(obs_size);
   observations_.setZero();
+  obs_history_initialized_ = false;
 }
 
-// ============================================================================
-// IMU / 世界坐标系初始化
-// ============================================================================
-
-/// 根据首帧 IMU 和 motion 目标姿态计算世界坐标系 yaw 偏移
 void GenericRLController::initializeDummyWorldYaw() {
   dummy_world_yaw_ = 0.0;
 
@@ -3496,23 +4576,17 @@ void GenericRLController::initializeDummyWorldYaw() {
     return;
   }
 
-  Eigen::Quaterniond target_quat = motion->getBodyQuat();
-  Eigen::Quaterniond base_quat(current_imu_.quat[0], current_imu_.quat[1],
-                               current_imu_.quat[2], current_imu_.quat[3]);
+  const Eigen::Quaterniond target_quat = motion->getBodyQuat();
+  const Eigen::Quaterniond base_quat(
+      current_imu_.quat[0], current_imu_.quat[1],
+      current_imu_.quat[2], current_imu_.quat[3]);
+  const Eigen::AngleAxisd base_target(target_quat * base_quat.inverse());
+  dummy_world_yaw_ =
+      base_target.axis()(2) > 0.0 ? -base_target.angle() : base_target.angle();
 
-  // 提取 yaw 分量（与 rl_mimic_controller 一致）
-  Eigen::AngleAxisd R_BaseTarget(target_quat * base_quat.inverse());
-  if (R_BaseTarget.axis()(2) > 0.0) {
-    dummy_world_yaw_ = -R_BaseTarget.angle();
-  } else {
-    dummy_world_yaw_ = R_BaseTarget.angle();
-  }
-
-  // 旋转轴 z 分量过小说明存在 pitch/roll 偏差
-  if (std::abs(R_BaseTarget.axis()(2)) < 0.7) {
+  if (std::abs(base_target.axis()(2)) < 0.7) {
     RL_LOG_WARNING("Detected initial base pitch or roll deviation");
   }
-
   RL_LOG_INFO("Initialized dummy_world_yaw: %.3f rad", dummy_world_yaw_);
 }
 

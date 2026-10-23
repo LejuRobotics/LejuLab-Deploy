@@ -18,6 +18,7 @@
 #define LEJU_RL_CONTROLLER_MOTION_TACT_PLAYER_H_
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -90,6 +91,8 @@ class TactPlayer {
   // @param waist_index    腰部关节在 tact servos 数组中的索引，-1 表示无腰部
   // @param hand_index     手部在 tact servos 数组中的起始索引，-1 表示无手部
   // @param action_dir     tact 文件所在目录
+  // @param hold_after_tact true 正常完成后仅保持手臂姿态；false 手臂恢复 Auto，不影响 Stop/Freeze
+  // 腰部不受此开关锁定，正常完成后仍恢复 Auto；不保证全身姿态或末端位置保持。
   // @param loop_dt        播放控制周期（秒），默认 0.001 = 1000 Hz，对齐 ControlLoop
   TactPlayer(CommandBuffer* cmd_buffer,
              TriggerBuffer* trigger_buffer,
@@ -97,7 +100,8 @@ class TactPlayer {
              int waist_index,
              int hand_index,
              const std::string& action_dir,
-             double loop_dt = 0.001);
+             double loop_dt = 0.001,
+             bool hold_after_tact = false);
   ~TactPlayer();
 
   TactPlayer(const TactPlayer&) = delete;
@@ -120,7 +124,7 @@ class TactPlayer {
   // 停止当前播放（恢复 Auto 模式）。
   void Stop();
 
-  // 冻结：停止播放且不恢复 Auto 模式（LB+B 锁定手臂时调用）。
+  // 非阻塞冻结请求：停止当前代播放且不恢复 Auto（LB+B 锁定手臂时调用）。
   // 与 Stop() 的区别：播放线程退出后不会推 SetArmMode(kAuto)。
   void Freeze();
 
@@ -133,12 +137,15 @@ class TactPlayer {
   std::string getLastName() const;
   std::string getErrorMessage() const;
 
+  // 控制线程非阻塞校验；锁内完成模式设置，阻止新 Play 穿过校验。
+  bool applyCompletion(uint64_t generation, const std::function<bool()>& apply);
+
   // 标记外部失败（供 ExternalInterface 在 Play 之前的外部失败场景调用，
   // 如 controller_not_running）：设 state=failed + error_code + error_message + name。
   void markFailed(int error_code, const std::string& message, const std::string& name);
 
  private:
-  void PlaybackLoop(int64_t target_execution_time_ns);
+  void PlaybackLoop(int64_t target_execution_time_ns, uint64_t generation);
   void SetArmMode(const std::string& mode_name);
   void SetWaistMode(const std::string& mode_name);
 
@@ -148,6 +155,7 @@ class TactPlayer {
   int waist_index_;
   int hand_index_;
   std::string action_dir_;
+  const bool hold_after_tact_;
   double loop_dt_;  // 播放控制周期（秒），默认 0.001 = 1000 Hz
 
   // 预计算轨迹：在 Play() 中以 loop_dt_ 步长采样整条贝塞尔曲线，
@@ -157,9 +165,12 @@ class TactPlayer {
 
   std::atomic<bool> playing_{false};
   std::atomic<bool> stop_requested_{false};
-  std::atomic<bool> frozen_{false};  // Freeze() 置位，PlaybackLoop 检测后跳过 Auto 恢复
+  std::atomic<bool> frozen_{false};  // PlaybackLoop 消费冻结请求后置位，跳过 Auto 恢复
   std::thread worker_;
   std::mutex play_mutex_;
+  uint64_t generation_ = 0;  // 由 play_mutex_ 保护
+  std::atomic<uint64_t> active_generation_{0};
+  std::atomic<uint64_t> freeze_generation_{0};  // 控制线程仅发请求，不访问 worker_
 
   // 状态模型：state_/error_code_ 为 atomic；last_name_/error_message_ 为 string，
   // 由 state_mutex_ 保护（ExternalInterface 1Hz Loop 读，PlaybackLoop 写，并发访问）。

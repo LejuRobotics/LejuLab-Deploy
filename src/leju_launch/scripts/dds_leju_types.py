@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from cyclonedds.idl import IdlStruct
-from cyclonedds.idl.types import float64, int32, sequence, uint32
+from cyclonedds.idl.types import float64, int32, sequence, uint16, uint32
 
 
 @dataclass
@@ -11,6 +11,13 @@ class Float64Array(IdlStruct, typename="leju::msgs::Float64Array"):
     header_sec: int32
     header_nanosec: uint32
     data: sequence[float64]
+
+
+@dataclass
+class UInt16Array(IdlStruct, typename="leju::msgs::UInt16Array"):
+    header_sec: int32
+    header_nanosec: uint32
+    data: sequence[uint16]
 
 
 @dataclass

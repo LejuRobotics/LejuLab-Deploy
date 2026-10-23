@@ -244,7 +244,11 @@ void ControlLogic::handleActionTriggers(const ImuData& imu,
           }
           if (mode_opt.has_value()) {
             std::string message;
-            bool success = controller_manager.setArmMode(mode_opt.value(), message);
+            auto* completion = dynamic_cast<TactCompletionArgs*>(args);
+            bool success = completion
+                ? controller_manager.applyTactCompletion(completion->generation,
+                                                        mode_opt.value(), message)
+                : controller_manager.setArmMode(mode_opt.value(), message);
             RL_LOGI("ControlLogic: setArmMode result=%s, msg=%s", success ? "true" : "false", message.c_str());
             // TactPlayer 播完/冻结时复位 M1/M2 速度屏蔽标记：
             // - kAuto：TactPlayer 正常播完恢复
@@ -396,6 +400,10 @@ std::vector<ActionTrigger> ControlLogic::processDuplicateTriggers(
 
   // 第一遍：统计每种类型的最后位置
   for (size_t i = 0; i < triggers.size(); ++i) {
+    // 完成通知不参与用户模式指令的 LastWins 去重。
+    if (dynamic_cast<TactCompletionArgs*>(triggers[i].args.get())) {
+      continue;
+    }
     last_index[triggers[i].type] = i;
   }
 
@@ -410,7 +418,12 @@ std::vector<ActionTrigger> ControlLogic::processDuplicateTriggers(
       continue;
     }
 
-    if (isDuplicateSensitive(type)) {
+    if (dynamic_cast<TactCompletionArgs*>(trigger.args.get())) {
+      // 同批次有主动手臂模式指令时，以用户指令为准。
+      if (last_index.find(ActionType::SetArmMode) == last_index.end()) {
+        result.push_back(trigger);
+      }
+    } else if (isDuplicateSensitive(type)) {
       // 去重策略：只保留第一个
       if (seen.insert(type).second) {
         result.push_back(trigger);
@@ -465,12 +478,16 @@ void ControlLogic::handleFallLogic(const RobotState& state,
     return;
   }
 
-  if (!isFallen(imu)) {
+  const std::string current_name = controller_manager.getCurrentControllerName();
+  if (current_name == "mimic_fall_stand") {
+    return;
+  }
+  
+  if (current_name.rfind("heft", 0) == 0) {
     return;
   }
 
-  const std::string current_name = controller_manager.getCurrentControllerName();
-  if (current_name == "mimic_fall_stand") {
+  if (!isFallen(imu)) {
     return;
   }
 
@@ -562,16 +579,32 @@ void ControlLogic::processExternalTargets(ControllerManager& controller_manager,
 
 
   // 处理手部目标：通过 DDS /rt/hand_cmd 发给 hardware_node，再由硬件进程调用 SetHandCommand。
+  // seq 去重仅用于更新缓存；/rt/hand_cmd 按固定 100Hz 重发最近有效目标，
+  // 但仅在目标新鲜（watchdog 内）且非搬运门控期间重发（
+  // 命令固定频率重发 + 0.25s watchdog 超时后停止，保持最后目标）。
   if (command_snapshot.hand_target.isNewerThan(last_applied_hand_target_seq_)) {
     const auto& target = command_snapshot.hand_target.getValue();
     if (target.isValid()) {
-      leju::HandCmd hand_cmd(target.position);
+      cached_hand_position_ = target.position;
+      has_cached_hand_target_ = true;
+      last_hand_target_update_time_s_ = common::GetSteadyTimestampNs() * 1e-9;
+    }
+    last_applied_hand_target_seq_ = command_snapshot.hand_target.seq;
+  }
+
+  if (has_cached_hand_target_ && !transport_gating) {
+    constexpr double kHandCmdPublishPeriodS = 1.0 / 100.0;  // 100Hz
+    constexpr double kHandCmdWatchdogS = 0.25;  // 无新目标超时后停止重发，保持最后目标
+    const double now_s = common::GetSteadyTimestampNs() * 1e-9;
+    if (now_s - last_hand_target_update_time_s_ <= kHandCmdWatchdogS &&
+        now_s - last_hand_cmd_publish_time_s_ >= kHandCmdPublishPeriodS) {
+      leju::HandCmd hand_cmd(cached_hand_position_);
       hand_cmd.timestamp = leju::common::GetUnixTimestampS();
       if (!leju::GlobalRobot::getInstance().publishHandCmd(hand_cmd)) {
         RL_LOGW("ControlLogic: failed to publish hand target");
       }
+      last_hand_cmd_publish_time_s_ = now_s;
     }
-    last_applied_hand_target_seq_ = command_snapshot.hand_target.seq;
   }
 
   // 处理头部关节目标

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # dds_depth_policy_input_video.sh — Record depth_walk policy 64x36 input as video
 #
-# Subscribes rt/depth_camera/frame_mm_240x424 and runs the same processing as
-# DepthImageProcessor in depth_walk (resize, inpaint, Gaussian blur, /2.5).
+# Subscribes to rt/depth_camera/frame_u16_mm_270x480 and locally
+# runs the real-camera DepthImageProcessor pipeline used by depth_walk:
+# white-spot removal, mask dilation, NS inpaint, Gaussian blur, and /2.5.
 #
 # Usage:
 #   bash src/leju_launch/scripts/dds_depth_policy_input_video.sh

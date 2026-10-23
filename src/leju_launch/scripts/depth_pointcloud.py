@@ -70,6 +70,7 @@ def backproject_raw_mm(
     *,
     step: int = 3,
     max_depth_m: float = 2.5,
+    colormap: str = "jet",
 ) -> tuple[np.ndarray, np.ndarray]:
     """Subsampled raw depth -> Nx3 points (camera frame) and Nx3 BGR colors."""
     h, w = depth_mm.shape
@@ -90,7 +91,7 @@ def backproject_raw_mm(
     points = np.stack([x, y, z], axis=1)
 
     norm = (z / max_depth_m * 255.0).astype(np.uint8)
-    colors = depth_u8_per_point_to_bgr(norm, "jet")
+    colors = depth_u8_per_point_to_bgr(norm, colormap)
     return points, colors
 
 
@@ -98,9 +99,10 @@ def backproject_policy(
     policy: np.ndarray,
     intrinsics: PinholeIntrinsics,
     *,
-    input_width: int = 424,
-    input_height: int = 240,
+    input_width: int = 480,
+    input_height: int = 270,
     max_depth_m: float = 2.5,
+    colormap: str = "jet",
 ) -> tuple[np.ndarray, np.ndarray]:
     """64x36 normalized policy depth -> point cloud in same camera frame."""
     out_h, out_w = policy.shape
@@ -128,7 +130,7 @@ def backproject_policy(
     points = np.stack([x, y, z], axis=1)
 
     norm = (z / max_depth_m * 255.0).astype(np.uint8)
-    colors = depth_u8_per_point_to_bgr(norm, "jet")
+    colors = depth_u8_per_point_to_bgr(norm, colormap)
     return points, colors
 
 

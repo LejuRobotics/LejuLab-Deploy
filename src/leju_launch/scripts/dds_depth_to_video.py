@@ -16,11 +16,12 @@ from cyclonedds.domain import DomainParticipant
 from cyclonedds.sub import DataReader
 from cyclonedds.topic import Topic
 
-from dds_leju_types import Float64Array
+from dds_leju_types import Float64Array, UInt16Array
+from depth_dds_source import NORMALIZED_TOPIC, default_shape, resolve_type
 
-DEFAULT_TOPIC = "rt/depth_camera/frame_mm_240x424"
-DEFAULT_WIDTH = 424
-DEFAULT_HEIGHT = 240
+DEFAULT_TOPIC = NORMALIZED_TOPIC
+DEFAULT_WIDTH = 0
+DEFAULT_HEIGHT = 0
 
 
 def _preload_cyclonedds() -> None:
@@ -38,7 +39,7 @@ def _preload_cyclonedds() -> None:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Visualize rt/depth_camera/frame_mm_240x424 as live window and/or MP4."
+            "Visualize native 480x270 UInt16 millimetre depth as a window or MP4."
         )
     )
     parser.add_argument(
@@ -51,13 +52,13 @@ def _parse_args() -> argparse.Namespace:
         "--width",
         type=int,
         default=DEFAULT_WIDTH,
-        help=f"Frame width in pixels (default: {DEFAULT_WIDTH})",
+        help="Frame width in pixels (default: auto by DDS type/topic)",
     )
     parser.add_argument(
         "--height",
         type=int,
         default=DEFAULT_HEIGHT,
-        help=f"Frame height in pixels (default: {DEFAULT_HEIGHT})",
+        help="Frame height in pixels (default: auto by DDS type/topic)",
     )
     parser.add_argument(
         "--max-depth-mm",
@@ -106,6 +107,7 @@ def _parse_args() -> argparse.Namespace:
         default=3,
         help="Upscale factor for 64x36 inset when --match-controller (default: 3)",
     )
+    parser.add_argument("--type", choices=("auto", "float64", "uint16"), default="auto", help="DDS payload type (default: auto)")
     return parser.parse_args()
 
 
@@ -136,7 +138,7 @@ def _apply_colormap(gray_u8: np.ndarray, mode: str) -> np.ndarray:
 
 
 def _controller_preview(depth_mm: np.ndarray, max_depth_mm: float, scale: int) -> np.ndarray:
-    """Nearest resize 424x240 -> 64x36, same semantics as DepthImageProcessor."""
+    """Nearest resize 480x270 -> 64x36 for the compact preview."""
     h, w = depth_mm.shape
     out_h, out_w = 36, 64
     ys = np.minimum(out_h - 1, (np.arange(out_h) * h // out_h))
@@ -163,27 +165,27 @@ def _compose_frame(
     gray, d_min, d_max, valid_ratio = _depth_mm_to_u8(depth_mm, args.max_depth_mm)
     main = _apply_colormap(gray, args.colormap)
 
+    frame_label = f"#{frame_idx}"
     label = (
-        f"#{frame_idx}  {args.width}x{args.height} mm  "
         f"valid={valid_ratio * 100:.1f}%  "
         f"depth=[{d_min:.0f},{d_max:.0f}]mm  ~{hz:.1f}Hz"
     )
     cv2.putText(
         main,
-        label,
-        (8, 22),
+        frame_label,
+        (6, 14),
         cv2.FONT_HERSHEY_SIMPLEX,
-        0.55,
+        0.35,
         (255, 255, 255),
-        2,
+        1,
         cv2.LINE_AA,
     )
     cv2.putText(
         main,
         label,
-        (8, 22),
+        (6, 30),
         cv2.FONT_HERSHEY_SIMPLEX,
-        0.55,
+        0.40,
         (0, 0, 0),
         1,
         cv2.LINE_AA,
@@ -222,9 +224,12 @@ def main() -> int:
     args = _parse_args()
     _preload_cyclonedds()
 
+    args.payload_type = resolve_type(args.topic, args.type)
+    if args.width <= 0 or args.height <= 0: args.width, args.height = default_shape(args.topic, args.payload_type)
     expected_len = args.width * args.height
     participant = DomainParticipant(0)
-    reader = DataReader(participant, Topic(participant, args.topic, Float64Array))
+    dds_type = Float64Array if args.payload_type == "float64" else UInt16Array
+    reader = DataReader(participant, Topic(participant, args.topic, dds_type))
 
     show = not args.no_show
     if show and not args.output:
@@ -257,6 +262,11 @@ def main() -> int:
                     continue
 
                 depth_mm = data.reshape(args.height, args.width)
+                # The preprocessed Float64 DDS stream is normalized to [0, 1].
+                # The visualization helpers below use millimetres, so convert
+                # only for display; the DDS payload itself is never modified.
+                if args.payload_type == "float64":
+                    depth_mm = depth_mm * args.max_depth_mm
                 now = time.time()
                 hz = 1.0 / max(now - last_frame_time, 1e-6)
                 last_frame_time = now

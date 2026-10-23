@@ -46,6 +46,13 @@ class ONNXRuntimeModel : public InferenceModel {
    */
   std::vector<float> forward(const std::vector<float>& input) override;
 
+  std::vector<float> forward(const std::vector<std::vector<float>>& inputs,
+                             const std::vector<std::string>& input_names) override;
+
+  std::vector<std::string> getInputNames() const override;
+  int getInputFeatureDim(const std::string& input_name) const override;
+  std::string getMetadata(const std::string& key) const override;
+
   /**
    * @brief 获取模型类型
    * @return 返回 ModelType::kONNXRuntime
@@ -62,6 +69,9 @@ class ONNXRuntimeModel : public InferenceModel {
    *   - "TensorrtExecutionProvider" (需要 TensorRT)
    */
   void setProvider(const std::string& provider);
+
+  /// @brief 选择输出张量（多输出模型，如 "action"）
+  void setOutputName(const std::string& output_name) override;
 
  private:
   bool loaded_ = false;                           ///< 模型加载状态

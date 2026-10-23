@@ -112,8 +112,8 @@ HumanoidRobotCfg:
       walking:                             # cmd_stance=0：行走模式（linear_x=前后速, angular_z=转身角速度）
         linear_x: 0.75                     # 默认档前进上限
         linear_x_low: 0.4                  # 低速档前进上限
-        linear_x_up: 0.95                  # 高速档前进上限
-        linear_x_negative_scale: 0.45      # 后退 policy 上限（不随档位变化）
+        linear_x_up: 1.0                  # 高速档前进上限
+        linear_x_negative_scale: 0.5    # 后退 policy 上限（不随档位变化）
         external_arm_linear_x_boost: 0.1
         linear_y: 0.4
         angular_z: 1.2
@@ -132,7 +132,7 @@ HumanoidRobotCfg:
       cmd_x_decel_ema_tau_low: 1.0            # 低速段 EMA 时间常数 [s]
 
       # 后退 cmd_x：不使用前进 EMA，加/减速独立单步限幅
-      max_velocity_change_neg_accel_cmd_x: 0.01  # 后退加速单步最大变化量 [m/s]
+      max_velocity_change_neg_accel_cmd_x: 0.25  # 后退加速单步最大变化量 [m/s]
       max_velocity_change_neg_cmd_x: 0.008        # 后退减速单步最大变化量 [m/s]
 
       # 两阶段停车（前后方向共用）：回中时先快速降到保持速度并保持 hold_time，
@@ -175,6 +175,14 @@ HumanoidRobotCfg:
       trigger_tolerance: 0.15     # 触发区间 [0.17, 0.47]
       lateral_threshold: 0.2      # abs(cmd_y) 超过则取消 [m/s]
       yaw_threshold: 0.2          # abs(cmd_ang_z) 超过则取消 [rad/s]
+
+    # 静止转后退：策略输入先前进 3 帧热身，再恢复原后退指令。
+    backward_start_forward_kick:
+      enabled: true
+      forward_velocity: 0.7
+      duration_steps: 3            # policy_dt=0.02s，合计约 0.1s
+      rest_cmd_threshold: 0.2
+      backward_trigger: 0.2
 
     # 低速原地转向脉冲：abs(cmd_ang_z) 落在 trigger±tolerance 且上一帧近零、相对上一帧加速时触发
     low_speed_yaw_kick_start:

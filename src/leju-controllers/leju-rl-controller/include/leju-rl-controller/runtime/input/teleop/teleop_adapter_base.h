@@ -86,6 +86,10 @@ public:
     config_ = binding_config_.getTeleopConfig();
   }
 
+  void setAmpActiveQuery(std::function<bool()> query) {
+    amp_active_query_ = std::move(query);
+  }
+
   /**
    * @brief 核心处理流程（模板方法模式）
    *
@@ -203,6 +207,17 @@ protected:
   }
 
 protected:
+  bool useAmpVelocityLimits() const {
+    return config_.amp_hand_cmd_vel_line_x_gear.enabled &&
+           (!amp_active_query_ || amp_active_query_());
+  }
+
+  double getEffectiveMaxLinearY() const {
+    // AMP's lateral policy scale is applied by its controller (0.4 on v17).
+    // The shared teleop limit is 0.5 for WAQ; AMP needs a unit input here.
+    return useAmpVelocityLimits() ? 1.0 : config_.max_linear_y;
+  }
+
   CommandBuffer cmd_buffer_;                ///< 内部命令缓冲区（线程安全）
   TriggerBuffer* trigger_buffer_;           ///< 触发器缓冲区（非拥有）
   TeleopConfig config_;                     ///< 速度控制配置
@@ -210,6 +225,7 @@ protected:
   /// 保护 config_ / binding_config_ 的读写: joy/quest 回调线程读 vs 热重载线程写.
   /// 派生类逐帧入口需用它上锁 (覆盖整帧), 写端 set/loadBindingConfig 已上锁.
   mutable std::mutex binding_mutex_;
+  std::function<bool()> amp_active_query_;
 
   // 上一帧状态（用于边缘检测）
   ComboKey prev_combo_;                     ///< 上一帧组合键

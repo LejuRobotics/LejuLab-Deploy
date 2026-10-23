@@ -331,6 +331,48 @@ TEST(JoyTriggerLayer_F4, BackwardLimitIsDirectPolicyValue) {
   EXPECT_DOUBLE_EQ(adapter.getEffectiveMaxLinearXBackward(), 0.5);
 }
 
+TEST(JoyTriggerLayer_F4, AmpLimitsDoNotCapOtherControllers) {
+  TriggerBuffer tb;
+  JoyTeleopAdapter adapter(&tb);
+  LoadConfig(adapter, kEdgeYaml);
+  EnableAmpHandGear(adapter);
+  adapter.config_.max_linear_x = 1.0;
+  adapter.config_.max_linear_y = 0.5;
+  adapter.config_.amp_hand_cmd_vel_line_x_gear.policy_linear_x_negative = 0.45;
+  bool amp_active = true;
+  adapter.setAmpActiveQuery([&amp_active] { return amp_active; });
+
+  const JoyData neutral = MakeBtn({});
+  const JoyData forward = MakeJoy(0, -1, 0, 0, 0, 0, {});
+  const JoyData backward = MakeJoy(0, 1, 0, 0, 0, 0, {});
+  const JoyData lateral = MakeJoy(1, 0, 0, 0, 0, 0, {});
+  const JoyData dpad_up = MakeBtn({"DPAD_UP"});
+  const JoyData dpad_down = MakeBtn({"DPAD_DOWN"});
+
+  Feed(adapter, tb, forward, neutral);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, 0.75);
+  Feed(adapter, tb, backward, forward);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, -0.45);
+  Feed(adapter, tb, lateral, backward);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_y, -1.0);
+  Feed(adapter, tb, dpad_up, lateral);
+  Feed(adapter, tb, forward, dpad_up);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, 0.95);
+  Feed(adapter, tb, dpad_down, forward);
+  Feed(adapter, tb, forward, dpad_down);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, 0.4);
+
+  amp_active = false;
+  Feed(adapter, tb, dpad_up, forward);
+  EXPECT_EQ(adapter.cmd_vel_line_x_limit_level_, 0);
+  Feed(adapter, tb, forward, dpad_up);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, 1.0);
+  Feed(adapter, tb, backward, forward);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_x, -1.0);
+  Feed(adapter, tb, lateral, backward);
+  EXPECT_DOUBLE_EQ(adapter.getSnapshot().cmd_vel.linear_y, -0.5);
+}
+
 // ============================================================================
 // F5: LB+A 输入屏蔽
 // ============================================================================

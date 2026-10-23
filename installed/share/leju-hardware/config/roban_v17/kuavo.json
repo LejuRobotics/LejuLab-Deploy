@@ -76,7 +76,7 @@
         "ruiwo_kp": [20, 20, 20, 20, 20, 20, 20, 20, 20, 10],
         "ruiwo_kd": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
     },
-    "EndEffectorType": ["none", "none"],
+    "EndEffectorType": ["revo2", "revo2"],
     "min_joint_position_limits":[
         -190, -180, -180, -10, -90, -95,
         -190, -180, -180, -10, -90, -95,

@@ -211,6 +211,66 @@ TEST_F(MotionTrajectoryTest, NextAtLastFrame) {
   EXPECT_DOUBLE_EQ(joint_pos[0], 0.14);
 }
 
+TEST_F(MotionTrajectoryTest, LastFramePreservesLegacyVelocityAndFutureStaticHold) {
+  loader_.load(test_file_path_);
+
+  for (int i = 0; i < 4; ++i) {
+    loader_.next();
+  }
+
+  EXPECT_DOUBLE_EQ(loader_.getJointVel()[0], 0.014);
+  EXPECT_TRUE(loader_.getJointVelAtOffset(0).isZero());
+  EXPECT_TRUE(loader_.getJointVelAtOffset(10).isZero());
+  EXPECT_DOUBLE_EQ(loader_.getCurrentCommand().tail(2)[1], 0.024);
+}
+
+TEST_F(MotionTrajectoryTest, RecordedVelocityPreservesLastFrameForFadeOut) {
+  loader_.load(test_file_path_);
+
+  for (int i = 0; i < 4; ++i) {
+    loader_.next();
+  }
+
+  ASSERT_EQ(loader_.getRecordedJointVelAtOffset(0).size(), 2);
+  EXPECT_DOUBLE_EQ(loader_.getRecordedJointVelAtOffset(0)[0], 0.014);
+  EXPECT_DOUBLE_EQ(loader_.getRecordedJointVelAtOffset(10)[1], 0.024);
+}
+
+TEST_F(MotionTrajectoryTest, BodyAngularVelocityUsesBackwardDifferenceAtLastFrame) {
+  loader_.load(test_file_path_);
+
+  for (int i = 0; i < 4; ++i) {
+    loader_.next();
+  }
+
+  const Eigen::Vector3d omega = loader_.getBodyAngVelAtOffset(0, 0.1);
+  EXPECT_NEAR(omega.x(), 0.0, 1e-12);
+  EXPECT_NEAR(omega.y(), 0.0, 1e-12);
+  EXPECT_GT(omega.z(), 0.0);
+  EXPECT_TRUE(omega.allFinite());
+}
+
+TEST_F(MotionTrajectoryTest, FutureVelocityIsZeroWhenClampedToLastFrame) {
+  loader_.load(test_file_path_);
+
+  EXPECT_DOUBLE_EQ(loader_.getJointVelAtOffset(3)[0], 0.013);
+  EXPECT_TRUE(loader_.getJointVelAtOffset(4).isZero());
+  EXPECT_TRUE(loader_.getJointVelAtOffset(10).isZero());
+}
+
+TEST_F(MotionTrajectoryTest, BodyLinearVelocityUsesClampedFrameValue) {
+  loader_.load(test_file_path_);
+
+  EXPECT_NEAR(loader_.getBodyLinVelAtOffset(0, 0.1).x(), 1.0, 1e-12);
+  EXPECT_NEAR(loader_.getBodyLinVelAtOffset(2, 0.1).x(), 1.0, 1e-12);
+
+  for (int i = 0; i < 4; ++i) {
+    loader_.next();
+  }
+  EXPECT_NEAR(loader_.getBodyLinVelAtOffset(0, 0.1).x(), 1.0, 1e-12);
+  EXPECT_NEAR(loader_.getBodyLinVelAtOffset(10, 0.1).x(), 1.0, 1e-12);
+}
+
 TEST_F(MotionTrajectoryTest, GetDataBeforeLoad) {
   // 未加载时获取数据应返回空/默认值
   array_t joint_pos = loader_.getJointPos();

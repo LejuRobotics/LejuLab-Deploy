@@ -16,10 +16,11 @@ from cyclonedds.domain import DomainParticipant
 from cyclonedds.sub import DataReader
 from cyclonedds.topic import Topic
 
-from dds_leju_types import Float64Array
+from dds_leju_types import Float64Array, UInt16Array
 from depth_processor import process_depth_mm_frame
+from depth_dds_source import NORMALIZED_TOPIC, default_shape, resolve_type
 
-DEFAULT_TOPIC = "rt/depth_camera/frame_mm_240x424"
+DEFAULT_TOPIC = NORMALIZED_TOPIC
 POLICY_W = 64
 POLICY_H = 36
 
@@ -39,7 +40,7 @@ def _preload_cyclonedds() -> None:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Subscribe rt/depth_camera/frame_mm_240x424, run the same "
+            "Subscribe rt/depth_camera/frame_u16_mm_270x480, run the same "
             "DepthImageProcessor path as depth_walk, and preview/record 64x36 "
             "normalized depth (policy single-frame input)."
         )
@@ -53,14 +54,14 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--input-width",
         type=int,
-        default=424,
-        help="Raw DDS frame width (default: 424)",
+        default=0,
+        help="Raw DDS frame width (0 = infer from topic/type)",
     )
     parser.add_argument(
         "--input-height",
         type=int,
-        default=240,
-        help="Raw DDS frame height (default: 240)",
+        default=0,
+        help="Raw DDS frame height (0 = infer from topic/type)",
     )
     parser.add_argument(
         "--max-depth-m",
@@ -112,8 +113,9 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--side-by-side",
         action="store_true",
-        help="Show raw 424x240 (left) and policy 64x36 (right) in one frame",
+        help="Show raw 480x270 (left) and policy 64x36 (right) in one frame",
     )
+    parser.add_argument("--type", choices=("auto", "float64", "uint16"), default="auto", help="DDS payload type (default: auto)")
     return parser.parse_args()
 
 
@@ -162,7 +164,7 @@ def _compose_display(
         canvas[:, raw_w + gap :] = policy_vis
         cv2.putText(
             canvas,
-            "raw 424x240 mm",
+            "raw 480x270 mm",
             (8, 22),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.55,
@@ -217,9 +219,12 @@ def main() -> int:
     args = _parse_args()
     _preload_cyclonedds()
 
+    args.payload_type = resolve_type(args.topic, args.type)
+    if args.input_width <= 0 or args.input_height <= 0: args.input_width, args.input_height = default_shape(args.topic, args.payload_type)
     expected_len = args.input_width * args.input_height
     participant = DomainParticipant(0)
-    reader = DataReader(participant, Topic(participant, args.topic, Float64Array))
+    dds_type = Float64Array if args.payload_type == "float64" else UInt16Array
+    reader = DataReader(participant, Topic(participant, args.topic, dds_type))
 
     show = not args.no_show
     print(f"subscribed to {args.topic}")
@@ -253,8 +258,13 @@ def main() -> int:
                     )
                     continue
 
-                depth_mm = data.reshape(args.input_height, args.input_width)
-                policy, valid_ratio = process_depth_mm_frame(
+                if args.payload_type == "float64":
+                    policy = np.clip(data.reshape(POLICY_H, POLICY_W), 0.0, 1.0).astype(np.float32)
+                    valid_ratio = float(np.isfinite(policy).mean())
+                    depth_mm = policy * args.max_depth_m * 1000.0
+                else:
+                    depth_mm = data.reshape(args.input_height, args.input_width)
+                    policy, valid_ratio = process_depth_mm_frame(
                     depth_mm,
                     input_width=args.input_width,
                     input_height=args.input_height,
@@ -262,7 +272,10 @@ def main() -> int:
                     output_height=POLICY_H,
                     max_depth_m=args.max_depth_m,
                     gaussian_blur=not args.no_blur,
-                )
+                    )
+                if policy is None:
+                    print("warn: dropped depth frame with no valid pixels", file=sys.stderr)
+                    continue
 
                 now = time.time()
                 hz = 1.0 / max(now - last_frame_time, 1e-6)
